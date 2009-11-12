@@ -1,0 +1,73 @@
+***************
+*** 30,35 ****
+  log = getLogger(__name__)
+  
+  
+  class HttpTransport(Transport):
+      """
+      HTTP transport using urllib2.  Provided basic http transport
+--- 30,63 ----
+  log = getLogger(__name__)
+  
+  
++ class SUDSHTTPRedirectHandler(u2.HTTPRedirectHandler):
++     def redirect_request(self, req, fp, code, msg, headers, newurl):
++         """Return a Request or None in response to a redirect.
++ 
++         This is called by the http_error_30x methods,
++         it was taken from the original Python version and modified
++         to use POST when redirection takes place.
++         This allows a SOAP message to be redirected without a loss
++         of content.
++         """
++         m = req.get_method()
++         if (code in (301, 302, 303, 307) and m in ("GET", "HEAD")
++             or code in (301, 302, 303) and m == "POST"):
++             newurl = newurl.replace(' ', '%20')
++             newheaders = dict((k,v) for k,v in req.headers.items()
++                               if k.lower() not in ("content-length", "content-type")
++                              )
++             log.debug("Redirecting to %s", newurl)
++             return u2.Request(newurl,
++                               data=req.data, # here we pass the original data
++                               headers=newheaders,
++                               origin_req_host=req.get_origin_req_host(),
++                               unverifiable=True,
++                               )
++         else:
++             raise u2.HTTPError(req.get_full_url(), code, msg, headers, fp)
++ 
++ 
+  class HttpTransport(Transport):
+      """
+      HTTP transport using urllib2.  Provided basic http transport
+***************
+*** 53,60 ****
+          Transport.__init__(self)
+          Unskin(self.options).update(kwargs)
+          self.cookiejar = CookieJar()
+-         self.urlopener = None
+-         
+      def open(self, request):
+          try:
+              url = request.url
+--- 81,89 ----
+          Transport.__init__(self)
+          Unskin(self.options).update(kwargs)
+          self.cookiejar = CookieJar()
++         self.urlopener = u2.build_opener(SUDSHTTPRedirectHandler(),
++                                          u2.HTTPCookieProcessor(self.cookiejar))
++ 
+      def open(self, request):
+          try:
+              url = request.url
+***************
+*** 139,142 ****
+          return HttpTransport.send(self, request)
+                   
+      def credentials(self):
+-         return (self.options.username, self.options.password)--- 168,171 ----
+          return HttpTransport.send(self, request)
+                   
+      def credentials(self):
++         return (self.options.username, self.options.password)

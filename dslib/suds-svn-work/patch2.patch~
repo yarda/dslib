@@ -1,0 +1,15 @@
+Index: xsd/sxbasic.py
+===================================================================
+--- xsd/sxbasic.py	(revision 588)
++++ xsd/sxbasic.py	(working copy)
+@@ -143,6 +143,10 @@
+     """
+     def resolve(self, nobuiltin=False):
+         qref = self.qref()
++        if qref and qref[0] == 'string' and len(self.rawchildren)>0:
++            """this node has children but was resolved to string, this should not happen"""
++            return self
++        
+         if qref is None:
+             return self
+         key = 'resolved:nb=%s' % nobuiltin

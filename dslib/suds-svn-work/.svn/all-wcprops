@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 28
+/svn/suds/!svn/ver/588/trunk
+END
+LICENSE
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/svn/suds/!svn/ver/221/trunk/LICENSE
+END
+.project
+K 25
+svn:wc:ra_dav:version-url
+V 35
+/svn/suds/!svn/ver/4/trunk/.project
+END
+python-suds.spec
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/suds/!svn/ver/583/trunk/python-suds.spec
+END
+sdist
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svn/suds/!svn/ver/575/trunk/sdist
+END
+setup.py
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/suds/!svn/ver/575/trunk/setup.py
+END
+.pydevproject
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/suds/!svn/ver/579/trunk/.pydevproject
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 35
+/svn/suds/!svn/ver/528/trunk/README
+END
+makefile
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/suds/!svn/ver/523/trunk/makefile
+END
+setup.cfg
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/svn/suds/!svn/ver/7/trunk/setup.cfg
+END

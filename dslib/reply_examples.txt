@@ -1,0 +1,151 @@
+-------------------- GetListOfReceivedMessages --------------------
+(reply){
+   dmRecords = 
+      (tRecordsArray){
+         dmRecord = 
+            (tRecord){
+               dmOrdinal = 1
+               dmID = "142499"
+               dbIDSender = "hjyaavk"
+               dmSender = "Město Milotice"
+               dmSenderAddress = "Kovářská 14/1, 37612 Milotice, CZ"
+               dmSenderType = 10
+               dmRecipient = "Bedřich Košata"
+               dmRecipientAddress = None
+               dmSenderOrgUnit = None
+               dmSenderOrgUnitNum = 0
+               dbIDRecipient = "avzfin2"
+               dmRecipientOrgUnit = None
+               dmRecipientOrgUnitNum = 0
+               dmToHands = None
+               dmAnnotation = "Vaše datová zpráva byla přijata"
+               dmRecipientRefNumber = None
+               dmSenderRefNumber = "AB-75596"
+               dmRecipientIdent = None
+               dmSenderIdent = "ZN-330"
+               dmLegalTitleLaw = None
+               dmLegalTitleYear = None
+               dmLegalTitleSect = None
+               dmLegalTitlePar = None
+               dmLegalTitlePoint = None
+               dmPersonalDelivery = False
+               dmAllowSubstDelivery = False
+               dmMessageStatus = 6
+               dmAttachmentSize = 260
+               dmDeliveryTime = 2009-10-30 20:59:32.000848
+               dmAcceptanceTime = 2009-10-30 20:59:37.000888
+            }
+      }
+   dmStatus = 
+      (tStatus){
+         dmStatusCode = "0000"
+         dmStatusMessage = "Provedeno úspěšně."
+      }
+ }
+-------------------- MessageEnvelopeDownload --------------------
+(reply){
+   dmReturnedMessageEnvelope = 
+      (tReturnedMessageEnvelope){
+         dmDm = 
+            (dmDm){
+               dmID = "142499"
+               dbIDSender = "hjyaavk"
+               dmSender = "Město Milotice"
+               dmSenderAddress = "Kovářská 14/1, 37612 Milotice, CZ"
+               dmSenderType = 10
+               dmRecipient = "Bedřich Košata"
+               dmRecipientAddress = None
+               dmSenderOrgUnit = None
+               dmSenderOrgUnitNum = 0
+               dbIDRecipient = "avzfin2"
+               dmRecipientOrgUnit = None
+               dmRecipientOrgUnitNum = 0
+               dmToHands = None
+               dmAnnotation = "Vaše datová zpráva byla přijata"
+               dmRecipientRefNumber = None
+               dmSenderRefNumber = "AB-75596"
+               dmRecipientIdent = None
+               dmSenderIdent = "ZN-330"
+               dmLegalTitleLaw = None
+               dmLegalTitleYear = None
+               dmLegalTitleSect = None
+               dmLegalTitlePar = None
+               dmLegalTitlePoint = None
+               dmPersonalDelivery = False
+               dmAllowSubstDelivery = False
+            }
+         dmHash = 
+            (dmHash){
+               value = "bNOcLphvHeE8AsmELsgL0o/hy2Y="
+               _algorithm = "SHA-1"
+            }
+         dmQTimestamp = "MIIM9QYJKoZIhvcNAQcCoIIM5jCCDOICAQMxCzAJBgUrDgMCGgUAMIH5BgsqhkiG9w0BCRABBKCB
+6QSB5jCB4wIBAQYIZ4EGAQUBAW4wITAJBgUrDgMCGgUABBRs05wumG8d4TwCyYQuyAvSj+HLZgIG
+SrTMc2qLGBMyMDA5MTAzMDE5NTkzMi43NDFaMASAAgH0AggW/hK+3Q0f2aCBg6SBgDB+MQswCQYD
+VQQGEwJDWjEsMCoGA1UECgwjxIxlc2vDoSBwb8WhdGEsIHMucC4gW0nEjCA0NzExNDk4M10xIDAe
+BgNVBAsTF1RpbWUgU3RhbXBpbmcgQXV0aG9yaXR5MR8wHQYDVQQDExZQb3N0U2lnbnVtIFRTQSAt
+IFRTVSAyoIIJSzCCBxowggYCoAMCAQICAwPPEzANBgkqhkiG9w0BAQsFADBdMQswCQYDVQQGEwJD
+WjEsMCoGA1UECgwjxIxlc2vDoSBwb8WhdGEsIHMucC4gW0nEjCA0NzExNDk4M10xIDAeBgNVBAMT
+F1Bvc3RTaWdudW0gUXVhbGlmaWVkIENBMB4XDTA5MDYyMjEwMTQzNVoXDTEyMDYyMjEwMTMwMFow
+fjELMAkGA1UEBhMCQ1oxLDAqBgNVBAoMI8SMZXNrw6EgcG/FoXRhLCBzLnAuIFtJxIwgNDcxMTQ5
+ODNdMSAwHgYDVQQLExdUaW1lIFN0YW1waW5nIEF1dGhvcml0eTEfMB0GA1UEAxMWUG9zdFNpZ251
+bSBUU0EgLSBUU1UgMjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKiYbmlw+o+Pph45
+ACOQLDvnKtK+fO5S4JSVTMKjgHjdJGCMfJVTP1jgR6CzOBuy1kjnAvvY1xudTWUPbeMLtp1PThpW
+UrU99dxls4QFh7oMAVBN3Wkl0oSTuVsGMe2aCZ/hEc6TzRg7nQDUVe112BKNqiCkn6XtTE8ieLmA
+Cw1jze8bQCa9fuEuNgB5OWmGW6B9z2MLuU8wUrHGEx22MxJnWI4MrOgQM03VY7HpRqrXAesZcUcg
+tPEHtFccJaMF2JmV/nUhB20EbPoVrab4nZDgldw5uK06s4J1Wcv71c8ogSZ5fNpUS3YxNLOJHa5T
+CH7lFFagPiA2FuAoRphV8EECAwEAAaOCA8AwggO8MAkGA1UdEwQCMAAwggEfBgNVHSAEggEWMIIB
+EjCCAQ4GCGeBBgEEAQduMIIBADCB1wYIKwYBBQUHAgIwgcoagcdUZW50byBrdmFsaWZpa292YW55
+IHN5c3RlbW92eSBjZXJ0aWZpa2F0IGJ5bCB2eWRhbiBwb2RsZSB6YWtvbmEgMjI3LzIwMDBTYi4g
+YSBuYXZhem55Y2ggcHJlZHBpc3UvVGhpcyBxdWFsaWZpZWQgc3lzdGVtIGNlcnRpZmljYXRlIHdh
+cyBpc3N1ZWQgYWNjb3JkaW5nIHRvIExhdyBObyAyMjcvMjAwMENvbGwuIGFuZCByZWxhdGVkIHJl
+Z3VsYXRpb25zMCQGCCsGAQUFBwIBFhhodHRwOi8vd3d3LnBvc3RzaWdudW0uY3owGgYIKwYBBQUH
+AQMEDjAMMAoGCCsGAQUFBwsCMA4GA1UdDwEB/wQEAwIGwDAWBgNVHSUBAf8EDDAKBggrBgEFBQcD
+CDCBgQYDVR0jBHoweIAUp5+2jomTmmV2CZqV+ER+aYJq3guhXaRbMFkxCzAJBgNVBAYTAkNaMSww
+KgYDVQQKDCPEjGVza8OhIHBvxaF0YSwgcy5wLiBbScSMIDQ3MTE0OTgzXTEcMBoGA1UEAxMTUG9z
+dFNpZ251bSBSb290IFFDQYIBHDCCAaMGA1UdHwSCAZowggGWMDSgMqAwhi5odHRwOi8vd3d3LnBv
+c3RzaWdudW0uY3ovY3JsL3BzcXVhbGlmaWVkY2EuY3JsMDSgMqAwhi5odHRwOi8vcG9zdHNpZ251
+bS50dGMuY3ovY3JsL3BzcXVhbGlmaWVkY2EuY3JsMIGSoIGPoIGMhoGJbGRhcDovL3FjYS5wb3N0
+c2lnbnVtLmN6L2NuJTNkUG9zdFNpZ251bSUyMFF1YWxpZmllZCUyMENBLG8lM2RDZXNrYSUyMHBv
+c3RhJTIwcy5wLiUyMCU1YklDJTIwNDcxMTQ5ODMlNWQsYyUzZENaP2NlcnRpZmljYXRlUmV2b2Nh
+dGlvbkxpc3QwgZKggY+ggYyGgYlsZGFwOi8vcG9zdHNpZ251bS50dGMuY3ovY24lM2RQb3N0U2ln
+bnVtJTIwUXVhbGlmaWVkJTIwQ0EsbyUzZENlc2thJTIwcG9zdGElMjBzLnAuJTIwJTViSUMlMjA0
+NzExNDk4MyU1ZCxjJTNkQ1o/Y2VydGlmaWNhdGVSZXZvY2F0aW9uTGlzdDAdBgNVHQ4EFgQUhMf0
+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
+8lwJU28vFfX7u1dCPAhS"
+         dmDeliveryTime = 2009-10-30 20:59:32.000848
+         dmAcceptanceTime = 2009-10-30 20:59:37.000888
+         dmMessageStatus = 6
+         dmAttachmentSize = 260
+      }
+   dmStatus = 
+      (tStatus){
+         dmStatusCode = "0000"
+         dmStatusMessage = "Provedeno úspěšně."
+      }
+ }
