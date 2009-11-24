@@ -72,7 +72,6 @@ class Model(object):
       logging.debug("Attribute %s not present in %s", attr, parent.__class__.__name__)
     
 
-        
   def _decode_soap_value(self, soap):
     """take a value as returned by SOAP and return a more suitable one;
     for example suds uses a class for text, so we translate to normal
@@ -81,12 +80,21 @@ class Model(object):
       return unicode(soap)
     return soap
 
+
   def copy_to_soap_object(self, soap):
     for attr in self.KNOWN_ATTRS:
       value = getattr(self, attr)
       if value != None:
         # we do not copy default empty values
-        setattr(soap, attr, value)
+        self._set_one_attr(soap, attr, value)
+
+
+  def _set_one_attr(self, soap, attr, value):
+##     if attr == "dmFiles":
+##       for child in value:
+##         soap_child = dmFile()
+##         child.copy_to_soap_object(soap_child)
+    setattr(soap, attr, value)
   
 
 class Message(Model):
@@ -171,6 +179,10 @@ class dmFile(Model):
     return fullname
 
 
+class dmFiles(Model):
+
+  KNOWN_ATTRS = ("dmFile",)
+  ATTR_TO_TYPE = {"dmFile":list}
 
 class dmEvent(Model):
   """corresponds to dmEvent SOAP class"""
@@ -196,6 +208,15 @@ class dmHash(Model):
 
   KNOWN_ATTRS = ("value", "_algorithm")
 
+
+class dmEnvelope(Model):
+
+  KNOWN_ATTRS = ("dmSenderOrgUnit", "dmSenderOrgUnitNum", "dbIDRecipient", "dmRecipientOrgUnit",
+                 "dmRecipientOrgUnitNum", "dmToHands", "dmAnnotation", "dmRecipientRefNumber",
+                 "dmSenderRefNumber", "dmRecipientIdent", "dmSenderIdent", "dmLegalTitleLaw",
+                 "dmLegalTitleYear", "dmLegalTitleSect", "dmLegalTitlePar", "dmLegalTitlePoint",
+                 "dmPersonalDelivery", "dmAllowSubstDelivery", "dmOVM")
+  
   
 class dbOwnerInfo(Model):
 

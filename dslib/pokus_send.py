@@ -40,5 +40,6 @@ dmFiles = client.factory.create("dmFiles")
 dmFiles.dmFile.append(attach_file)
 print dmFiles
 
+aaaa
 reply = client.service.CreateMessage(dmEnvelope, dmFiles)
 print reply

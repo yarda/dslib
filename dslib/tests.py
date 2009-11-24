@@ -86,7 +86,7 @@ def DummyOperation():
   reply = ds_client.DummyOperation()
   print "Actually is", reply.status, reply.data
 
-@active
+#@active
 def FindDataBox():
   # part 1
   info = models.dbOwnerInfo()
@@ -116,6 +116,21 @@ def FindDataBox():
   print
   print " * Should not find anything for 'Prase'"
   print "Result:", reply.data
+
+#@active
+def CreateMessage():
+  envelope = models.dmEnvelope()
+  envelope.dbIDRecipient = "hjyaavk"
+  envelope.dmAnnotation = "tohle je dalsi pokus posilany z pythonu"
+  dmfile = models.dmFile()
+  dmfile._dmMimeType = "text/plain"
+  dmfile._dmFileMetaType = "main"
+  dmfile._dmFileDescr = "prilozeny_soubor.txt"
+  import base64
+  dmfile.dmEncodedContent = base64.standard_b64encode("tohle je pokusny text v pokusne priloze")
+  dmfiles = [dmfile]
+  reply = ds_client.CreateMessage(envelope, dmfiles)
+  print reply.status
 
 if __name__ == "__main__":
   import sys, inspect

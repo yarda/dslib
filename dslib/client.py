@@ -103,6 +103,18 @@ class Dispatcher(object):
     else:
       result = []
     return Reply(self._extract_status(reply), result)
+
+  def CreateMessage(self, envelope, files):
+    """info = dbOwnerInfo instance"""
+    soap_envelope = self.soap_client.factory.create("dmEnvelope")
+    envelope.copy_to_soap_object(soap_envelope)
+    soap_files = self.soap_client.factory.create("dmFiles")
+    for f in files:
+      soap_file = self.soap_client.factory.create("dmFile")
+      f.copy_to_soap_object(soap_file)
+      soap_files.dmFile.append(soap_file)
+    reply = self.soap_client.service.CreateMessage(soap_envelope, soap_files)
+    return Reply(self._extract_status(reply), None)
     
     
 
@@ -117,6 +129,7 @@ class Client(object):
                           "DummyOperation": "operations",
                           "GetDeliveryInfo": "info",
                           "FindDataBox": "search",
+                          "CreateMessage": "operations",
                           }
 
   dispatcher_name2config = {"info": {"wsdl_name": "dm_info.wsdl",
