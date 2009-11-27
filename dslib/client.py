@@ -77,12 +77,18 @@ class Dispatcher(object):
 
   def MessageEnvelopeDownload(self, msgid):
     reply = self.soap_client.service.MessageEnvelopeDownload(msgid)
-    message = models.Message(reply.dmReturnedMessageEnvelope)
+    if hasattr(reply, 'dmReturnedMessageEnvelope'):
+      message = models.Message(reply.dmReturnedMessageEnvelope)
+    else:
+      message = None
     return Reply(self._extract_status(reply), message)
 
   def MessageDownload(self, msgid):
     reply = self.soap_client.service.MessageDownload(msgid)
-    message = models.Message(reply.dmReturnedMessage)
+    if hasattr(reply, 'dmReturnedMessage'):
+      message = models.Message(reply.dmReturnedMessage)
+    else:
+      message = None
     return Reply(self._extract_status(reply), message)
 
   def DummyOperation(self):
