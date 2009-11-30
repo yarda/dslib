@@ -3,6 +3,13 @@ This is the main part of the dslib library - a client object resides here
 which is responsible for all communication with the DS server
 """
 
+# this is a work-around for an incompatibility of openssl-1.0.0beta
+# with the login.czebox.cz sites HTTPS interface
+# more info here: https://bugzilla.redhat.com/show_bug.cgi?id=537822
+import _ssl
+_ssl.PROTOCOL_SSLv23 = _ssl.PROTOCOL_SSLv3
+# / end of work-around
+
 # suds does not work properly without this
 import sys, os
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
