@@ -132,11 +132,15 @@ class Dispatcher(object):
     reply = self.soap_client.service.CreateMessage(soap_envelope, soap_files)
     return Reply(self._extract_status(reply), None)
     
-    
+
 
 class Client(object):
 
-  WSDL_URL_BASE = 'file://%s/wsdl/' % os.path.dirname(os.path.abspath(__file__))
+  cur_path = os.path.dirname(os.path.abspath(__file__))
+  if cur_path.startswith("/"):
+    WSDL_URL_BASE = 'file://%s/wsdl/' % cur_path
+  else:
+    WSDL_URL_BASE = 'file:///%s/wsdl/' % cur_path
 
   attr2dispatcher_name = {"GetListOfSentMessages": "info",
                           "GetListOfReceivedMessages": "info",
