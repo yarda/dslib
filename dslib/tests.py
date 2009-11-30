@@ -2,9 +2,13 @@
 
 from client import Client
 import models
+import sys
 
-username = "kvm6ra"
-password = "Schr8ne4ka"
+if len(sys.argv) < 2:
+  print "Usage: python tests.py username"
+username = sys.argv[1]
+import getpass
+password = getpass.getpass()
 ds_client = Client(username, password)
 
 def active(f):
@@ -14,7 +18,7 @@ def active(f):
 
 # ============================== Tests start here ==============================
 
-#@active
+@active
 def GetListOfSentMessages():
   template = "%(dmID)-8s %(dmSender)-20s %(dmRecipient)-20s %(dmAnnotation)-20s %(dmDeliveryTime)-20s"
   heading = {"dmID":"ID",
@@ -30,7 +34,7 @@ def GetListOfSentMessages():
     print (template % (message.__dict__)).encode("utf-8")
 
 
-#@active
+@active
 def GetListOfReceivedMessages():
   template = "%(dmID)-8s %(dmSender)-20s %(dmRecipient)-20s %(dmAnnotation)-20s %(dmDeliveryTime)-20s"
   heading = {"dmSender":"Sender",
@@ -46,7 +50,7 @@ def GetListOfReceivedMessages():
     print (template % (message.__dict__)).encode("utf-8")
 
 
-#@active
+@active
 def MessageDownload():
   for envelope in ds_client.GetListOfReceivedMessages().data:
     message = ds_client.MessageDownload(envelope.dmID).data
@@ -58,7 +62,7 @@ def MessageDownload():
       print "  '%s' saved" % f.save_file("./")
 
 
-#@active
+@active
 def MessageEnvelopeDownload():
   for envelope in ds_client.GetListOfReceivedMessages().data:
     message = ds_client.MessageEnvelopeDownload(envelope.dmID).data
@@ -67,7 +71,7 @@ def MessageEnvelopeDownload():
     print "dmAnnotation:", message.dmAnnotation.encode('utf-8')
 
 
-#@active
+@active
 def GetDeliveryInfo():
   import tools
   for envelope in ds_client.GetListOfSentMessages().data:

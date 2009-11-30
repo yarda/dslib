@@ -237,15 +237,3 @@ class Reply(object):
   def __unicode__(self):
     return "Reply: StatusCode: %s; DataType: %s" % (self.status.dmStatusCode, data.__class__.__name__)
 
-
-if __name__ == "__main__":
-  #import logging
-  #logging.basicConfig(level=logging.INFO)
-  #logging.getLogger('suds.client').setLevel(logging.DEBUG)
-  username = "kvm6ra"
-  password = "Schr8ne4ka"
-  c = Client(username, password, test_environment=False)
-  #message = c.GetDeliveryInfo(166156)
-  #print message
-  #print c.DummyOperation() 
-  print c.GetListOfSentMessages()

@@ -1,0 +1,30 @@
+dslib
+-------------------------------------------------------------------------------
+
+dslib je svobodná (licence LGPL) knihovna pro přístup k Datovým schránkám.
+Knihovna je napsaná v jazyce Python a ve svém základě jde v podstatě o tenkou
+vrstvu nad SOAP rozhraním, které systém datových schránek poskytuje.
+
+V současné verzi jsou implementovány následující funkce:
+
+ * GetListOfSentMessages
+ * GetListOfReceivedMessages
+ * MessageEnvelopeDownload
+ * MessageDownload
+ * DummyOperation
+ * FindDataBox
+ * CreateMessage
+ 
+Autentizace je v současné verzi omezená na jméno a heslo,
+autentizace pomocí klientského certifikátu není implementovaná.
+
+Ukázkový kód pro knihovnu je k disposici v souboru tests.py
+
+
+SOAP knihovna
+-------------------------------------------------------------------------------
+Knihovna používá knihovnu "suds" pro SOAP komunikaci. Protože bylo třeba
+tuto knihovnu upravit pro potřeby našeho projektu, distribuujeme upravenou
+verzi jako součást našeho balíčku (suds i dslib jsou vydávány pod licencí
+LGPL).
+
