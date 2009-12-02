@@ -23,10 +23,10 @@ Ukázkový kód pro knihovnu je k disposici v souboru tests.py
 
 SOAP knihovna
 -------------------------------------------------------------------------------
-Knihovna používá knihovnu "suds" pro SOAP komunikaci. Protože bylo třeba
-tuto knihovnu upravit pro potřeby našeho projektu, distribuujeme upravenou
-verzi jako součást našeho balíčku (suds i dslib jsou vydávány pod licencí
-LGPL).
+Knihovna používá knihovnu "suds" (https://fedorahosted.org/suds) pro SOAP
+komunikaci. Protože bylo třeba tuto knihovnu upravit pro potřeby našeho
+projektu, distribuujeme upravenou verzi jako součást našeho balíčku 
+(suds i dslib jsou vydávány pod licencí LGPL).
 V okamžiku, kdy bude možné použít oficiální verzi "suds", bude naše upravená
 verze z balíčku odstraněna
 
