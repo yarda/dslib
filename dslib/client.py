@@ -6,15 +6,17 @@ which is responsible for all communication with the DS server
 # this is a work-around for an incompatibility of openssl-1.0.0beta
 # with the login.czebox.cz sites HTTPS interface
 # more info here: https://bugzilla.redhat.com/show_bug.cgi?id=537822
-try:
-  import _ssl
-  _ssl.PROTOCOL_SSLv23 = _ssl.PROTOCOL_SSLv3
-except:
-  pass
+# the workaround breaks things on FreeBSD
+import sys, os
+if not sys.platform.startswith("freebds"):
+  try:
+    import _ssl
+    _ssl.PROTOCOL_SSLv23 = _ssl.PROTOCOL_SSLv3
+  except:
+    pass
 # / end of work-around
 
 # suds does not work properly without this
-import sys, os
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from suds.client import Client as SudsClient
