@@ -8,7 +8,7 @@ which is responsible for all communication with the DS server
 # more info here: https://bugzilla.redhat.com/show_bug.cgi?id=537822
 # the workaround breaks things on FreeBSD
 import sys, os
-if not sys.platform.startswith("freebds"):
+if not sys.platform.startswith("freebds") and not sys.platform.startswith("darwin"):
   try:
     import _ssl
     _ssl.PROTOCOL_SSLv23 = _ssl.PROTOCOL_SSLv3
