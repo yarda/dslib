@@ -4,13 +4,6 @@ from client import Client
 import models
 import sys
 
-if len(sys.argv) < 2:
-  print "Usage: python tests.py username"
-username = sys.argv[1]
-import getpass
-password = getpass.getpass()
-ds_client = Client(username, password)
-
 def active(f):
   """decorator to activate a test"""
   f.active = True
@@ -18,7 +11,7 @@ def active(f):
 
 # ============================== Tests start here ==============================
 
-@active
+#@active
 def GetListOfSentMessages():
   template = "%(dmID)-8s %(dmSender)-20s %(dmRecipient)-20s %(dmAnnotation)-20s %(dmDeliveryTime)-20s"
   heading = {"dmID":"ID",
@@ -34,7 +27,7 @@ def GetListOfSentMessages():
     print (template % (message.__dict__)).encode("utf-8")
 
 
-@active
+#@active
 def GetListOfReceivedMessages():
   template = "%(dmID)-8s %(dmSender)-20s %(dmRecipient)-20s %(dmAnnotation)-20s %(dmDeliveryTime)-20s"
   heading = {"dmSender":"Sender",
@@ -50,7 +43,7 @@ def GetListOfReceivedMessages():
     print (template % (message.__dict__)).encode("utf-8")
 
 
-@active
+#@active
 def MessageDownload():
   for envelope in ds_client.GetListOfReceivedMessages().data:
     message = ds_client.MessageDownload(envelope.dmID).data
@@ -62,7 +55,7 @@ def MessageDownload():
       print "  '%s' saved" % f.save_file("./")
 
 
-@active
+#@active
 def MessageEnvelopeDownload():
   for envelope in ds_client.GetListOfReceivedMessages().data:
     message = ds_client.MessageEnvelopeDownload(envelope.dmID).data
@@ -71,7 +64,7 @@ def MessageEnvelopeDownload():
     print "dmAnnotation:", message.dmAnnotation.encode('utf-8')
 
 
-@active
+#@active
 def GetDeliveryInfo():
   import tools
   for envelope in ds_client.GetListOfSentMessages().data:
@@ -84,13 +77,13 @@ def GetDeliveryInfo():
       print event
     print "----------------------------------------"
 
-@active
+#@active
 def DummyOperation():
   print "Should be None None"
   reply = ds_client.DummyOperation()
   print "Actually is", reply.status, reply.data
 
-@active
+#@active
 def FindDataBox():
   # part 1
   info = models.dbOwnerInfo()
@@ -158,7 +151,26 @@ def CreateMessage():
   reply = ds_client.CreateMessage(envelope, dmfiles)
   print reply.status
 
+@active
+def GetOwnerInfoFromLogin():
+  reply = ds_client.GetOwnerInfoFromLogin()
+  print reply.status
+  print reply.data
+
 if __name__ == "__main__":
+  from optparse import OptionParser
+  op = OptionParser(usage="python %prog [options] username")
+  op.add_option( "-t", action="store_true",
+                 dest="test_account", default=False,
+                 help="the account is a test account, not a standard one.")
+  (options, args) = op.parse_args()
+  #import 
+  if len(args) == 0:
+    op.error("Too few arguments")
+  username = args[0]
+  import getpass
+  password = getpass.getpass()
+  ds_client = Client(username, password, test_environment=options.test_account)
   import sys, inspect
 
   for name, f in inspect.getmembers(sys.modules[__name__], inspect.isfunction):

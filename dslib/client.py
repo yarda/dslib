@@ -134,6 +134,13 @@ class Dispatcher(object):
     reply = self.soap_client.service.CreateMessage(soap_envelope, soap_files)
     return Reply(self._extract_status(reply), None)
     
+  def GetOwnerInfoFromLogin(self):
+    reply = self.soap_client.service.GetOwnerInfoFromLogin()
+    if hasattr(reply, 'dbOwnerInfo'):
+      message = models.dbOwnerInfo(reply.dbOwnerInfo)
+    else:
+      message = None
+    return Reply(self._extract_status(reply), message)
 
 
 class Client(object):
@@ -152,6 +159,7 @@ class Client(object):
                           "GetDeliveryInfo": "info",
                           "FindDataBox": "search",
                           "CreateMessage": "operations",
+                          "GetOwnerInfoFromLogin": "supplementary",
                           }
 
   dispatcher_name2config = {"info": {"wsdl_name": "dm_info.wsdl",
@@ -159,7 +167,9 @@ class Client(object):
                             "operations": {"wsdl_name": "dm_operations.wsdl",
                                            "soap_url_end": "dz"},
                             "search": {"wsdl_name": "db_search.wsdl",
-                                       "soap_url_end": "df"}
+                                       "soap_url_end": "df"},
+                            "supplementary": {"wsdl_name": "db_supplementary.wsdl",
+                                              "soap_url_end": "DsManage"}
                             }
   test2soap_url = {True: "https://www.czebox.cz/",
                    False: "https://www.mojedatovaschranka.cz/"}
