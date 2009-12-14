@@ -2,11 +2,6 @@
 This is the main part of the dslib library - a client object resides here
 which is responsible for all communication with the DS server..
 """
-import base64
-import pkcs7
-import pkcs7.decoder
-import pkcs7.verifier
-import logging
         
 # this is a work-around for an incompatibility of openssl-1.0.0beta
 # with the login.czebox.cz sites HTTPS interface
@@ -23,6 +18,11 @@ if not sys.platform.startswith("freebsd") and not sys.platform.startswith("darwi
 
 # suds does not work properly without this
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+import base64
+import pkcs7
+import pkcs7.decoder
+import pkcs7.verifier
+import logging
 
 from suds.client import Client as SudsClient
 from suds.transport.http import HttpAuthenticated
