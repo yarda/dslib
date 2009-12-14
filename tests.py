@@ -151,11 +151,36 @@ def CreateMessage():
   reply = ds_client.CreateMessage(envelope, dmfiles)
   print reply.status
 
-@active
+#@active
 def GetOwnerInfoFromLogin():
   reply = ds_client.GetOwnerInfoFromLogin()
   print reply.status
   print reply.data
+
+@active
+def SignedMessageDownload():
+  for envelope in ds_client.GetListOfReceivedMessages().data:
+    reply = ds_client.SignedMessageDownload(envelope.dmID)    
+    print reply.status
+    #print reply.data
+    print "Verified message: %s" % reply.data.is_verified
+
+@active
+def SignedSentMessageDownload():
+  for envelope in ds_client.GetListOfSentMessages().data:
+    reply = ds_client.SignedSentMessageDownload(envelope.dmID)    
+    print reply.status
+    #print reply.data
+    print "Verified message: %s" % reply.data.is_verified
+  
+@active
+def GetSignedDeliveryInfo():  
+  for envelope in ds_client.GetListOfSentMessages().data:
+    reply = ds_client.GetSignedDeliveryInfo(envelope.dmID)    
+    print reply.status
+    #print reply.data
+    print "Verified message: %s" % reply.data.is_verified
+
 
 if __name__ == "__main__":
   from optparse import OptionParser

@@ -182,6 +182,11 @@ class Message(Model):
   
   SIG_MESSAGE_CONTENT_PATH =  "MessageDownloadResponse/dmReturnedMessage" 
   
+  # has meaning only if msg contains pkcs7_data
+  is_verified = False
+  # all PKCS7 data are stored in pkcs7_data attribute
+  pkcs7_data = None
+    
   def __init__(self, soap_message=None, xml_document=None, path_to_content=None):
     if (xml_document is not None) and (path_to_content is None):
         raise Exception("Must specify path to the content of message!")
@@ -196,21 +201,13 @@ class Message(Model):
 
   def get_status_description(self):
     return constants.MESSAGE_STATUS.get(self.dmMessageStatus, u"neznámy")
-
-  # all PKCS7 data are stored in pkcs7_data attribute
-  pkcs7_data = None
-  
-  def set_PKCS7_data(self, pkcs7_data):
-      self.pkcs7_data = pkcs7_data
-    
-  def get_PKCS7_data(self):
-      return self.pkcs7_data
   
   def has_PKCS7_data(self):
       if self.pkcs7_data:
           return True
       else:
           return False
+
 
   # ---------- private methods ----------
 

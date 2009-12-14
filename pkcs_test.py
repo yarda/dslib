@@ -36,7 +36,6 @@ signed_data = message.getComponentByName("signedData")
 
 certificate = message.getComponentByName("certificate")
 
-
 pkcs_data = models.PKCS7_data(signed_data, certificate, signer_info)
 
 msg = pkcs_data.signed_data.message
@@ -54,9 +53,9 @@ m = models.Message(xml_document = document,
                    path_to_content=models.Message.SIG_MESSAGE_CONTENT_PATH)
 
 
-m.set_PKCS7_data(pkcs_data)
+m.pkcs7_data = pkcs_data
 
 # mala ukazka
-e_alg_code = m.get_PKCS7_data().signer_infos.signers[0].encrypt_algorithm
+e_alg_code = m.pkcs7_data.signer_infos.signers[0].encrypt_algorithm
 print "Encryption alg:"
 print pkcs7.asn1_models.oid.oid_map[e_alg_code]
