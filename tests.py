@@ -151,7 +151,7 @@ def CreateMessage():
   reply = ds_client.CreateMessage(envelope, dmfiles)
   print reply.status
 
-#@active
+@active
 def GetOwnerInfoFromLogin():
   reply = ds_client.GetOwnerInfoFromLogin()
   print reply.status
