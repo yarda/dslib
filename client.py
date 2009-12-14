@@ -134,7 +134,7 @@ class Dispatcher(object):
     return Reply(self._extract_status(reply), result)
 
   def CreateMessage(self, envelope, files):
-    """info = dbOwnerInfo instance"""
+    """returns message id as reply.data"""
     soap_envelope = self.soap_client.factory.create("dmEnvelope")
     envelope.copy_to_soap_object(soap_envelope)
     soap_files = self.soap_client.factory.create("dmFiles")
@@ -143,7 +143,11 @@ class Dispatcher(object):
       f.copy_to_soap_object(soap_file)
       soap_files.dmFile.append(soap_file)
     reply = self.soap_client.service.CreateMessage(soap_envelope, soap_files)
-    return Reply(self._extract_status(reply), None)
+    if hasattr(reply,"dmID"):
+      dmID = reply.dmID
+    else:
+      dmID = None
+    return Reply(self._extract_status(reply), dmID)
     
   def GetOwnerInfoFromLogin(self):
     reply = self.soap_client.service.GetOwnerInfoFromLogin()

@@ -136,7 +136,7 @@ def FindDataBox():
   
     
     
-#@active
+@active
 def CreateMessage():
   envelope = models.dmEnvelope()
   envelope.dbIDRecipient = "hjyaavk"
@@ -150,6 +150,7 @@ def CreateMessage():
   dmfiles = [dmfile]
   reply = ds_client.CreateMessage(envelope, dmfiles)
   print reply.status
+  print "Message ID is:", reply.data
 
 @active
 def GetOwnerInfoFromLogin():
