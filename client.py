@@ -34,6 +34,7 @@ class Dispatcher(object):
   """
 
   def __init__(self, ds_client, wsdl_url, soap_url=None, proxy=None):
+    """proxy can be a string 'hostname:port' or None"""
     self.ds_client = ds_client # this is a Client instance; username, password, etc. will be take from it
     self.wsdl_url = wsdl_url
     self.soap_url = soap_url # if None, default from WSDL will be used
@@ -206,6 +207,8 @@ class Client(object):
     if neither soap_url not test_environment is provided, it will be empty and
     the dispatcher will use the value from WSDL;
     if soap_url id used, it will be used without regard to test_environment value
+    proxy can be a string 'hostname:port' or None or -1 for automatic
+    detection using the urllib2 library
     """
     self.login = login
     self.password = password
@@ -256,10 +259,24 @@ class Client(object):
       else:
         this_soap_url = self.soap_url + "/"
       this_soap_url += Client.login_method2url_part[self.login_method] + "/" + config['soap_url_end']
-    dis = Dispatcher(self, Client.WSDL_URL_BASE+config['wsdl_name'], soap_url=this_soap_url, proxy=self.proxy)
+    dis = Dispatcher(self, Client.WSDL_URL_BASE+config['wsdl_name'], soap_url=this_soap_url, proxy=self.get_real_proxy())
     self._dispatchers[name] = dis
     return dis
 
+  def get_real_proxy(self):
+    return self.proxy_to_real_proxy(self.proxy)
+
+  @classmethod
+  def proxy_to_real_proxy(cls, proxy):
+    """interpret the proxy setting to obtain a real name and port or None"""
+    if proxy == None:
+      return None
+    elif proxy == -1:
+      import urllib2
+      print urllib2.getproxies()
+      return urllib2.getproxies().get('https',None) 
+    else:
+      return proxy    
 
 class Reply(object):
   """represent a reply from the SOAP server"""
