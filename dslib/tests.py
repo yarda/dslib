@@ -163,6 +163,10 @@ if __name__ == "__main__":
   op.add_option( "-t", action="store_true",
                  dest="test_account", default=False,
                  help="the account is a test account, not a standard one.")
+  op.add_option( "-p", action="store",
+                 dest="proxy", default="",
+                 help="address of HTTP proxy to be used.")
+  
   (options, args) = op.parse_args()
   #import 
   if len(args) == 0:
@@ -170,7 +174,7 @@ if __name__ == "__main__":
   username = args[0]
   import getpass
   password = getpass.getpass()
-  ds_client = Client(username, password, test_environment=options.test_account, proxy="localhost:3128")
+  ds_client = Client(username, password, test_environment=options.test_account, proxy=options.proxy)
   import sys, inspect
 
   for name, f in inspect.getmembers(sys.modules[__name__], inspect.isfunction):
