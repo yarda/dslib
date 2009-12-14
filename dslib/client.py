@@ -142,6 +142,18 @@ class Dispatcher(object):
       message = None
     return Reply(self._extract_status(reply), message)
 
+  def SignedMessageDownload(self, msgId):
+    #TODO
+    pass
+  
+  def SignedSentMessageDownload(self, msgId):
+    #TODO
+    pass
+
+  def GetSignedDeliveryInfo(self, msgId):
+    #TODO
+    pass
+
 
 class Client(object):
 
@@ -160,6 +172,9 @@ class Client(object):
                           "FindDataBox": "search",
                           "CreateMessage": "operations",
                           "GetOwnerInfoFromLogin": "supplementary",
+                          "SignedMessageDownload" : "operations",
+                          "SignedSentMessageDownload" : "operations",
+                          "GetSignedDeliveryInfo" : "info"
                           }
 
   dispatcher_name2config = {"info": {"wsdl_name": "dm_info.wsdl",

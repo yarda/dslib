@@ -10,16 +10,19 @@ import logging
 import os
 import constants
 
+from pkcs7_models import *
 
 class Model(object):
 
   KNOWN_ATTRS = ()
   ATTR_TO_TYPE = {}
 
-  def __init__(self, soap_message=None):
-    self._init_default()
+  def __init__(self, soap_message=None, xml_document=None):
+    self._init_default()    
     if soap_message:
       self._load_from_soap(soap_message)
+    if xml_document is not None:
+      self._load_from_xml_document(xml_document)
 
 
   def __unicode__(self):
@@ -40,6 +43,7 @@ class Model(object):
       else:
         value = None
       setattr(self, attr, value)
+  
 
 
   def _load_from_soap(self, soap):
@@ -48,7 +52,7 @@ class Model(object):
       parent = soap
       self._load_one_attr(parent, a)
 
-
+  
   def _load_one_attr(self, parent, attr):
     if hasattr(parent, attr):
       value = getattr(parent, attr)
@@ -96,6 +100,56 @@ class Model(object):
 ##         child.copy_to_soap_object(soap_child)
     setattr(soap, attr, value)
   
+  '''
+  Returns value of xml attribute
+  '''
+  def _get_attribute_value(self, xml_attribute):
+      return xml_attribute.getValue()
+  
+  '''
+  Returns text value of child node 
+  '''
+  def _get_child_text_value(self, xml_child):
+      return xml_child.text
+  
+  
+  def _load_one_xml_att(self, parent, attr):
+      
+      if attr[0] == '_':
+          entity = parent.attrib(attr[1:])
+      else:
+          entity = parent.getChild(attr)
+          
+      if entity is not None:
+          if attr[0] == '_':
+              value = self._get_attribute_value(entity)
+          else:
+              value = self._get_child_text_value(entity)
+          
+          if (attr == "dmFiles"):
+              files = entity.getChildren()
+              values = [dmFile(xml_document=file) for file in files]
+              for file in files:
+                  s = dmFile(xml_document=file)
+              setattr(self, attr, values)
+          elif (attr == "dmEvents"):
+              events = entity.getChildren()
+              values = [dmEvent(xml_document=event) for event in events]
+              setattr(self, attr, values)
+          elif (attr == "dmHash"):
+              x = dmHash(xml_document=entity)
+              setattr(self, attr, dmHash(xml_document=entity))              
+          else:
+              setattr(self, attr, value)          
+      else:
+          logging.debug("Attribute %s not present in %s", attr, parent.text)
+    
+    
+  def _load_from_xml_document(self, xml_doc, root_name=None):      
+      for a in self.__class__.KNOWN_ATTRS:
+          parent = xml_doc
+          self._load_one_xml_att(parent, a)
+          
 
 class Message(Model):
   """reflection of the DS message, which could be a result from
@@ -123,9 +177,17 @@ class Message(Model):
 
   # origins in which some info (described above in OUTSIDE_ATTRS) is placed outside
   SPLIT_ORIGINS = ("tReturnedMessageEnvelope","tReturnedMessage","tDelivery")
-
-
-  # ---------- public methods ----------
+  
+  SIG_DELIVERY_CONTENT_PATH = "GetDeliveryInfoResponse/dmDelivery"
+  
+  SIG_MESSAGE_CONTENT_PATH =  "MessageDownloadResponse/dmReturnedMessage" 
+  
+  def __init__(self, soap_message=None, xml_document=None, path_to_content=None):
+    if (xml_document is not None) and (path_to_content is None):
+        raise Exception("Must specify path to the content of message!")
+    self.content_path = path_to_content    
+    Model.__init__(self, soap_message, xml_document)
+    # ---------- public methods ----------
 
   def get_origin(self):
     """returns a string describing from which SOAP call this Message comes;
@@ -134,6 +196,21 @@ class Message(Model):
 
   def get_status_description(self):
     return constants.MESSAGE_STATUS.get(self.dmMessageStatus, u"neznámy")
+
+  # all PKCS7 data are stored in pkcs7_data attribute
+  pkcs7_data = None
+  
+  def set_PKCS7_data(self, pkcs7_data):
+      self.pkcs7_data = pkcs7_data
+    
+  def get_PKCS7_data(self):
+      return self.pkcs7_data
+  
+  def has_PKCS7_data(self):
+      if self.pkcs7_data:
+          return True
+      else:
+          return False
 
   # ---------- private methods ----------
 
@@ -148,7 +225,23 @@ class Message(Model):
         parent = soap.dmDm
       self._load_one_attr(parent, a)
     self._origin = _origin
-        
+    
+  def _load_from_xml_document(self, xml_doc):
+    # split path to content by /
+    parts = self.content_path.split('/')
+    root = xml_doc
+    # go down the xml tree to reach the start of "message envelope"
+    for part in parts:
+        root = root.getChild(part)
+        if root is None:
+            raise Exception("Could not reach the message content node, check specified path to the content")
+
+    for a in Message.KNOWN_ATTRS:
+        if a in Message.OUTSIDE_ATTRS: 
+            parent = root
+        else:
+            parent = root.getChild("dmDm")
+        self._load_one_xml_att(parent, a)
 
 
 class dmFile(Model):
@@ -177,12 +270,12 @@ class dmFile(Model):
     outf.write(self.get_decoded_content())
     outf.close()
     return fullname
-
-
+    
 class dmFiles(Model):
 
   KNOWN_ATTRS = ("dmFile",)
   ATTR_TO_TYPE = {"dmFile":list}
+          
 
 class dmEvent(Model):
   """corresponds to dmEvent SOAP class"""
@@ -208,6 +301,12 @@ class dmHash(Model):
 
   KNOWN_ATTRS = ("value", "_algorithm")
 
+  '''
+  Override Model _load>from_xml_document
+  '''
+  def _load_from_xml_document(self, xml_doc):
+      self.value = xml_doc.text
+      self._load_one_xml_att(xml_doc, "_algorithm")
 
 class dmEnvelope(Model):
 
