@@ -170,7 +170,7 @@ if __name__ == "__main__":
   username = args[0]
   import getpass
   password = getpass.getpass()
-  ds_client = Client(username, password, test_environment=options.test_account)
+  ds_client = Client(username, password, test_environment=options.test_account, proxy="localhost:3128")
   import sys, inspect
 
   for name, f in inspect.getmembers(sys.modules[__name__], inspect.isfunction):

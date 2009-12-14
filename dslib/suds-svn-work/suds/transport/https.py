@@ -58,7 +58,7 @@ class HttpAuthenticated(HttpTransport):
         HttpTransport.__init__(self, **kwargs)
         self.pm = u2.HTTPPasswordMgrWithDefaultRealm()
         self.handler = u2.HTTPBasicAuthHandler(self.pm)
-        self.urlopener = u2.build_opener(self.handler)
+        self.urlopener.add_handler(self.handler)
         
     def open(self, request):
         credentials = self.credentials()

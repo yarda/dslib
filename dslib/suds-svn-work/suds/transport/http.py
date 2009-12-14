@@ -83,6 +83,8 @@ class HttpTransport(Transport):
         self.cookiejar = CookieJar()
         self.urlopener = u2.build_opener(SUDSHTTPRedirectHandler(),
                                          u2.HTTPCookieProcessor(self.cookiejar))
+        if self.options.proxy:
+          self.urlopener.add_handler(u2.ProxyHandler(self.options.proxy))        
 
     def open(self, request):
         try:
@@ -111,6 +113,9 @@ class HttpTransport(Transport):
             self.__setproxy(url, u2request)
             request.headers.update(u2request.headers)
             log.debug('sending:\n%s', request)
+            if self.options.proxy:
+              if not u2request._tunnel_host and u2request.origin_req_host != u2request.host:
+                u2request._tunnel_host = u2request.origin_req_host
             fp = self.__open(u2request)
             self.__getcookies(fp, u2request)
             result = Reply(200, fp.headers.dict, fp.read())
