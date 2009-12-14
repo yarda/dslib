@@ -38,13 +38,14 @@ class Dispatcher(object):
     self.wsdl_url = wsdl_url
     self.soap_url = soap_url # if None, default from WSDL will be used
     self.proxy = proxy
-    transport = HttpAuthenticated(username=self.ds_client.login, password=self.ds_client.password)
+    if self.proxy:
+      transport = HttpAuthenticated(username=self.ds_client.login, password=self.ds_client.password, proxy={'https':self.proxy})
+    else:
+      transport = HttpAuthenticated(username=self.ds_client.login, password=self.ds_client.password)
     if not self.soap_url:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport)
     else:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport, location=self.soap_url)
-    if self.proxy:
-      self.soap_client.set_options(proxy={"https":proxy})
 
 
   def __getattr__(self, name):
