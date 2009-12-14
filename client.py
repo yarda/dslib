@@ -1,6 +1,6 @@
 """
 This is the main part of the dslib library - a client object resides here
-which is responsible for all communication with the DS server
+which is responsible for all communication with the DS server.
 """
 import base64
 import pkcs7
