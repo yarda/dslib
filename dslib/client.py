@@ -33,15 +33,20 @@ class Dispatcher(object):
   Dispatcher is a simple client that handles one of these parts
   """
 
-  def __init__(self, ds_client, wsdl_url, soap_url=None):
+  def __init__(self, ds_client, wsdl_url, soap_url=None, proxy=None):
     self.ds_client = ds_client # this is a Client instance; username, password, etc. will be take from it
     self.wsdl_url = wsdl_url
     self.soap_url = soap_url # if None, default from WSDL will be used
-    transport = HttpAuthenticated(username=self.ds_client.login, password=self.ds_client.password)
+    self.proxy = proxy
+    if self.proxy:
+      transport = HttpAuthenticated(username=self.ds_client.login, password=self.ds_client.password, proxy={'https':self.proxy})
+    else:
+      transport = HttpAuthenticated(username=self.ds_client.login, password=self.ds_client.password)
     if not self.soap_url:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport)
     else:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport, location=self.soap_url)
+
 
   def __getattr__(self, name):
     def _simple_wrapper(method):
@@ -193,7 +198,8 @@ class Client(object):
                            "certificate": "cert/DS",
                            }
 
-  def __init__(self, login=None, password=None, soap_url=None, test_environment=None, login_method="username"):
+  def __init__(self, login=None, password=None, soap_url=None, test_environment=None,
+               login_method="username", proxy=None):
     """
     if soap_url is not given and test_environment is given, soap_url will be
     infered from the value of test_environment based on what is set in test2soap_url;
@@ -212,6 +218,7 @@ class Client(object):
     self.test_environment = test_environment
     self.login_method = login_method
     self._dispatchers = {}
+    self.proxy = proxy
 
 
   def __getattr__(self, name):
@@ -249,7 +256,7 @@ class Client(object):
       else:
         this_soap_url = self.soap_url + "/"
       this_soap_url += Client.login_method2url_part[self.login_method] + "/" + config['soap_url_end']
-    dis = Dispatcher(self, Client.WSDL_URL_BASE+config['wsdl_name'], soap_url=this_soap_url)
+    dis = Dispatcher(self, Client.WSDL_URL_BASE+config['wsdl_name'], soap_url=this_soap_url, proxy=self.proxy)
     self._dispatchers[name] = dis
     return dis
 

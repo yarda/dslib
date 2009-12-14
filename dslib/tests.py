@@ -159,18 +159,29 @@ def GetOwnerInfoFromLogin():
 
 if __name__ == "__main__":
   from optparse import OptionParser
+  import os
   op = OptionParser(usage="python %prog [options] username")
   op.add_option( "-t", action="store_true",
                  dest="test_account", default=False,
                  help="the account is a test account, not a standard one.")
+  op.add_option( "-p", action="store",
+                 dest="proxy", default="",
+                 help="address of HTTP proxy to be used.")
+  
   (options, args) = op.parse_args()
   #import 
   if len(args) == 0:
     op.error("Too few arguments")
   username = args[0]
-  import getpass
-  password = getpass.getpass()
-  ds_client = Client(username, password, test_environment=options.test_account)
+  # try to find a stored password
+  passfile = "./.isds_password"
+  if os.path.exists(passfile):
+    print "Using password from '%s'" % passfile
+    password = file(passfile,'r').read().strip()
+  else:
+    import getpass
+    password = getpass.getpass()
+  ds_client = Client(username, password, test_environment=options.test_account, proxy=options.proxy)
   import sys, inspect
 
   for name, f in inspect.getmembers(sys.modules[__name__], inspect.isfunction):

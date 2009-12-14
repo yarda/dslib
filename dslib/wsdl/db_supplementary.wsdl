@@ -108,7 +108,7 @@ Seznam služeb:
   <!-- ******************************************************************* -->
   <service name="DataBoxSupplementary">
     <port name="DataBoxSupplementaryPortType" binding="tns:DataBoxSupplementaryBinding">
-      <soap:address location="https://www.mojedatovaschranka.cz/DS/DsManage"/>
+      <soap:address location="https://www.czebox.cz/DS/DsManage"/>
     </port>
   </service>
 
