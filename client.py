@@ -53,7 +53,6 @@ class Dispatcher(object):
     else:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport, location=self.soap_url)
 
-
   def __getattr__(self, name):
     def _simple_wrapper(method):
       def f(*args, **kw):
@@ -366,7 +365,6 @@ class Client(object):
       return None
     elif proxy == -1:
       import urllib2
-      print urllib2.getproxies()
       return urllib2.getproxies().get('https',None) 
     else:
       return proxy    

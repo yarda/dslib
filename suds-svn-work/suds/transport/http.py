@@ -81,10 +81,11 @@ class HttpTransport(Transport):
         Transport.__init__(self)
         Unskin(self.options).update(kwargs)
         self.cookiejar = CookieJar()
-        self.urlopener = u2.build_opener(SUDSHTTPRedirectHandler(),
+        proxy_handler = u2.ProxyHandler(self.options.proxy or {})
+        self.urlopener = u2.build_opener(proxy_handler,
+                                         SUDSHTTPRedirectHandler(),
                                          u2.HTTPCookieProcessor(self.cookiejar))
-        if self.options.proxy:
-          self.urlopener.add_handler(u2.ProxyHandler(self.options.proxy))        
+
 
     def open(self, request):
         try:
