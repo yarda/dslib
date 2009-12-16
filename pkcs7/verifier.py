@@ -29,7 +29,9 @@ import hashlib
 
 RSA_NAME = "RSA"
 SHA1_NAME = "SHA-1"
-
+SHA256_NAME = "SHA-256"
+SHA384_NAME = "SHA-384"
+SHA512_NAME = "SHA-512"
 
 def _calculate_digest(data, alg):    
     '''
@@ -38,7 +40,16 @@ def _calculate_digest(data, alg):
     digest_alg = None
     if (alg == SHA1_NAME):
         digest_alg = hashlib.sha1() 
-           
+    
+    if (alg == SHA256_NAME):
+        digest_alg = hashlib.sha256()
+    
+    if (alg == SHA384_NAME):
+        digest_alg = hashlib.sha384()
+    
+    if (alg == SHA512_NAME):
+        digest_alg = hashlib.sha512()
+    
     if digest_alg is None:
         logging.error("Unknown digest algorithm : %s" % alg)
     
