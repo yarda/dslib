@@ -157,7 +157,7 @@ def GetOwnerInfoFromLogin():
   print reply.status
   print reply.data
 
-#@active
+@active
 def SignedMessageDownload():
   for envelope in ds_client.GetListOfReceivedMessages().data:
     reply = ds_client.SignedMessageDownload(envelope.dmID)    
@@ -165,7 +165,7 @@ def SignedMessageDownload():
     #print reply.data
     print "Verified message: %s" % reply.data.is_verified
 
-#@active
+@active
 def SignedSentMessageDownload():
   for envelope in ds_client.GetListOfSentMessages().data:
     reply = ds_client.SignedSentMessageDownload(envelope.dmID)    
@@ -173,7 +173,7 @@ def SignedSentMessageDownload():
     #print reply.data
     print "Verified message: %s" % reply.data.is_verified
   
-#@active
+@active
 def GetSignedDeliveryInfo():  
   for envelope in ds_client.GetListOfSentMessages().data:
     reply = ds_client.GetSignedDeliveryInfo(envelope.dmID)    

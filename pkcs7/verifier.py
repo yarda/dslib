@@ -32,6 +32,9 @@ SHA1_NAME = "SHA-1"
 
 
 def _calculate_digest(data, alg):    
+    '''
+    Calculates digest according to algorithm
+    '''
     digest_alg = None
     if (alg == SHA1_NAME):
         digest_alg = hashlib.sha1() 
@@ -48,6 +51,10 @@ def _calculate_digest(data, alg):
 
 
 def _prepare_auth_attributes_to_digest(auth_attributes_instance):
+    """
+    Prepares autheticated attributes field to digesting process.
+    Replaces implicit tag with SET tag.
+    """
     implicit_tag = chr(0xa0)    # implicit tag of the set of authAtt
     set_tag = chr(0x31)         # tag of the ASN type "set"
     
@@ -60,11 +67,12 @@ def _prepare_auth_attributes_to_digest(auth_attributes_instance):
     
     return attrs
 
-"""
-Extracts public ket material and alg. name from certificate.
-Certificate is pyasn1 object Certificate
-"""  
+  
 def _get_key_material(certificate):
+    """
+    Extracts public ket material and alg. name from certificate.
+    Certificate is pyasn1 object Certificate
+    """
     pubKey = certificate.getComponentByName("tbsCertificate").\
             getComponentByName("subjectPublicKeyInfo").\
                 getComponentByName("subjectPublicKey")
@@ -92,6 +100,10 @@ def _get_key_material(certificate):
     return algorithm, key_material
 
 def _get_digest_algorithm(signer_info):
+    '''
+    Extracts digest algorithm from signerInfo component.
+    Returns algorithm's name pr raises Exception
+    '''
     digest_alg = str(signer_info.getComponentByName("digestAlg"))
     result = None
     if oid_map.has_key(digest_alg):
@@ -102,46 +114,63 @@ def _get_digest_algorithm(signer_info):
     
     return result
     
-    
-'''
-input is a tuple (message, signer_information)
-'''
+def _find_certificate_by_serial(certificates, serial_number):
+    '''
+    Looks for certificate with serial_number.
+    Returns the certificate or None.
+    '''
+    for cert in certificates:
+        sn = cert.getComponentByName("tbsCertificate")\
+                            .getComponentByName("serialNumber")
+        if sn == serial_number:
+            return cert
+    return None
+
 def verify_msg(decoded_pkcs7_msg):
-    message = decoded_pkcs7_msg[0]
-    signer_information = decoded_pkcs7_msg[1]
+    '''
+    Method verifies decoded message (built from pyasn1 objects)
+    Input is decoded pkcs7 message.
+    '''
+    message = decoded_pkcs7_msg
+    signer_infos = message.getComponentByName("signerInfos")    
+    certificates = message.getComponentByName("certificates")
     
-    cert = message.getComponentByName("certificate")
-    
-    sig_algorithm, key_material = _get_key_material(cert) 
+    result = False
     
     msg = message.getComponentByName("signedData").\
                     getComponentByName("content").\
                         getComponentByName("signed_content").getContentValue()
-                    
-    auth_attributes = signer_information.getComponentByPosition(0).\
-                        getComponentByName("authAttributes")
     
+    for signer_info in signer_infos:
+        id = signer_info.getComponentByName("issuerAndSerialNum").\
+                        getComponentByName("serialNumber")._value
+        cert = _find_certificate_by_serial(certificates, id)
+        
+        if cert is None:
+            raise Exception("No certificate found for signer %d" % id)
+        
+        sig_algorithm, key_material = _get_key_material(cert) 
+        digest_alg = _get_digest_algorithm(signer_info)
+                
+        auth_attributes = signer_info.getComponentByName("authAttributes")            
+        
+        if auth_attributes is None:
+            data_to_verify = msg
+        else:
+            data_to_verify = _prepare_auth_attributes_to_digest(auth_attributes)
     
-    digest_alg = _get_digest_algorithm(signer_information.getComponentByPosition(0))
+        data_to_verify = _calculate_digest(data_to_verify, digest_alg)    
+        #print base64.b64encode(data_to_verify)    
+        signature = signer_info.getComponentByName("signature")._value
     
-    if auth_attributes is None:
-        data_to_verify = msg
-    else:
-        data_to_verify = _prepare_auth_attributes_to_digest(auth_attributes)
-    
-    #show_bytes(data_to_verify)
-    
-    data_to_verify = _calculate_digest(data_to_verify, digest_alg)
-    
-    #print base64.b64encode(data_to_verify)
-    
-    signature = signer_information.getComponentByPosition(0).\
-            getComponentByName("signature")._value
-    
-    
-    if (sig_algorithm == RSA_NAME):
-        result = rsa_verify(data_to_verify, signature, key_material)
-    # Note: here we should not have unknown signing algorithm
-    # .....only RSA for now
+        if (sig_algorithm == RSA_NAME):
+            r = rsa_verify(data_to_verify, signature, key_material)
+            if not r:
+                logging.debug("Verification of signature with id %d failed"%id)
+                return False
+            else:
+                result = True
+        # Note: here we should not have unknown signing algorithm
+        # .....only RSA for now
     
     return result

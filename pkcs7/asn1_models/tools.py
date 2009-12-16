@@ -8,10 +8,11 @@ from RSA import *
 from pyasn1.codec.der import decoder
 from pyasn1 import error
 
-"""
-Converts OID tuple to OID string
-"""
+
 def tuple_to_OID(tuple):
+    """
+    Converts OID tuple to OID string
+    """
     l = len(tuple)
     buf = ''
     for idx in xrange(l):
@@ -21,13 +22,11 @@ def tuple_to_OID(tuple):
             buf += str(tuple[idx])
     return buf
 
-
-
-'''
-Extracts modulus and public exponent from 
-ASN1 bitstring component subjectPublicKey
-'''
 def get_RSA_pub_key_material(subjectPublicKeyAsn1):
+    '''
+    Extracts modulus and public exponent from 
+    ASN1 bitstring component subjectPublicKey
+    '''
     # create template for decoder
     rsa_key = RsaPubKey()
     # convert ASN1 subjectPublicKey component from BITSTRING to octets

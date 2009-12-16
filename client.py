@@ -153,8 +153,8 @@ class Dispatcher(object):
       message = None
     return Reply(self._extract_status(reply), message)
   
-  def _verify_der_msg(self, der_message, der_signer_info):    
-    verification_result = pkcs7.verifier.verify_msg((der_message, der_signer_info))
+  def _verify_der_msg(self, der_message):    
+    verification_result = pkcs7.verifier.verify_msg(der_message)
     if verification_result:        
         logging.debug("Message verified")
     else:
@@ -180,67 +180,58 @@ class Dispatcher(object):
         print "Expected: 'Message' or 'DeliveryInfo'"
     return m
   
-  def _prepare_PKCS7_data(self, decoded_msg, signer_info):
-    signed_data = decoded_msg.getComponentByName("signedData")
-    certificate = decoded_msg.getComponentByName("certificate")
-    pkcs_data = models.PKCS7_data(signed_data, certificate, signer_info)
+  def _prepare_PKCS7_data(self, decoded_msg):    
+    pkcs_data = models.PKCS7_data(decoded_msg)
     return pkcs_data
-        
+  
+  def _generic_get_signed(self, der_encoded):
+    '''
+    "Base" of methods downloading signed versions of messages and
+    delivery information.
+    Returns tuple xml_document, pkcs7_data, verified
+    '''
+    # decode DER encoding
+    decoded_msg = pkcs7.decoder.decode_msg(der_encoded)
+    # verify the message
+    verified = self._verify_der_msg(decoded_msg)            
+    # prepare PKCS7 to supply to the Message
+    pkcs_data = self._prepare_PKCS7_data(decoded_msg)
+    # extract sent message from pkcs7 document
+    str_msg = pkcs_data.signed_data.message
+    # parse string xml to create xml document
+    xml_document = self._xml_parse_msg(str_msg)
+    
+    return xml_document, pkcs_data, verified
+  
+  def _signed_msg_download(self, ws_name, msg_id):
+    '''
+    Common method for downloading signed message (sent or received)
+    '''
+    method = getattr(self.soap_client.service, ws_name)
+    if (method is None):
+        raise Exception("Unknown method: %s" % ws_name)
+    reply = method.__call__(msg_id)
+    der_encoded = base64.b64decode(reply.dmSignature)  
+   
+    xml_document, pkcs_data, verified  = self._generic_get_signed(der_encoded)
+    
+    message = self._create_message_instance(xml_document, "Message")        
+    message.pkcs7_data = pkcs_data
+    if (verified):
+        message.is_verified = True
+
+    return Reply(self._extract_status(reply), message)
+      
   def SignedMessageDownload(self, msgId):
-    reply = self.soap_client.service.SignedMessageDownload(msgId)
-    der_encoded = base64.b64decode(reply.dmSignature)  
-    # decode DER encoding
-    decoded_msg, signer_info = pkcs7.decoder.decode_msg(der_encoded)
-    # verify the message
-    verified = self._verify_der_msg(decoded_msg, signer_info)            
-    # prepare PKCS7 to supply to the Message
-    pkcs_data = self._prepare_PKCS7_data(decoded_msg, signer_info)
-    # extract sent message from pkcs7 document
-    str_msg = pkcs_data.signed_data.message
-    # parse string xml to create xml document
-    xml_document = self._xml_parse_msg(str_msg)
-    # create Message instance to return 
-    message = self._create_message_instance(xml_document, "Message")        
-    message.pkcs7_data = pkcs_data
-    if (verified):
-        message.is_verified = True
-
-    return Reply(self._extract_status(reply), message)
-
+    return self._signed_msg_download("SignedMessageDownload", msgId)
+    
   def SignedSentMessageDownload(self, msgId):
-    reply = self.soap_client.service.SignedSentMessageDownload(msgId)
-    der_encoded = base64.b64decode(reply.dmSignature)  
-    # decode DER encoding
-    decoded_msg, signer_info = pkcs7.decoder.decode_msg(der_encoded)
-    # verify the message
-    verified = self._verify_der_msg(decoded_msg, signer_info)            
-    # prepare PKCS7 to supply to the Message
-    pkcs_data = self._prepare_PKCS7_data(decoded_msg, signer_info)
-    # extract sent message from pkcs7 document
-    str_msg = pkcs_data.signed_data.message
-    # parse string xml to create xml document
-    xml_document = self._xml_parse_msg(str_msg)
-    # create Message instance to return 
-    message = self._create_message_instance(xml_document, "Message")        
-    message.pkcs7_data = pkcs_data
-    if (verified):
-        message.is_verified = True
-        
-    return Reply(self._extract_status(reply), message)
-
+    return self._signed_msg_download("SignedSentMessageDownload", msgId)
+    
   def GetSignedDeliveryInfo(self, msgId):
     reply = self.soap_client.service.GetSignedDeliveryInfo(msgId)
     der_encoded = base64.b64decode(reply.dmSignature)  
-    # decode DER encoding
-    decoded_msg, signer_info = pkcs7.decoder.decode_msg(der_encoded)
-    # verify the message
-    verified = self._verify_der_msg(decoded_msg, signer_info)            
-    # prepare PKCS7 to supply to the Message
-    pkcs_data = self._prepare_PKCS7_data(decoded_msg, signer_info)
-    # extract sent message from pkcs7 document
-    str_msg = pkcs_data.signed_data.message
-    # parse string xml to create xml document
-    xml_document = self._xml_parse_msg(str_msg)
+    xml_document, pkcs_data, verified  = self._generic_get_signed(der_encoded)
     # create Message instance to return 
     message = self._create_message_instance(xml_document, "DeliveryInfo")        
     message.pkcs7_data = pkcs_data

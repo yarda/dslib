@@ -16,7 +16,8 @@ from general_types import  *
 
 class GeneralName(univ.Choice):
     componentType = namedtype.NamedTypes(
-                            namedtype.NamedType("rfc822name", char.IA5String().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x1)))                            
+                            namedtype.NamedType("rfc822name", char.IA5String().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x1))),
+                            namedtype.NamedType("name", univ.OctetString().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x4)))                            
                                          ) 
 class GeneralNames(univ.SequenceOf):
     componentType = GeneralName()
@@ -119,12 +120,8 @@ class Certificate(univ.Sequence):
         namedtype.NamedType('signatureAlgorithm', AlgorithmIdentifier()),
         namedtype.NamedType('signatureValue', univ.BitString())
         )
-    tagSet = univ.Sequence.tagSet.tagExplicitly(
-                                             tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0)
-                                             )
-    
 
-class Certificates(univ.Set):
+class Certificates(univ.SetOf):
     componentType = Certificate()
     tagSet = univ.SequenceOf.tagSet.tagImplicitly(
                                              tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0)

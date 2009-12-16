@@ -73,7 +73,7 @@ class PublicKeyInfo():
     '''
     Represents information about public key.
     Expected RSA.
-    TODO: other types of algorithms (DSA)!
+    TODO: other types of algorithms (DSA)! are supported in pkcs7?
     Attributes:
     - alg (identifier of algorithm)
     - key (tuple of modulus and exponent)
@@ -212,11 +212,6 @@ class SignerInfo():
         else:
             self.auth_attributes = AutheticatedAttributes(auth_attrib)
 
-class SignerInfoList():
-    def __init__(self, signer_infos):
-        self.signers = []
-        for signer_info in signer_infos:
-            self.signers.append(SignerInfo(signer_info))
 
 class PKCS7_data():    
     '''
@@ -224,7 +219,7 @@ class PKCS7_data():
     signed_data, certificate, signer_info = instances from pyasn1, will be 
     mapped into plain python objets
     '''
-    def __init__(self, signed_data, certificates, signer_infos):
-        self.signed_data = SignedData(signed_data)
-        self.certificates = X509Certificate(certificates)
-        self.signer_infos = SignerInfoList(signer_infos)
+    def __init__(self, asn1_message):
+        self.signed_data = SignedData(asn1_message.getComponentByName("signedData"))
+        self.certificates = [X509Certificate(cert) for cert in asn1_message.getComponentByName("certificates")] 
+        self.signer_infos = [SignerInfo(si) for si in asn1_message.getComponentByName("signerInfos")]

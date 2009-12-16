@@ -8,7 +8,7 @@ from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful
 from pyasn1.codec.der import decoder, encoder
 from pyasn1 import error
 
-from X509certificate import Certificate
+from X509certificate import Certificates
 from general_types import *
 from oid import oid_map as oid_map
 
@@ -89,10 +89,20 @@ class SignerInfo(univ.Sequence):
 class SignerInfos(univ.SetOf):
     componentType = SignerInfo()
 
+class Crl(univ.Sequence):
+    pass
+
+class Crls(univ.Set):
+    componentType = Crl()
+    tagSet = univ.SequenceOf.tagSet.tagImplicitly(
+                                             tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x1)
+                                             )
+
 class Message(univ.Sequence):
     componentType = namedtype.NamedTypes(
                         namedtype.NamedType("type", MsgType()),
                         namedtype.NamedType("signedData", SignedData()),
-                        namedtype.NamedType("certificate", Certificate()),
-                        namedtype.OptionalNamedType("crls", univ.Sequence())
+                        namedtype.OptionalNamedType("certificates", Certificates()),
+                        namedtype.OptionalNamedType("crls", Crls()),
+                        namedtype.NamedType("signerInfos", SignerInfos())
                 )

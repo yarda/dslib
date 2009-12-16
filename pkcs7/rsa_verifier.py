@@ -67,24 +67,26 @@ def _fast_exponentiation(a, p, n):
         result = ((a ** rem) * result ** 2) % n
     return result
 
-'''
-Decodes DER and returns content of hash component 
-(the hash of the original document)
-'''
+
 def _get_hash_from_DER(pkcs1_5_DER_bytes):
+    '''
+    Decodes DER and returns content of hash component 
+    (the hash of the original document)
+    '''
     di = DigestInfo()
     digestInfo = decoder.decode(pkcs1_5_DER_bytes, asn1Spec = di)[0]
     hash = digestInfo.getComponentByName("digest")._value
     return hash
     
-'''
-Returns DER encoded bytes from signature.
-Signature is created according to EMSA-PKCS1-v1_5 :
-shortly: first byte 0x0 | 0x1 | 0*FF .... 0*FF | 0x00 | msg
-msg is DER encoded DigestInfo, which contains hash alg specification
-and the hash itself
-'''
+
 def _extract_hash_from_decoded_sig(pkcs1_5_encoded_bytes):
+    '''
+    Returns DER encoded bytes from signature.
+    Signature is created according to EMSA-PKCS1-v1_5 :
+    shortly: first byte 0x0 | 0x1 | 0*FF .... 0*FF | 0x00 | msg
+    msg is DER encoded DigestInfo, which contains hash alg specification
+    and the hash itself
+    '''
     idx = 0
     for byte in pkcs1_5_encoded_bytes:
         if ord(byte) == 0x01 or ord(byte) == 0xff:
@@ -97,10 +99,10 @@ def _extract_hash_from_decoded_sig(pkcs1_5_encoded_bytes):
     
     return decoded_bytes
 
-"""
-"Decrypts" RSA signature (applies public exponent modulo n)
-"""
-def _rsa_decode(encoded, pub_key):    
+def _rsa_decode(encoded, pub_key):
+    """
+    "Decrypts" RSA signature (applies public exponent modulo n)
+    """    
     _enc = bytes2int(encoded)
     _mod = bytes2int(pub_key["mod"])
     _exp = pub_key["exp"]
@@ -111,10 +113,11 @@ def _rsa_decode(encoded, pub_key):
     
     return _decrypt
    
-"""
-Decodes RSA signature and returns the hash, which was signed
-"""
+
 def _get_hash_from_signature(signature, pub_key):
+    """
+    Decodes (not decrypts!) RSA signature and returns the hash, which was signed
+    """
     # decrypt the signature
     decrypted = _rsa_decode(signature, pub_key)  
     # get the DER encoded (DigestInfo component) bytes from the decrypted signature
@@ -130,6 +133,9 @@ def _get_hash_from_signature(signature, pub_key):
 
 
 def rsa_verify(data_digest, signature, pub_key):    
+    '''
+    Verifies data digest against signature with public key
+    '''
     hash_signature = _get_hash_from_signature(signature, pub_key)
     if (data_digest == hash_signature):
         logging.debug("Signature OK")

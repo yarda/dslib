@@ -481,9 +481,9 @@ class Decoder:
                        tagSet[0][0] != tag.tagClassUniversal:
                     # Assume explicit tagging
                     state = stDecodeTag
-                else:
+                else:                    
                     raise error.PyAsn1Error(
-                        '%s not in asn1Spec: %s' % (tagSet, asn1Spec)
+                        '%s not in asn1Spec: %s' % (tagSet, asn1Spec)                        
                         )
             if state == stDecodeValue:
                 if recursiveFlag:

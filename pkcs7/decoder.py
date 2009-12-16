@@ -12,21 +12,19 @@ from asn1_models.digestInfo import *
 
 from debug import *
             
-'''
-Decodes message in DER encoding.
-Return tuple - (message, signer_information)
-'''
+
 def decode_msg(message):    
+    '''
+    Decodes message in DER encoding.
+    Returns ASN1 message object
+    '''
     # create template for decoder
     msg = Message()
     # decode pkcs signed message
     decoded = decoder.decode(message,asn1Spec=msg)
     message = decoded[0]
-    # decode signer information
-    sigInfos = SignerInfos()    
-    signer_information = decoder.decode(decoded[1], asn1Spec=sigInfos)[0]
-    
-    return message, signer_information
+        
+    return message
 
 
 
