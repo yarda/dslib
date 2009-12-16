@@ -1,6 +1,6 @@
 # encoding: utf-8
 """
-This modules hosts classes that reflect objects used in the
+This module hosts classes that reflect objects used in the
 DS SOAP interface.
 The purpose of these classes is to provide further functionality,
 such as serialization, etc.

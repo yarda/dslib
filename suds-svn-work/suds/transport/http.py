@@ -81,7 +81,8 @@ class HttpTransport(Transport):
         Transport.__init__(self)
         Unskin(self.options).update(kwargs)
         self.cookiejar = CookieJar()
-        proxy_handler = u2.ProxyHandler(self.options.proxy or {})
+        log.debug("Proxy: %s", self.options.proxy)
+        proxy_handler = u2.ProxyHandler(self.options.proxy)
         self.urlopener = u2.build_opener(proxy_handler,
                                          SUDSHTTPRedirectHandler(),
                                          u2.HTTPCookieProcessor(self.cookiejar))
