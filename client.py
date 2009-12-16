@@ -52,10 +52,6 @@ class Dispatcher(object):
       self.soap_client = SudsClient(self.wsdl_url, transport=transport)
     else:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport, location=self.soap_url)
-    if self.proxy:
-      self.soap_client.set_options(proxy={'https':self.proxy})
-    else:
-      self.soap_client.set_options(proxy={})
 
   def __getattr__(self, name):
     def _simple_wrapper(method):
