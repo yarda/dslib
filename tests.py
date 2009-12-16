@@ -11,7 +11,7 @@ def active(f):
 
 # ============================== Tests start here ==============================
 
-#@active
+@active
 def GetListOfSentMessages():
   template = "%(dmID)-8s %(dmSender)-20s %(dmRecipient)-20s %(dmAnnotation)-20s %(dmDeliveryTime)-20s"
   heading = {"dmID":"ID",
@@ -213,7 +213,7 @@ if __name__ == "__main__":
 
   #import logging
   #logging.basicConfig(level=logging.INFO)
-  #logging.getLogger('suds').setLevel(logging.DEBUG)
+  #logging.getLogger('suds.transport.http').setLevel(logging.DEBUG)
 
   import sys, inspect
   for name, f in inspect.getmembers(sys.modules[__name__], inspect.isfunction):

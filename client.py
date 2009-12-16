@@ -78,7 +78,7 @@ class Dispatcher(object):
     return status
 
 
-  def _handle_dmrescords_and_status_response(self, method):
+  def _handle_dmrecords_and_status_response(self, method):
     reply = method()
     status = self._extract_status(reply)
     # the following is a hack around a bug in the suds library that
@@ -95,11 +95,11 @@ class Dispatcher(object):
     
   def GetListOfSentMessages(self):
     method = self.soap_client.service.GetListOfSentMessages
-    return self._handle_dmrescords_and_status_response(method)
+    return self._handle_dmrecords_and_status_response(method)
 
   def GetListOfReceivedMessages(self):
     method = self.soap_client.service.GetListOfReceivedMessages
-    return self._handle_dmrescords_and_status_response(method)
+    return self._handle_dmrecords_and_status_response(method)
 
   def MessageEnvelopeDownload(self, msgid):
     reply = self.soap_client.service.MessageEnvelopeDownload(msgid)

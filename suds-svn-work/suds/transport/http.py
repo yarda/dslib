@@ -131,6 +131,10 @@ class HttpTransport(Transport):
 
     def __addcookies(self, u2request):
         self.cookiejar.add_cookie_header(u2request)
+        u2request.type = None # nasty hack to get around a bug in urllib2
+                              # that causes infinite loop when type==https
+                              # and has_proxy is called (it looks for non-existent
+                              # __r_host
         
     def __getcookies(self, fp, u2request):
         self.cookiejar.extract_cookies(fp, u2request)
