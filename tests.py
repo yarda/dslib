@@ -11,7 +11,7 @@ def active(f):
 
 # ============================== Tests start here ==============================
 
-#@active
+@active
 def GetListOfSentMessages():
   template = "%(dmID)-8s %(dmSender)-20s %(dmRecipient)-20s %(dmAnnotation)-20s %(dmDeliveryTime)-20s"
   heading = {"dmID":"ID",
@@ -27,7 +27,7 @@ def GetListOfSentMessages():
     print (template % (message.__dict__)).encode("utf-8")
 
 
-#@active
+@active
 def GetListOfReceivedMessages():
   template = "%(dmID)-8s %(dmSender)-20s %(dmRecipient)-20s %(dmAnnotation)-20s %(dmDeliveryTime)-20s"
   heading = {"dmSender":"Sender",
@@ -150,8 +150,9 @@ def CreateMessage():
   dmfiles = [dmfile]
   reply = ds_client.CreateMessage(envelope, dmfiles)
   print reply.status
+  print "Message ID is:", reply.data
 
-@active
+#@active
 def GetOwnerInfoFromLogin():
   reply = ds_client.GetOwnerInfoFromLogin()
   print reply.status
@@ -209,6 +210,10 @@ if __name__ == "__main__":
   if proxy == "SYSTEM":
     proxy = -1
   ds_client = Client(username, password, test_environment=options.test_account, proxy=proxy)
+
+  #import logging
+  #logging.basicConfig(level=logging.INFO)
+  #logging.getLogger('suds.transport.http').setLevel(logging.DEBUG)
 
   import sys, inspect
   for name, f in inspect.getmembers(sys.modules[__name__], inspect.isfunction):

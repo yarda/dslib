@@ -2,11 +2,6 @@
 This is the main part of the dslib library - a client object resides here
 which is responsible for all communication with the DS server..
 """
-import base64
-import pkcs7
-import pkcs7.decoder
-import pkcs7.verifier
-import logging
         
 # this is a work-around for an incompatibility of openssl-1.0.0beta
 # with the login.czebox.cz sites HTTPS interface
@@ -23,6 +18,11 @@ if not sys.platform.startswith("freebsd") and not sys.platform.startswith("darwi
 
 # suds does not work properly without this
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+import base64
+import pkcs7
+import pkcs7.decoder
+import pkcs7.verifier
+import logging
 
 from suds.client import Client as SudsClient
 from suds.transport.http import HttpAuthenticated
@@ -53,7 +53,6 @@ class Dispatcher(object):
     else:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport, location=self.soap_url)
 
-
   def __getattr__(self, name):
     def _simple_wrapper(method):
       def f(*args, **kw):
@@ -75,7 +74,7 @@ class Dispatcher(object):
     return status
 
 
-  def _handle_dmrescords_and_status_response(self, method):
+  def _handle_dmrecords_and_status_response(self, method):
     reply = method()
     status = self._extract_status(reply)
     # the following is a hack around a bug in the suds library that
@@ -92,11 +91,11 @@ class Dispatcher(object):
     
   def GetListOfSentMessages(self):
     method = self.soap_client.service.GetListOfSentMessages
-    return self._handle_dmrescords_and_status_response(method)
+    return self._handle_dmrecords_and_status_response(method)
 
   def GetListOfReceivedMessages(self):
     method = self.soap_client.service.GetListOfReceivedMessages
-    return self._handle_dmrescords_and_status_response(method)
+    return self._handle_dmrecords_and_status_response(method)
 
   def MessageEnvelopeDownload(self, msgid):
     reply = self.soap_client.service.MessageEnvelopeDownload(msgid)
@@ -134,7 +133,7 @@ class Dispatcher(object):
     return Reply(self._extract_status(reply), result)
 
   def CreateMessage(self, envelope, files):
-    """info = dbOwnerInfo instance"""
+    """returns message id as reply.data"""
     soap_envelope = self.soap_client.factory.create("dmEnvelope")
     envelope.copy_to_soap_object(soap_envelope)
     soap_files = self.soap_client.factory.create("dmFiles")
@@ -143,7 +142,11 @@ class Dispatcher(object):
       f.copy_to_soap_object(soap_file)
       soap_files.dmFile.append(soap_file)
     reply = self.soap_client.service.CreateMessage(soap_envelope, soap_files)
-    return Reply(self._extract_status(reply), None)
+    if hasattr(reply,"dmID"):
+      dmID = reply.dmID
+    else:
+      dmID = None
+    return Reply(self._extract_status(reply), dmID)
     
   def GetOwnerInfoFromLogin(self):
     reply = self.soap_client.service.GetOwnerInfoFromLogin()
@@ -353,7 +356,6 @@ class Client(object):
       return None
     elif proxy == -1:
       import urllib2
-      print urllib2.getproxies()
       return urllib2.getproxies().get('https',None) 
     else:
       return proxy    

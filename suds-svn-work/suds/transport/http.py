@@ -81,10 +81,12 @@ class HttpTransport(Transport):
         Transport.__init__(self)
         Unskin(self.options).update(kwargs)
         self.cookiejar = CookieJar()
-        self.urlopener = u2.build_opener(SUDSHTTPRedirectHandler(),
+        log.debug("Proxy: %s", self.options.proxy)
+        proxy_handler = u2.ProxyHandler(self.options.proxy)
+        self.urlopener = u2.build_opener(proxy_handler,
+                                         SUDSHTTPRedirectHandler(),
                                          u2.HTTPCookieProcessor(self.cookiejar))
-        if self.options.proxy:
-          self.urlopener.add_handler(u2.ProxyHandler(self.options.proxy))        
+
 
     def open(self, request):
         try:
@@ -129,6 +131,10 @@ class HttpTransport(Transport):
 
     def __addcookies(self, u2request):
         self.cookiejar.add_cookie_header(u2request)
+        u2request.type = None # nasty hack to get around a bug in urllib2
+                              # that causes infinite loop when type==https
+                              # and has_proxy is called (it looks for non-existent
+                              # __r_host
         
     def __getcookies(self, fp, u2request):
         self.cookiejar.extract_cookies(fp, u2request)
