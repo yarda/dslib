@@ -168,7 +168,8 @@ class X509Certificate():
         self.signature = certificate.getComponentByName("signatureValue").toOctets()     
         tbsCert = certificate.getComponentByName("tbsCertificate")
         self.tbsCertificate = Certificate(tbsCert)   
-
+        self.is_verified = False
+        
 class Attribute():
     """
     One attribute in SignerInfo attributes set

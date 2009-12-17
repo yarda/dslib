@@ -14,6 +14,10 @@ from pyasn1 import error
 
 import models
 
+
+from certs.cert_verifier import *
+from certs.pem_decoder import *
+
 '''
 subory v test_msgs obsahuju binarnu formu prijatych podpisanych sprav
 t.j. odpoved na getSignedXXX obsahovala element dmSignature. Jeho obsah
@@ -27,6 +31,8 @@ coded = f.read()
 
 decoded_msg = pkcs7.decoder.decode_msg(coded)
 verification_result = pkcs7.verifier.verify_msg(decoded_msg)
+
+#print decoded_msg.getComponentByName("signedData")
 
 if verification_result:
     print "TEST: Message verified - ok"
@@ -57,10 +63,20 @@ m.pkcs7_data = pkcs_data
 
 # mala ukazka
 e_alg_code = m.pkcs7_data.signer_infos[0].encrypt_algorithm
-print "Encryption alg:"
-print pkcs7.asn1_models.oid.oid_map[e_alg_code]
+print "TEST: Msg encryption alg: %s" % pkcs7.asn1_models.oid.oid_map[e_alg_code]
 
 
+cert = decoded_msg.getComponentByName("certificates")[0]
+trusted = load_certificates_from_dir("trusted_certificates/")
+
+certificate_verified = verify_certificate(cert, trusted)
+
+print "TEST: Certificate verified?..... %s" % certificate_verified
+
+# daju sa overit aj samotne doveryhodne certifikaty voci sebe
+ok = verify_certificate(trusted[0], trusted)
+print ok
+'''
 import base64
 ts = base64.b64decode(m.dmQTimestamp)
 
@@ -89,3 +105,4 @@ bb = decoder.decode(aa, asn1Spec=spec)
 c = encoder.encode(a[0].getComponentByPosition(0))
 b = pkcs7.decoder.decode_msg(c)
 print b
+'''

@@ -165,6 +165,7 @@ def SignedMessageDownload():
     print reply.status
     #print reply.data
     print "Verified message: %s" % reply.data.is_verified
+    print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified
 
 @active
 def SignedSentMessageDownload():
@@ -173,6 +174,7 @@ def SignedSentMessageDownload():
     print reply.status
     #print reply.data
     print "Verified message: %s" % reply.data.is_verified
+    print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified
   
 @active
 def GetSignedDeliveryInfo():  
@@ -181,6 +183,7 @@ def GetSignedDeliveryInfo():
     print reply.status
     #print reply.data
     print "Verified message: %s" % reply.data.is_verified
+    print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified
 
 
 if __name__ == "__main__":
@@ -208,8 +211,9 @@ if __name__ == "__main__":
     password = getpass.getpass()
   proxy = options.proxy
   if proxy == "SYSTEM":
-    proxy = -1
-  ds_client = Client(username, password, test_environment=options.test_account, proxy=proxy)
+    proxy = -1  
+  ds_client = Client(username, password, test_environment=options.test_account,\
+                     proxy=proxy, trusted_certs_dir="trusted_certificates")
 
   #import logging
   #logging.basicConfig(level=logging.INFO)

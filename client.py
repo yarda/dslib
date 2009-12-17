@@ -30,6 +30,7 @@ import exceptions
 from ds_exceptions import DSException
 import models
 
+import certs.pem_decoder
 
 class Dispatcher(object):
   """
@@ -38,7 +39,7 @@ class Dispatcher(object):
   Dispatcher is a simple client that handles one of these parts
   """
 
-  def __init__(self, ds_client, wsdl_url, soap_url=None, proxy=None):
+  def __init__(self, ds_client, wsdl_url, soap_url=None, proxy=None, trusted_certs_dir=None):
     """proxy can be a string 'hostname:port' or None"""
     self.ds_client = ds_client # this is a Client instance; username, password, etc. will be take from it
     self.wsdl_url = wsdl_url
@@ -52,7 +53,11 @@ class Dispatcher(object):
       self.soap_client = SudsClient(self.wsdl_url, transport=transport)
     else:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport, location=self.soap_url)
+    self.trusted_certs = []
+    if trusted_certs_dir is not None:
+        self.trusted_certs = certs.pem_decoder.load_certificates_from_dir(trusted_certs_dir)
 
+    
   def __getattr__(self, name):
     def _simple_wrapper(method):
       def f(*args, **kw):
@@ -191,7 +196,7 @@ class Dispatcher(object):
     '''
     "Base" of methods downloading signed versions of messages and
     delivery information.
-    Returns tuple xml_document, pkcs7_data, verified
+    Returns tuple xml_document, pkcs7_data, verified, cert_verified
     '''
     # decode DER encoding
     decoded_msg = pkcs7.decoder.decode_msg(der_encoded)
@@ -204,7 +209,18 @@ class Dispatcher(object):
     # parse string xml to create xml document
     xml_document = self._xml_parse_msg(str_msg)
     
-    return xml_document, pkcs_data, verified
+    # verify certificate
+    certificates_ok = False
+    certs = decoded_msg.getComponentByName("certificates")
+    for cert in certs:
+        if self._verify_certificate(cert):
+            certificates_ok = True
+        else:
+            # if certificate is not trusted, set to false and exit cycle
+            certificates_ok = False
+            break
+        
+    return xml_document, pkcs_data, verified, certificates_ok
   
   def _signed_msg_download(self, ws_name, msg_id):
     '''
@@ -216,15 +232,25 @@ class Dispatcher(object):
     reply = method.__call__(msg_id)
     der_encoded = base64.b64decode(reply.dmSignature)  
    
-    xml_document, pkcs_data, verified  = self._generic_get_signed(der_encoded)
+    xml_document, pkcs_data, verified, cert_verified  = self._generic_get_signed(der_encoded)
     
     message = self._create_message_instance(xml_document, "Message")        
     message.pkcs7_data = pkcs_data
     if (verified):
         message.is_verified = True
-
+    
+    # TODO: distinguish among certificates (may be more signers, but highly improbable)
+    if cert_verified:
+        for c in message.pkcs7_data.certificates:
+            c.is_verified = True
+    
     return Reply(self._extract_status(reply), message)
-      
+  
+  def _verify_certificate(self, certificate):
+    import certs.cert_verifier
+    res = certs.cert_verifier.verify_certificate(certificate, self.trusted_certs)
+    return res
+     
   def SignedMessageDownload(self, msgId):
     return self._signed_msg_download("SignedMessageDownload", msgId)
     
@@ -234,13 +260,18 @@ class Dispatcher(object):
   def GetSignedDeliveryInfo(self, msgId):
     reply = self.soap_client.service.GetSignedDeliveryInfo(msgId)
     der_encoded = base64.b64decode(reply.dmSignature)  
-    xml_document, pkcs_data, verified  = self._generic_get_signed(der_encoded)
+    xml_document, pkcs_data, verified, cert_verified  = self._generic_get_signed(der_encoded)
     # create Message instance to return 
     message = self._create_message_instance(xml_document, "DeliveryInfo")        
     message.pkcs7_data = pkcs_data
     if (verified):
         message.is_verified = True
     
+    # TODO: distinguish among certificates (may be more signers, but highly improbable)
+    if cert_verified:
+        for c in message.pkcs7_data.certificates:
+            c.is_verified = True
+            
     return Reply(self._extract_status(reply), message)
 
 
@@ -283,7 +314,7 @@ class Client(object):
                            }
 
   def __init__(self, login=None, password=None, soap_url=None, test_environment=None,
-               login_method="username", proxy=None):
+               login_method="username", proxy=None, trusted_certs_dir=None):
     """
     if soap_url is not given and test_environment is given, soap_url will be
     infered from the value of test_environment based on what is set in test2soap_url;
@@ -305,6 +336,7 @@ class Client(object):
     self.login_method = login_method
     self._dispatchers = {}
     self.proxy = proxy
+    self.trusted_certs_dir = trusted_certs_dir
 
 
   def __getattr__(self, name):
@@ -342,7 +374,8 @@ class Client(object):
       else:
         this_soap_url = self.soap_url + "/"
       this_soap_url += Client.login_method2url_part[self.login_method] + "/" + config['soap_url_end']
-    dis = Dispatcher(self, Client.WSDL_URL_BASE+config['wsdl_name'], soap_url=this_soap_url, proxy=self.get_real_proxy())
+    dis = Dispatcher(self, Client.WSDL_URL_BASE+config['wsdl_name'], soap_url=this_soap_url,\
+                      proxy=self.get_real_proxy(), trusted_certs_dir=self.trusted_certs_dir)
     self._dispatchers[name] = dis
     return dis
 

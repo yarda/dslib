@@ -25,43 +25,11 @@ from asn1_models.tools import *
 
 from asn1_models.oid import *
 
-import hashlib
+from digest import *
 
-RSA_NAME = "RSA"
-SHA1_NAME = "SHA-1"
-SHA256_NAME = "SHA-256"
-SHA384_NAME = "SHA-384"
-SHA512_NAME = "SHA-512"
+from certs.cert_finder import *
 
 MESSAGE_DIGEST_KEY = "1.2.840.113549.1.9.4"
-
-def _calculate_digest(data, alg):    
-    '''
-    Calculates digest according to algorithm
-    '''
-    digest_alg = None
-    if (alg == SHA1_NAME):
-        digest_alg = hashlib.sha1() 
-    
-    if (alg == SHA256_NAME):
-        digest_alg = hashlib.sha256()
-    
-    if (alg == SHA384_NAME):
-        digest_alg = hashlib.sha384()
-    
-    if (alg == SHA512_NAME):
-        digest_alg = hashlib.sha512()
-    
-    if digest_alg is None:
-        logging.error("Unknown digest algorithm : %s" % alg)
-    
-    digest_alg.update(data)   
-    dg = digest_alg.digest()       
-    
-    logging.debug("Calculated hash from incoming file (digesting autheticatedAttributes):")
-    logging.debug(base64.b64encode(dg))
-    return dg
-
 
 def _prepare_auth_attributes_to_digest(auth_attributes_instance):
     """
@@ -126,18 +94,6 @@ def _get_digest_algorithm(signer_info):
         raise Exception("Unrecognized digest algorithm")
     
     return result
-    
-def _find_certificate_by_serial(certificates, serial_number):
-    '''
-    Looks for certificate with serial_number.
-    Returns the certificate or None.
-    '''
-    for cert in certificates:
-        sn = cert.getComponentByName("tbsCertificate")\
-                            .getComponentByName("serialNumber")
-        if sn == serial_number:
-            return cert
-    return None
 
 def verify_msg(decoded_pkcs7_msg):
     '''
@@ -157,7 +113,7 @@ def verify_msg(decoded_pkcs7_msg):
     for signer_info in signer_infos:
         id = signer_info.getComponentByName("issuerAndSerialNum").\
                         getComponentByName("serialNumber")._value
-        cert = _find_certificate_by_serial(certificates, id)
+        cert = find_certificate_by_serial(id, certificates)
         
         if cert is None:
             raise Exception("No certificate found for signer %d" % id)
@@ -174,13 +130,13 @@ def verify_msg(decoded_pkcs7_msg):
                 type = str(attr.getComponentByName("type"))
                 if (type == MESSAGE_DIGEST_KEY):
                     value = str(attr.getComponentByName("value"))
-                    calculated = _calculate_digest(msg, digest_alg)
+                    calculated = calculate_digest(msg, digest_alg)
                     if (value != calculated):
                         raise Exception("Digest in authenticated attributes differs\
                                         from the digest of message!")
             data_to_verify = _prepare_auth_attributes_to_digest(auth_attributes)
     
-        data_to_verify = _calculate_digest(data_to_verify, digest_alg)    
+        data_to_verify = calculate_digest(data_to_verify, digest_alg)    
         #print base64.b64encode(data_to_verify)    
         signature = signer_info.getComponentByName("signature")._value
     

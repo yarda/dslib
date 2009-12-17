@@ -22,16 +22,7 @@ class GeneralName(univ.Choice):
 class GeneralNames(univ.SequenceOf):
     componentType = GeneralName()
 
-class GeneralName1(univ.Choice):
-    componentType = namedtype.NamedTypes(
-                            namedtype.NamedType("rfc822name", char.IA5String().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x1)))                            
-                                         ) 
 
-class GeneralNames1(univ.SequenceOf):
-    componentType = GeneralName1()
-    tagSet = univ.SequenceOf.tagSet.tagImplicitly(
-                                            tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x1)
-                                           )
 class KeyIdentifier(univ.OctetString):
     tagSet = univ.OctetString.tagSet.tagImplicitly(
                                             tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x0)
@@ -39,9 +30,9 @@ class KeyIdentifier(univ.OctetString):
     
     
 class AuthKeyId(univ.Sequence):
-    componentName = namedtype.NamedTypes(
+    componentType = namedtype.NamedTypes(
                             namedtype.OptionalNamedType("keyIdentifier", KeyIdentifier()),#univ.OctetString().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x0))),
-                            namedtype.OptionalNamedType("authorityCertIssuer", GeneralNames1()),
+                            namedtype.OptionalNamedType("authorityCertIssuer", GeneralNames()),
                             namedtype.OptionalNamedType("authorityCertSerialNum", univ.Integer().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x2))),
                                          )
 
@@ -64,6 +55,7 @@ class Extension(univ.Sequence):
         namedtype.NamedType('extnID', univ.ObjectIdentifier()),
         namedtype.DefaultedNamedType('critical', univ.Boolean('False')),
         namedtype.NamedType('extnValue', univ.OctetString())
+        #namedtype.NamedType('extnValue', ExtensionValue())
         )
    
 

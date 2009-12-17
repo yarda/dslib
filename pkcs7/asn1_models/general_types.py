@@ -45,17 +45,40 @@ class AttributeTypeAndValue(univ.Sequence):
        value = self.getComponentByName('value')
        s = "%s => %s" % (type,value)
        return s
+    
+    def __str__(self):
+        return self.__repr__()
 
 class RelativeDistinguishedName(univ.SetOf):
     componentType = AttributeTypeAndValue()
+    
+    def __str__(self):
+        buf = ''
+        for component in self._componentValues:
+            buf += str(component)
+            buf += ','
+        buf = buf[:len(buf)-1]
+        return buf
 
 class RDNSequence(univ.SequenceOf):
     componentType = RelativeDistinguishedName()
+    
+    def __str__(self):
+        buf = ''        
+        for component in self._componentValues:            
+            buf += str(component)
+            buf += ';'
+        buf = buf[:len(buf)-1]
+        return buf
+            
 
 class Name(univ.Choice):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('', RDNSequence())
         )
+    
+    def __str__(self):
+        return str(self.getComponent())
            
                
 class AlgorithmIdentifier(univ.Sequence):
