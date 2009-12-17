@@ -58,8 +58,11 @@ class IssuerAndSerial(univ.Sequence):
                                          )
 
 class AuthAttributeValue(univ.Set): 
-    pass
-    
+    def __str__(self):
+        '''
+        Return string of first element in this set
+        '''
+        return str(self.getComponentByPosition(0))
 
 class AuthAttribute(univ.Sequence):
     componentType = namedtype.NamedTypes(

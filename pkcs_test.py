@@ -72,6 +72,8 @@ f.close()
 #x = pkcs7.decoder.decode_msg(ts)
 #print x
 
+d = pkcs7.decoder.decode_msg(ts)
+
 a = decoder.decode(ts)
 print a
 aa = a[0].getComponentByPosition(1).getComponentByPosition(2).getComponentByPosition(1)._value

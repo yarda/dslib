@@ -33,6 +33,8 @@ SHA256_NAME = "SHA-256"
 SHA384_NAME = "SHA-384"
 SHA512_NAME = "SHA-512"
 
+MESSAGE_DIGEST_KEY = "1.2.840.113549.1.9.4"
+
 def _calculate_digest(data, alg):    
     '''
     Calculates digest according to algorithm
@@ -168,6 +170,14 @@ def verify_msg(decoded_pkcs7_msg):
         if auth_attributes is None:
             data_to_verify = msg
         else:
+            for attr in auth_attributes:
+                type = str(attr.getComponentByName("type"))
+                if (type == MESSAGE_DIGEST_KEY):
+                    value = str(attr.getComponentByName("value"))
+                    calculated = _calculate_digest(msg, digest_alg)
+                    if (value != calculated):
+                        raise Exception("Digest in authenticated attributes differs\
+                                        from the digest of message!")
             data_to_verify = _prepare_auth_attributes_to_digest(auth_attributes)
     
         data_to_verify = _calculate_digest(data_to_verify, digest_alg)    
