@@ -17,7 +17,7 @@ if not sys.platform.startswith("freebsd") and not sys.platform.startswith("darwi
 # / end of work-around
 
 # suds does not work properly without this
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 import base64
 import pkcs7
 import pkcs7.decoder
