@@ -20,7 +20,7 @@ if not sys.platform.startswith("freebsd") and not sys.platform.startswith("darwi
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import base64
 import pkcs7
-import pkcs7.decoder
+import pkcs7.pkcs7_decoder
 import pkcs7.verifier
 import logging
 
