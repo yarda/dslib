@@ -49,7 +49,7 @@ def parse_certificate(pem_file):
     pattern = Certificate()
     try:
         certificate = decoder.decode(substrate, asn1Spec=pattern)[0]
-    except Exception as e:
+    except Exception, e:
         print e.message
         return None
     
