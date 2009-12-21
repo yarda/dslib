@@ -1,13 +1,13 @@
 '''
 Created on Dec 11, 2009
 
-@author: mdioszegi
 '''
 
 from pkcs7.asn1_models.tools import *
 from pkcs7.asn1_models.oid import *
 from pkcs7.asn1_models.tools import *
 from pkcs7.asn1_models.X509certificate import *
+from pkcs7.asn1_models.certificate_extensions import *
 from pkcs7.debug import *
 
 class SignedData():    
@@ -74,6 +74,7 @@ class PublicKeyInfo():
     Represents information about public key.
     Expected RSA.
     TODO: other types of algorithms (DSA)! are supported in pkcs7?
+    NOTE: PostSignum does not use DSA
     Attributes:
     - alg (identifier of algorithm)
     - key (tuple of modulus and exponent)
@@ -83,6 +84,163 @@ class PublicKeyInfo():
         bitstr_key = public_key_info.getComponentByName("subjectPublicKey")
         self.key = get_RSA_pub_key_material(bitstr_key)
 
+class SubjectAltNameExt():
+    '''
+    Subject alternative name extension.
+    '''
+    def __init__(self, asn1_subjectAltName):
+        self.names = []
+        #gen_names = asn1_subjectAltName.getComponentByName("subjectAltName")
+        for gname in asn1_subjectAltName:
+            self.names.append(gname.getComponent()._value)
+
+class BasicConstraintsExt():
+    '''
+    Basic constraints of this certificate - is it CA and maximal chain depth.
+    '''
+    def __init__(self, asn1_bConstraints):
+        self.ca = asn1_bConstraints.getComponentByName("ca")._value
+        self.max_path_len = 0
+        if asn1_bConstraints.getComponentByName("pathLen") is not None:
+            self.max_path_len = asn1_bConstraints.getComponentByName("pathLen")._value
+        
+
+class KeyUsageExt():
+    '''
+    Key usage extension. 
+    '''    
+    def __init__(self, asn1_keyUsage):
+        self.digitalSignature = False    # (0),
+        self.nonRepudiation = False     # (1),
+        self.keyEncipherment = False    # (2),
+        self.dataEncipherment = False   # (3),
+        self.keyAgreement = False       # (4),
+        self.keyCertSign = False        # (5),
+        self.cRLSign = False            # (6),
+        self.encipherOnly = False       # (7),
+        self.decipherOnly = False       # (8) 
+        
+        bits = asn1_keyUsage._value
+        try:
+            if (bits[0]): self.digitalSignature = True
+            if (bits[1]): self.nonRepudiation = True
+            if (bits[2]): self.keyEncipherment = True
+            if (bits[3]): self.dataEncipherment = True
+            if (bits[4]): self.keyAgreement = True
+            if (bits[5]): self.keyCertSign = True
+            if (bits[6]): self.cRLSign = True    
+            if (bits[7]): self.encipherOnly = True
+            if (bits[8]): self.decipherOnly = True
+        except IndexError:
+            return
+
+class AuthorityKeyIdExt():
+    '''
+    Authority Key identifier extension.
+    Identifies key of the authority which was used to sign this certificate.
+    '''
+    def __init__(self, asn1_authKeyId):
+        if (asn1_authKeyId.getComponentByName("keyIdentifier")) is not None:
+            self.key_id = asn1_authKeyId.getComponentByName("keyIdentifier")._value
+        if (asn1_authKeyId.getComponentByName("authorityCertSerialNum")) is not None:
+            self.auth_cert_sn = asn1_authKeyId.getComponentByName("authorityCertSerialNum")._value
+        if (asn1_authKeyId.getComponentByName("authorityCertIssuer")) is not None:
+            issuer = asn1_authKeyId.getComponentByName("authorityCertIssuer")
+            iss = str(issuer.getComponentByName("name"))
+            self.auth_cert_issuer = iss
+    
+class SubjectKeyIdExt():
+    '''
+    Subject Key Identifier extension. Just the octet string.
+    '''
+    def __init__(self, asn1_subKey):
+        self.subject_key_id = asn1_subKey._value
+      
+class PolicyQualifier():
+    '''
+    Certificate policy qualifier. Consist of id and
+    own qualifier (id-qt-cps | id-qt-unotice).
+    '''
+    def __init__(self, asn1_pQual):
+        self.id = str(asn1_pQual.getComponentByName("policyQualifierId"))
+        if asn1_pQual.getComponentByName("qualifier") is not None:
+            qual = asn1_pQual.getComponentByName("qualifier")
+            # this is a choice - onky one of following types will be non-null
+            qaulifier = None
+            comp = qual.getComponentByName("t1")
+            if comp is not None:
+                qaulifier = comp[0]
+            comp = qual.getComponentByName("t2")
+            if comp is not None:
+                qaulifier = comp[0]  
+            comp = qual.getComponentByName("t3")
+            if comp is not None:
+                qaulifier = comp
+            self.qualifier = str(qaulifier)
+            
+class CertificatePolicyExt():
+    '''
+    Certificate policy extension.
+    COnsist of id and qualifiers.
+    '''
+    def __init__(self, asn1_certPol):
+        self.id = str(asn1_certPol.getComponentByName("policyIdentifier"))
+        if (asn1_certPol.getComponentByName("policyQualifiers")):
+            qualifiers = asn1_certPol.getComponentByName("policyQualifiers")
+            self.qualifiers = [PolicyQualifier(pq) for pq in qualifiers]
+
+class Reasons():
+    '''
+    CRL distribution point reason flags
+    '''
+    def __init__(self, asn1_rflags):
+        self.unused  = False   #(0),
+        self.keyCompromise = False   #(1),
+        self.cACompromise = False   #(2),
+        self.affiliationChanged = False    #(3),
+        self.superseded = False   #(4),
+        self.cessationOfOperation = False   #(5),
+        self.certificateHold = False   #(6),
+        self.privilegeWithdrawn = False   #(7),
+        self.aACompromise = False   #(8) 
+        
+        bits = asn1_rflags._value
+        try:
+            if (bits[0]): self.unused = True
+            if (bits[1]): self.keyCompromise = True
+            if (bits[2]): self.cACompromise = True
+            if (bits[3]): self.affiliationChanged = True
+            if (bits[4]): self.superseded = True
+            if (bits[5]): self.cessationOfOperation = True
+            if (bits[6]): self.certificateHold = True    
+            if (bits[7]): self.privilegeWithdrawn = True
+            if (bits[8]): self.aACompromise = True
+        except IndexError:
+            return
+
+
+class CRLdistPointExt():
+    '''
+    CRL distribution point extension
+    '''
+    def __init__(self, asn1_crl_dp):
+        dp = asn1_crl_dp.getComponentByName("distPoint")
+        if dp is not None:
+            self.dist_point = str(dp.getComponent())
+        reasons = asn1_crl_dp.getComponentByName("reasons")
+        if reasons is not None:
+            self.reasons = Reasons(reasons)
+        issuer = asn1_crl_dp.getComponentByName("issuer")
+        if issuer is not None:
+            self.issuer = str(issuer)
+
+class QcStatementExt():
+    '''
+    id_pe_qCStatement
+    '''
+    def __init__(self, asn1_caStatement):
+        self.oid = str(asn1_caStatement.getComponentByName("stmtId"))
+        
 class Extension():
     '''
     Represents one Extension in X509v3 certificate
@@ -90,8 +248,6 @@ class Extension():
     - id  (identifier of extension)
     - is_critical
     - value (value of extension, needs more parsing - it is in DER encoding)
-    
-    TODO: parsing of extension value (contains info about CRL distrib. points, alternative subject name, some constraints etc)
     '''
     def __init__(self, extension):
         self.id = tuple_to_OID(extension.getComponentByName("extnID"))
@@ -100,9 +256,42 @@ class Extension():
             self.is_critical = False
         else:
             self.is_critical = True
-        
+        # set the bytes as the extension value
         self.value = extension.getComponentByName("extnValue")._value
-       
+        # if we know the type of value, parse it
+        if (self.id == "2.5.29.17"):
+            v = decoder.decode(self.value, asn1Spec=GeneralNames())[0]
+            val = SubjectAltNameExt(v)
+            self.value = val
+        elif (self.id == "2.5.29.35"):            
+            v = decoder.decode(self.value, asn1Spec=KeyId())[0]
+            val = AuthorityKeyIdExt(v)
+            self.value = val
+        elif (self.id == "2.5.29.14"):            
+            v = decoder.decode(self.value, asn1Spec=SubjectKeyId())[0]
+            val = SubjectKeyIdExt(v)
+            self.value = val
+        elif (self.id == "2.5.29.19"):
+            v = decoder.decode(self.value, asn1Spec=BasicConstraints())[0]
+            val = BasicConstraintsExt(v)
+            self.value = val
+        elif (self.id == "2.5.29.15"):
+            v = decoder.decode(self.value)[0]
+            val = KeyUsageExt(v)
+            self.value = val
+        elif (self.id == "2.5.29.32"):            
+            v = decoder.decode(self.value, asn1Spec=CertificatePolicies())[0]           
+            val = [CertificatePolicyExt(p) for p in v]
+            self.value = val
+        elif (self.id == "2.5.29.31"):            
+            v = decoder.decode(self.value, asn1Spec=CRLDistributionPoints())[0]         
+            val = [CRLdistPointExt(p) for p in v]
+            self.value = val
+        elif (self.id == "1.3.6.1.5.5.7.1.3"):            
+            v = decoder.decode(self.value, asn1Spec=Statements())[0]
+            val = [QcStatementExt(s) for s in v]            
+            self.value = val
+
 class Certificate():
     '''
     Represents Certificate object.

@@ -1,7 +1,6 @@
 '''
 Created on Dec 4, 2009
 
-@author: mdioszegi
 '''
 import sys, string, base64
 from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful

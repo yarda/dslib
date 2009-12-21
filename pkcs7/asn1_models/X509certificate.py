@@ -1,7 +1,6 @@
 '''
 Created on Dec 3, 2009
 
-@author: mdioszegi
 '''
 import sys, string, base64
 from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful
@@ -12,42 +11,6 @@ from tools import *
 from oid import oid_map as oid_map
 
 from general_types import  *
-
-
-class GeneralName(univ.Choice):
-    componentType = namedtype.NamedTypes(
-                            namedtype.NamedType("rfc822name", char.IA5String().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x1))),
-                            namedtype.NamedType("name", univ.OctetString().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x4)))                            
-                                         ) 
-class GeneralNames(univ.SequenceOf):
-    componentType = GeneralName()
-
-
-class KeyIdentifier(univ.OctetString):
-    tagSet = univ.OctetString.tagSet.tagImplicitly(
-                                            tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x0)
-                                            )
-    
-    
-class AuthKeyId(univ.Sequence):
-    componentType = namedtype.NamedTypes(
-                            namedtype.OptionalNamedType("keyIdentifier", KeyIdentifier()),#univ.OctetString().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x0))),
-                            namedtype.OptionalNamedType("authorityCertIssuer", GeneralNames()),
-                            namedtype.OptionalNamedType("authorityCertSerialNum", univ.Integer().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x2))),
-                                         )
-
- 
-class ExtensionValue(univ.Choice):
-    componentType = namedtype.NamedTypes(
-                            namedtype.NamedType("subjectAltName", GeneralNames()),
-                            namedtype.NamedType("authKeyId", AuthKeyId()),
-                            #namedtype.NamedType(),
-                            #namedtype.NamedType(),
-                            #namedtype.NamedType(),
-                            #namedtype.NamedType(),
-                            #namedtype.NamedType(),
-                            #namedtype.NamedType(),
-                                         )
 
 
 class Extension(univ.Sequence):

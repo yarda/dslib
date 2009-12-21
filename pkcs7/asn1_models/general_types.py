@@ -1,7 +1,6 @@
 '''
 Created on Dec 9, 2009
 
-@author: mdioszegi
 '''
 from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful
 from pyasn1 import error
@@ -19,7 +18,8 @@ class DirectoryString(univ.Choice):
         namedtype.NamedType('universalString', char.UniversalString().subtype(subtypeSpec=constraint.ValueSizeConstraint(1, MAX))),
         namedtype.NamedType('utf8String', char.UTF8String().subtype(subtypeSpec=constraint.ValueSizeConstraint(1, MAX))),
         namedtype.NamedType('bmpString', char.BMPString().subtype(subtypeSpec=constraint.ValueSizeConstraint(1, MAX))),
-        namedtype.NamedType('ia5String', char.IA5String().subtype(subtypeSpec=constraint.ValueSizeConstraint(1, MAX))) # hm, this should not be here!? XXX
+        namedtype.NamedType('ia5String', char.IA5String().subtype(subtypeSpec=constraint.ValueSizeConstraint(1, MAX))), # hm, this should not be here!? XXX
+        namedtype.NamedType('gString', univ.OctetString().subtype(implicitTag=tag.Tag(tag.tagClassUniversal, tag.tagFormatSimple, 0x19))) 
         )
     def __repr__(self):
         c = self.getComponent()

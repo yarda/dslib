@@ -1,7 +1,6 @@
 '''
 Created on Dec 3, 2009
 
-@author: mdioszegi
 '''
 
 from RSA import *

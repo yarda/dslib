@@ -1,7 +1,6 @@
 '''
 Created on Dec 9, 2009
 
-@author: mdioszegi
 '''
 from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful
 from pyasn1 import error

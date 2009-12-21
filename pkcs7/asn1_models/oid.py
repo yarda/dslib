@@ -1,7 +1,7 @@
 '''
 Created on Dec 3, 2009
 
-@author: mdioszegi
+
 '''
 oid_map = {
        "1.3.14.3.2.26" : "SHA-1",
@@ -18,6 +18,7 @@ oid_map = {
        "2.5.4.10" : "id-at-organizationName ",
        "2.5.4.3" : "id-at-commonName",
        "2.5.4.11" : "id-at-organizationalUnitName",       
+       
        "2.5.29.17" : "id-ce-subjectAltName",
        "2.5.29.19" : "basicConstraints",
        "2.5.29.32" : "Certificate policies",

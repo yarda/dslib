@@ -1,8 +1,10 @@
 '''
 Created on Dec 4, 2009
+
+Sandbox unstable module.
 '''
 import pkcs7
-import pkcs7.decoder
+import pkcs7.pkcs7_decoder
 import pkcs7.verifier
 import pkcs7.asn1_models.oid
 
@@ -29,7 +31,7 @@ f = open("test_msgs/signedSentMessage", "r")
 #f = open("test_msgs/sigDeliveryInfo", "r")
 coded = f.read()
 
-decoded_msg = pkcs7.decoder.decode_msg(coded)
+decoded_msg = pkcs7.pkcs7_decoder.decode_msg(coded)
 verification_result = pkcs7.verifier.verify_msg(decoded_msg)
 
 #print decoded_msg.getComponentByName("signedData")

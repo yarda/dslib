@@ -1,7 +1,6 @@
 '''
 Created on Dec 9, 2009
 
-@author: mdioszegi
 '''
 def show_bytes(string):
     print '--------------'       
