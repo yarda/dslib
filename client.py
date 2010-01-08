@@ -274,6 +274,14 @@ class Dispatcher(object):
             
     return Reply(self._extract_status(reply), message)
 
+  def GetDeliveryInfo(self, msgId):
+    reply = self.soap_client.service.GetDeliveryInfo(msgId)
+    if hasattr(reply, 'dmDelivery'):
+      message = models.Message(reply.dmDelivery)
+    else:
+      message = None
+    return Reply(self._extract_status(reply), message)
+     
 
 class Client(object):
 

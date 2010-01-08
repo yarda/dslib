@@ -43,7 +43,7 @@ def GetListOfReceivedMessages():
     print (template % (message.__dict__)).encode("utf-8")
 
 
-#@active
+@active
 def MessageDownload():
   for envelope in ds_client.GetListOfReceivedMessages().data:
     message = ds_client.MessageDownload(envelope.dmID).data
@@ -55,7 +55,7 @@ def MessageDownload():
       print "  '%s' saved" % f.save_file("./")
 
 
-#@active
+@active
 def MessageEnvelopeDownload():
   for envelope in ds_client.GetListOfReceivedMessages().data:
     message = ds_client.MessageEnvelopeDownload(envelope.dmID).data
@@ -64,9 +64,8 @@ def MessageEnvelopeDownload():
     print "dmAnnotation:", message.dmAnnotation.encode('utf-8')
 
 
-#@active
+@active
 def GetDeliveryInfo():
-  import tools
   for envelope in ds_client.GetListOfSentMessages().data:
     message = ds_client.GetDeliveryInfo(envelope.dmID).data
     print "dmID:", message.dmID
@@ -77,13 +76,13 @@ def GetDeliveryInfo():
       print event
     print "----------------------------------------"
 
-#@active
+@active
 def DummyOperation():
   print "Should be None None"
   reply = ds_client.DummyOperation()
   print "Actually is", reply.status, reply.data
 
-#@active
+@active
 def FindDataBox():
   # part 1
   info = models.dbOwnerInfo()
@@ -152,7 +151,7 @@ def CreateMessage():
   print reply.status
   print "Message ID is:", reply.data
 
-#@active
+@active
 def GetOwnerInfoFromLogin():
   reply = ds_client.GetOwnerInfoFromLogin()
   print reply.status
@@ -187,9 +186,23 @@ def GetSignedDeliveryInfo():
 
 
 if __name__ == "__main__":
+  def list_tests(tests):
+    print "Available tests:"
+    for i,test in enumerate(tests):
+      print "  %2d. %s" % (i, test.__name__)
+    print
+    
+  # get list of tests
+  import sys, inspect
+  tests = []
+  for name, f in inspect.getmembers(sys.modules[__name__], inspect.isfunction):
+    if hasattr(f, "active") and f.active:
+      tests.append(f)
+
+  # parse options
   from optparse import OptionParser
   import os
-  op = OptionParser(usage="python %prog [options] username")
+  op = OptionParser(usage="python %prog [options] username test+\n\nusername - the login name do DS\ntest - either a number or name of a test or 'ALL'")
   op.add_option( "-t", action="store_true",
                  dest="test_account", default=False,
                  help="the account is a test account, not a standard one.")
@@ -198,7 +211,8 @@ if __name__ == "__main__":
                  help="address of HTTP proxy to be used (use 'SYSTEM' for default system setting).")
   
   (options, args) = op.parse_args()
-  if len(args) == 0:
+  if len(args) <= 1:
+    list_tests(tests)
     op.error("Too few arguments")
   username = args[0]
   # try to find a stored password
@@ -211,19 +225,38 @@ if __name__ == "__main__":
     password = getpass.getpass()
   proxy = options.proxy
   if proxy == "SYSTEM":
-    proxy = -1  
-  ds_client = Client(username, password, test_environment=options.test_account,\
-                     proxy=proxy, trusted_certs_dir="trusted_certificates")
-
+    proxy = -1
+  # read the tests
+  to_run = []
+  if 'ALL' in args[1:]:
+    to_run = tests
+  else:
+    for test_name in args[1:]:
+      if test_name.isdigit():
+        test_id = int(test_name)
+        if test_id < len(tests):
+          to_run.append(tests[test_id])
+        else:
+          sys.stderr.write("Test %d does not exist!\n" % test_id)
+      else:
+        for test in tests:
+          if test.__name__ == test_name:
+            to_run.append(test)
+            break
+        else:
+          sys.stderr.write("Test '%s' does not exist!\n" % test_name)
+  # run the tests
+  if to_run:      
+    ds_client = Client(username, password, test_environment=options.test_account,\
+                       proxy=proxy, trusted_certs_dir="trusted_certificates")
+    for test in to_run:
+      print "==================== %s ====================" % test.__name__
+      test()
+      print "==================== end of %s ====================" % test.__name__  
+      print
+      print
+  else:
+    list_tests(tests)
   #import logging
   #logging.basicConfig(level=logging.INFO)
   #logging.getLogger('suds.transport.http').setLevel(logging.DEBUG)
-
-  import sys, inspect
-  for name, f in inspect.getmembers(sys.modules[__name__], inspect.isfunction):
-    if hasattr(f, "active") and f.active:
-      print "==================== %s ====================" % name
-      f()
-      print "==================== end of %s ====================" % name    
-      print
-      print
