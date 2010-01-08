@@ -186,6 +186,16 @@ class Message(Model):
   is_verified = False
   # all PKCS7 data are stored in pkcs7_data attribute
   pkcs7_data = None
+  
+  # is message qtimestamp verified?
+  tstamp_verified = False
+  # TSTInfo - response obtained by signer (MVCR) from TSA (postsignum)
+  # at the time when data message was created
+  tstamp_token = None
+  
+  # if the message has dmQTimestamp, messageImprint value from Timestamtoken
+  # contained in Qtimestamp as content, must be the same as the dmHash value
+  qts_imprint_matches_hash = False
     
   def __init__(self, soap_message=None, xml_document=None, path_to_content=None):
     if (xml_document is not None) and (path_to_content is None):

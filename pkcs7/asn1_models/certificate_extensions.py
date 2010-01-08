@@ -10,23 +10,7 @@ from tools import *
 from oid import oid_map as oid_map
 
 from general_types import  *
-
-class GeneralName(univ.Choice):
-    componentType = namedtype.NamedTypes(
-                            namedtype.NamedType("rfc822name", char.IA5String().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x1))),
-                            namedtype.NamedType("dnsName", char.IA5String().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x2))),
-                            namedtype.NamedType("name", univ.OctetString().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x4))),
-                            namedtype.NamedType("uriName", char.IA5String().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x6))),                            
-                                         ) 
-class GeneralNames(univ.SequenceOf):
-    componentType = GeneralName()
-    def __str__(self):
-        ret = ''
-        for part in self._componentValues:
-            ret+= str(part.getComponent())
-            ret+= ' ; '
-        return ret[:len(ret)-1]
-            
+         
 
 #RDNS sequence otagovana A4 (constructed octet string)
 class IssuerName(univ.Sequence):

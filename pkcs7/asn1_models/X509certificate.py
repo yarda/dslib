@@ -78,6 +78,4 @@ class Certificate(univ.Sequence):
 
 class Certificates(univ.SetOf):
     componentType = Certificate()
-    tagSet = univ.SequenceOf.tagSet.tagImplicitly(
-                                             tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0)
-                                             )
+

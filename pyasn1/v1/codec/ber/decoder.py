@@ -227,10 +227,34 @@ class SequenceDecoder(AbstractDecoder):
             except error.PyAsn1Error:
                 asn1Spec = None # XXX
             if not decodeFun:
-                return r, substrate
+                return r, substrate            
             component, substrate = decodeFun(substrate, asn1Spec)
-            if component == eoo.endOfOctets:
-                break
+            if component == eoo.endOfOctets:                
+                '''
+                Needed to add action when the explicit tag
+                has indefinite length. We need to close the 
+                component with double EOC, not just one!
+                We set the property of tag, that it has indefinite length
+                and we check this property when we are completing
+                the component. If the explicit tag had the indefinite length,
+                we must eat one more EOC from substrate!
+                '''
+                #print '------'
+                # we can have more explicit tags, each with indef length
+                expectedExplicitEocCounter = 0
+                for tag in tagSet:
+                #    print tag.length
+                    if tag.length == -1:
+                        expectedExplicitEocCounter += 1
+                #decrease by one - one tag is base tag (eoc solved by decoder), others are explicit  
+                expectedExplicitEocCounter -= 1                    
+                #print '------'
+                if expectedExplicitEocCounter: 
+                    # NOTE: asn1Spec is None, as we are 'decoding' EOC
+                    for i in xrange(expectedExplicitEocCounter):
+                        spare_eoc, substrate = decodeFun(substrate, None)  
+                        #print spare_eoc              
+                break                
             idx = self._getPositionByType(r, component, idx)
             r.setComponentByPosition(idx, component)
             idx = idx + 1                
@@ -347,6 +371,7 @@ codecMap = {
 class Decoder:
     def __init__(self, codecMap):
         self.__codecMap = codecMap
+        self.indefLen = False
     def __call__(self, substrate, asn1Spec=None, tagSet=None,
                  length=None, state=stDecodeTag, recursiveFlag=1):
         # Decode tag & length
@@ -373,7 +398,7 @@ class Decoder:
                         tagId = tagId << 7 | (t&0x7F)
                         substrate = substrate[1:]
                         if not t&0x80:
-                            break
+                            break                
                 lastTag = tag.Tag(
                     tagClass=tagClass, tagFormat=tagFormat, tagId=tagId
                     )
@@ -392,6 +417,8 @@ class Decoder:
                 if firstOctet == 128:
                     size = 1
                     length = -1
+                    # set length of the last added tag to -1 (tags are added to the first place)
+                    tagSet[0].length = -1
                 elif firstOctet < 128:
                     length, size = firstOctet, 1
                 else:
@@ -482,6 +509,9 @@ class Decoder:
                     # Assume explicit tagging
                     state = stDecodeTag
                 else:                    
+                    #f = open("error", "w")
+                    #f.write(substrate)
+                    #f.close()
                     raise error.PyAsn1Error(
                         '%s not in asn1Spec: %s' % (tagSet, asn1Spec)                        
                         )

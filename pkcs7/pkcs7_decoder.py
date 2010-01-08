@@ -9,6 +9,7 @@ from asn1_models.X509certificate import *
 from asn1_models.pkcsSignedData import *
 from asn1_models.RSA import *
 from asn1_models.digestInfo import *
+from asn1_models.TSTInfo import *
 
 from debug import *
             
@@ -26,6 +27,26 @@ def decode_msg(message):
         
     return message
 
+def decode_qts(qts_bytes):
+    '''
+    Decodes qualified timestamp
+    '''
+    qts = Qts()
+    decoded = decoder.decode(qts_bytes,asn1Spec=qts)
+    qts = decoded[0]
+    
+    return qts
+
+
+def decode_tst(tst_bytes):
+    '''
+    Decodes Timestamp Token
+    '''
+    tst = TSTInfo()
+    decoded = decoder.decode(tst_bytes,asn1Spec=tst)
+    tst = decoded[0]
+    
+    return tst
 
 
 

@@ -10,8 +10,23 @@ import pkcs7.rsa_verifier
 
 from cert_finder import *
 
+import time
+
 SHA1RSA_NAME = "SHA1/RSA"
 SHA256RSA_NAME = "SHA256/RSA"
+
+# TODO finish
+def _verify_date(certificate): 
+    '''
+    Checks date boundaries in the certificate (actual time must be inside). 
+    '''
+    tbs = certificate.getComponentByName("tbsCertificate")
+    validity = tbs.getComponentByName("validity")
+    start = validity.getComponentByName("notBefore")
+    end = validity.getComponentByName("notAfter")
+    now = time.time()
+    return True
+    
 
 def verify_certificate(cert, trusted_ca_certs):
     if len(trusted_ca_certs) == 0:
@@ -36,6 +51,11 @@ def verify_certificate(cert, trusted_ca_certs):
     signing_cert = find_cert_by_subject(issuer, trusted_ca_certs)    
     if not signing_cert:
         msg = "No certificate found for %s" % issuer
+        logging.error(msg)
+        raise Exception(msg)
+    # check validity of certificate - validity period etc.
+    if not _verify_date(signing_cert):
+        msg = "Signing certificate out of validity period"
         logging.error(msg)
         raise Exception(msg)
     # extract public key from matching certificate

@@ -21,7 +21,7 @@ tagCategoryExplicit = 0x02
 tagCategoryUntagged = 0x04
 
 class Tag:
-    def __init__(self, tagClass, tagFormat, tagId):
+    def __init__(self, tagClass, tagFormat, tagId, length=0):
         if tagId < 0:
             raise error.PyAsn1Error(
                 'Negative tag ID (%s) not allowed' % tagId
@@ -29,6 +29,7 @@ class Tag:
         self.__tag = (tagClass, tagFormat, tagId)
         self.__uniqTag = (tagClass, tagId)
         self.__hashedUniqTag = hash(self.__uniqTag)
+        self.length = length
     def __repr__(self):
         return '%s(tagClass=%s, tagFormat=%s, tagId=%s)' % (
             (self.__class__.__name__,) + self.__tag
@@ -55,7 +56,8 @@ class TagSet:
         self.__superTags = superTags
         self.__hashedSuperTags = hash(superTags)
         self.__lenOfSuperTags = len(superTags)
-        
+        self.EOCcounter = 0
+                
     def __repr__(self):
         return '%s(%s)' % (
             self.__class__.__name__,

@@ -29,6 +29,7 @@ from suds.transport.http import HttpAuthenticated
 import exceptions
 from ds_exceptions import DSException
 import models
+import pkcs7.tstamp_helper
 
 import certs.pem_decoder
 
@@ -108,6 +109,12 @@ class Dispatcher(object):
       message = models.Message(reply.dmReturnedMessageEnvelope)
     else:
       message = None
+    # check the timestamp
+    if message:       
+        if self._check_timestamp(message):
+            message.qts_imprint_matches_hash = True
+        else:
+            message.qts_imprint_matches_hash = False
     return Reply(self._extract_status(reply), message)
 
   def MessageDownload(self, msgid):
@@ -116,6 +123,13 @@ class Dispatcher(object):
       message = models.Message(reply.dmReturnedMessage)
     else:
       message = None
+    # check the timestamp
+    if message:       
+        if self._check_timestamp(message):
+            message.qts_imprint_matches_hash = True
+        else:
+            message.qts_imprint_matches_hash = False
+            
     return Reply(self._extract_status(reply), message)
 
   def DummyOperation(self):
@@ -199,19 +213,19 @@ class Dispatcher(object):
     Returns tuple xml_document, pkcs7_data, verified, cert_verified
     '''
     # decode DER encoding
-    decoded_msg = pkcs7.decoder.decode_msg(der_encoded)
+    decoded_msg = pkcs7.pkcs7_decoder.decode_msg(der_encoded)
     # verify the message
     verified = self._verify_der_msg(decoded_msg)            
     # prepare PKCS7 to supply to the Message
     pkcs_data = self._prepare_PKCS7_data(decoded_msg)
     # extract sent message from pkcs7 document
-    str_msg = pkcs_data.signed_data.message
+    str_msg = pkcs_data.message
     # parse string xml to create xml document
     xml_document = self._xml_parse_msg(str_msg)
     
     # verify certificate
     certificates_ok = False
-    certs = decoded_msg.getComponentByName("certificates")
+    certs = decoded_msg.getComponentByName("content").getComponentByName("certificates")
     for cert in certs:
         if self._verify_certificate(cert):
             certificates_ok = True
@@ -244,8 +258,39 @@ class Dispatcher(object):
         for c in message.pkcs7_data.certificates:
             c.is_verified = True
     
+    if self._check_timestamp(message):
+        message.qts_imprint_matches_hash = True
+    else:
+        message.qts_imprint_matches_hash = False
+        
     return Reply(self._extract_status(reply), message)
   
+  def _check_timestamp(self, message):
+    '''
+    Checks message timestamp - parses and verifies it. Result of verification
+    and TimeStampToken are attached to the message.
+    Method returns flag that says, if the content of messages's dmHash element
+    is the same as the message imprint
+    '''
+    # if message had dmQtimestamp, parse and verify it
+    if message.dmQTimestamp is not None:
+        tstamp_verified, tstamp = pkcs7.tstamp_helper\
+                                        .parse_qts(message.dmQTimestamp)
+        message.tstamp_verified = tstamp_verified
+        message.tstamp_token = tstamp
+        
+        imprint = tstamp.msgImprint.imprint
+        imprint = base64.b64encode(imprint)
+    
+        hashFromMsg = message.dmHash.value
+    
+        if hashFromMsg == imprint:
+            logging.info("Message imprint in timestamp and dmHash value are the same")
+            return True
+        else:
+            logging.error("Message imprint in timestamp and dmHash value differ!")
+            return False
+        
   def _verify_certificate(self, certificate):
     import certs.cert_verifier
     res = certs.cert_verifier.verify_certificate(certificate, self.trusted_certs)
@@ -272,6 +317,10 @@ class Dispatcher(object):
         for c in message.pkcs7_data.certificates:
             c.is_verified = True
             
+    if self._check_timestamp(message):
+        message.qts_imprint_matches_hash = True
+    else:
+        message.qts_imprint_matches_hash = False
     return Reply(self._extract_status(reply), message)
 
   def GetDeliveryInfo(self, msgId):
@@ -280,6 +329,12 @@ class Dispatcher(object):
       message = models.Message(reply.dmDelivery)
     else:
       message = None
+    # check timestamp
+    if message:       
+        if self._check_timestamp(message):
+            message.qts_imprint_matches_hash = True
+        else:
+            message.qts_imprint_matches_hash = False
     return Reply(self._extract_status(reply), message)
      
 

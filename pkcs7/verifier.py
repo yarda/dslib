@@ -94,21 +94,8 @@ def _get_digest_algorithm(signer_info):
     
     return result
 
-def verify_msg(decoded_pkcs7_msg):
-    '''
-    Method verifies decoded message (built from pyasn1 objects)
-    Input is decoded pkcs7 message.
-    '''
-    message = decoded_pkcs7_msg
-    signer_infos = message.getComponentByName("signerInfos")    
-    certificates = message.getComponentByName("certificates")
-    
+def _verify_data(data, certificates, signer_infos):
     result = False
-    
-    msg = message.getComponentByName("signedData").\
-                    getComponentByName("content").\
-                        getComponentByName("signed_content").getContentValue()
-    
     for signer_info in signer_infos:
         id = signer_info.getComponentByName("issuerAndSerialNum").\
                         getComponentByName("serialNumber")._value
@@ -123,13 +110,13 @@ def verify_msg(decoded_pkcs7_msg):
         auth_attributes = signer_info.getComponentByName("authAttributes")            
         
         if auth_attributes is None:
-            data_to_verify = msg
+            data_to_verify = data
         else:
             for attr in auth_attributes:
                 type = str(attr.getComponentByName("type"))
                 if (type == MESSAGE_DIGEST_KEY):
                     value = str(attr.getComponentByName("value"))
-                    calculated = calculate_digest(msg, digest_alg)
+                    calculated = calculate_digest(data, digest_alg)
                     if (value != calculated):
                         raise Exception("Digest in authenticated attributes differs\
                                         from the digest of message!")
@@ -148,5 +135,32 @@ def verify_msg(decoded_pkcs7_msg):
                 result = True
         # Note: here we should not have unknown signing algorithm
         # .....only RSA for now
-    
     return result
+    
+def verify_msg(decoded_pkcs7_msg):
+    '''
+    Method verifies decoded message (built from pyasn1 objects)
+    Input is decoded pkcs7 message.
+    '''
+    message_content = decoded_pkcs7_msg.getComponentByName("content")
+    
+    signer_infos = message_content.getComponentByName("signerInfos")    
+    certificates = message_content.getComponentByName("certificates")    
+    msg = message_content.\
+                    getComponentByName("content").\
+                        getComponentByName("signed_content").getContentValue()
+    
+    return _verify_data(msg, certificates, signer_infos)
+    
+
+def verify_qts(asn1_qts):
+    qts_content = asn1_qts.getComponentByName("content")
+    
+    signer_infos = qts_content.getComponentByName("signerInfos")
+    certificates = qts_content.getComponentByName("certificates")
+    msg = qts_content.\
+                    getComponentByName("encapsulatedContentInfo").\
+                        getComponentByName("eContent")._value
+    
+    return _verify_data(msg, certificates, signer_infos)
+    

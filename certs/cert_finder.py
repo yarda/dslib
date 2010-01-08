@@ -2,6 +2,7 @@
 This module contains methods which can look for a certificate among other 
 certificates.
 '''
+import logging
 
 def find_cert_by_subject(subject, certs):
     '''
@@ -20,8 +21,12 @@ def find_certificate_by_serial(serial_number, certificates):
     Returns the certificate or None.
     '''
     for cert in certificates:
-        sn = cert.getComponentByName("tbsCertificate")\
-                            .getComponentByName("serialNumber")        
-        if sn == serial_number:
-            return cert
+        try:
+            sn = cert.getComponentByName("tbsCertificate")\
+                                .getComponentByName("serialNumber")        
+            if sn == serial_number:
+                return cert
+        except Exception as ex:
+            logging.error(ex)
+            continue
     return None

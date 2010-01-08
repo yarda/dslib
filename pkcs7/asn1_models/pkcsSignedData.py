@@ -8,13 +8,18 @@ from pyasn1.codec.der import decoder, encoder
 from pyasn1 import error
 
 from X509certificate import Certificates
+from att_certificate_v2 import CertificateSet
 from general_types import *
 from oid import oid_map as oid_map
 
 
-class SignedContent(univ.StructuredOctetString):
-    tagSet = univ.OctetString.tagSet.tagExplicitly(
-                        tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0)
+class SignedContent(univ.SequenceOf):#StructuredOctetString):
+    #tagSet = univ.OctetString.tagSet.tagExplicitly(
+    #                    tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0)
+    #                )
+    componentType = univ.OctetString()
+    tagSet = univ.SequenceOf.tagSet.tagImplicitly(
+                        tag.Tag(tag.tagClassUniversal, tag.tagFormatConstructed, 0x04)
                     )
     def getContentValue(self):
         buffer = ''
@@ -27,7 +32,8 @@ class SignedContent(univ.StructuredOctetString):
 class Content(univ.Sequence):
     componentType = namedtype.NamedTypes(
                         namedtype.NamedType("content_type", univ.ObjectIdentifier()),
-                        namedtype.NamedType("signed_content", SignedContent()),                    
+                        namedtype.NamedType("signed_content", SignedContent().\
+                                            subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0)))                 
                     )
 
 class AlgIdentifiers(univ.SetOf):
@@ -35,9 +41,6 @@ class AlgIdentifiers(univ.SetOf):
             
 
 class SignedData(univ.Sequence):
-    tagSet = univ.Sequence.tagSet.tagExplicitly(
-                                                tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0)
-                                                )
     componentType = namedtype.NamedTypes(
                         namedtype.NamedType("version", univ.Integer()),                        
                         namedtype.NamedType("digestAlgs", AlgIdentifiers()),
@@ -45,8 +48,6 @@ class SignedData(univ.Sequence):
                     )
 
 class MsgType(univ.ObjectIdentifier): pass
-
-
 
 class SignVersion(univ.Integer):pass
 
@@ -69,23 +70,21 @@ class AuthAttribute(univ.Sequence):
         namedtype.NamedType('value', AuthAttributeValue())
         )
 
-# attributes are implicitly tagged sequence
-class Attributes(univ.SetOf):
-    tagSet = univ.Sequence.tagSet.tagImplicitly(
-                                                tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0)
-                                                )
-    componentType = AuthAttribute()
 
+class Attributes(univ.SetOf):
+    componentType = AuthAttribute()
 
 class SignerInfo(univ.Sequence): 
     componentType = namedtype.NamedTypes(
                                         namedtype.NamedType("version", SignVersion()),
                                         namedtype.NamedType("issuerAndSerialNum", IssuerAndSerial()),
                                         namedtype.NamedType("digestAlg", AlgorithmIdentifier()),
-                                        namedtype.OptionalNamedType("authAttributes", Attributes()),
+                                        namedtype.OptionalNamedType("authAttributes", Attributes().\
+                                                                                    subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0))),
                                         namedtype.NamedType("encryptAlg", AlgorithmIdentifier()),
                                         namedtype.NamedType("signature", univ.OctetString()),
-                                        namedtype.OptionalNamedType("unauthAttributes", Attributes())
+                                        namedtype.OptionalNamedType("unauthAttributes", Attributes().\
+                                                                                    subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x1)))
                                          )
 
 class SignerInfos(univ.SetOf):
@@ -96,15 +95,71 @@ class Crl(univ.Sequence):
 
 class Crls(univ.Set):
     componentType = Crl()
-    tagSet = univ.SequenceOf.tagSet.tagImplicitly(
-                                             tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x1)
-                                             )
 
+class V1Content(univ.Sequence):   
+    componentType = namedtype.NamedTypes(                        
+                        namedtype.NamedType("version", univ.Integer()),                        
+                        namedtype.NamedType("digestAlgs", AlgIdentifiers()),
+                        namedtype.NamedType("content", Content()),
+                        namedtype.OptionalNamedType("certificates", Certificates().\
+                                                                subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0))),
+                        namedtype.OptionalNamedType("crls", Crls().\
+                                                                subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x1))),
+                        namedtype.NamedType("signerInfos", SignerInfos())
+                )
+
+class Message1(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+                        namedtype.NamedType("type", MsgType()),                        
+                        namedtype.NamedType("signedData", SignedData().\
+                                                                subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0))),
+                        namedtype.OptionalNamedType("certificates", Certificates().\
+                                                                subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0))),
+                        namedtype.OptionalNamedType("crls", Crls().\
+                                                                subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x1))),
+                        namedtype.NamedType("signerInfos", SignerInfos())
+                        )
+    
 class Message(univ.Sequence):
     componentType = namedtype.NamedTypes(
                         namedtype.NamedType("type", MsgType()),
-                        namedtype.NamedType("signedData", SignedData()),
-                        namedtype.OptionalNamedType("certificates", Certificates()),
-                        namedtype.OptionalNamedType("crls", Crls()),
-                        namedtype.NamedType("signerInfos", SignerInfos())
-                )
+                        namedtype.NamedType("content", V1Content().\
+                                            subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0)))
+                        )
+####################################
+####### TIMESTAMPS #################
+####################################
+'''
+version CMSVersion,
+ digestAlgorithms DigestAlgorithmIdentifiers,
+ encapContentInfo EncapsulatedContentInfo,
+ certificates [0] IMPLICIT CertificateSet OPTIONAL,
+ crls [1] IMPLICIT RevocationInfoChoices OPTIONAL,
+ signerInfos SignerInfos
+'''
+class EncapsulatedContent(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+                        namedtype.NamedType("eContentType", univ.ObjectIdentifier()),
+                        namedtype.OptionalNamedType("eContent", univ.OctetString().\
+                                                    subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0))),
+                        
+                        )
+
+class QtsContent(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+                        namedtype.NamedType("version", univ.Integer()),
+                        namedtype.NamedType("digestAlgorithms", AlgIdentifiers()),
+                        namedtype.NamedType("encapsulatedContentInfo", EncapsulatedContent()),
+                        namedtype.OptionalNamedType("certificates", CertificateSet().\
+                                                    subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0))),
+                        namedtype.OptionalNamedType("crls", Crls().\
+                                                    subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x1))),
+                        namedtype.NamedType("signerInfos", SignerInfos()),
+                        )
+
+class Qts(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+                        namedtype.NamedType("type", MsgType()),
+                        namedtype.NamedType("content", QtsContent().\
+                                            subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0)))
+                        )

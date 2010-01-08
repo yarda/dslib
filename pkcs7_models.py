@@ -10,31 +10,34 @@ from pkcs7.asn1_models.X509certificate import *
 from pkcs7.asn1_models.certificate_extensions import *
 from pkcs7.debug import *
 
-class SignedData():    
-    '''
-    Represents SignedData object.
-    Attributes:
-    - version
-    - digest_algorithms
-    - message
-    '''
-    def __init__(self, signed_data):
-        self.version = signed_data.getComponentByName("version")        
-        self.digest_algorithms = self._extract_used_digest_algs(signed_data)
-        self.message = signed_data.getComponentByName("content").getComponentByName("signed_content").getContentValue()                 
-    
-    def _extract_used_digest_algs(self, signed_data):
-        used_digests = signed_data.getComponentByName("digestAlgs")
-        result = []
-        for used_digest in used_digests:           
-            algorithm_key = tuple_to_OID(used_digest.getComponentByName("algorithm")._value)
-            result.append(algorithm_key)  
-        return result
 
+#class SignedData():    
+'''
+Represents SignedData object.
+Attributes:
+- version
+- digest_algorithms
+- message
+'''
+'''
+def __init__(self, signed_data):
+    self.version = signed_data.getComponentByName("version")        
+    self.digest_algorithms = self._extract_used_digest_algs(signed_data)
+    self.message = signed_data.getComponentByName("content").getComponentByName("signed_content").getContentValue()                 
+
+def _extract_used_digest_algs(self, signed_data):
+    used_digests = signed_data.getComponentByName("digestAlgs")
+    result = []
+    for used_digest in used_digests:           
+        algorithm_key = tuple_to_OID(used_digest.getComponentByName("algorithm")._value)
+        result.append(algorithm_key)  
+    return result
+'''
+    
 class Name():
     '''
     Represents Name (structured, tagged).
-    This is a dictionary. Keys are types of names (their OIDs), value is thei value.
+    This is a dictionary. Keys are types of names (their OIDs), value is the value.
     String representation: "1.2.3.5=>CZ, 2.3.6.5=>Ceska posta..."
     Oids are in oid_map, in module oid
     '''
@@ -51,7 +54,7 @@ class Name():
         for key in self.__attributes.keys():
             result += key
             result += ' => '
-            result += self.attributes[key]
+            result += self.__attributes[key]
             result += ','
         return result[:len(result)-1]
         
@@ -92,7 +95,8 @@ class SubjectAltNameExt():
         self.names = []
         #gen_names = asn1_subjectAltName.getComponentByName("subjectAltName")
         for gname in asn1_subjectAltName:
-            self.names.append(gname.getComponent()._value)
+            #self.names.append(gname.getComponent()._value)
+            self.names.append(str(gname.getComponent()))
 
 class BasicConstraintsExt():
     '''
@@ -260,6 +264,9 @@ class Extension():
         self.value = extension.getComponentByName("extnValue")._value
         # if we know the type of value, parse it
         if (self.id == "2.5.29.17"):
+            f = open("err", "w")
+            f.write(self.value)
+            f.close()
             v = decoder.decode(self.value, asn1Spec=GeneralNames())[0]
             val = SubjectAltNameExt(v)
             self.value = val
@@ -405,11 +412,57 @@ class SignerInfo():
 
 class PKCS7_data():    
     '''
-    Holder for PKCS7 data - signed content, certificate, signer information.
+    Holder for PKCS7 data - version, digest algorithms, signed message, certificate, signer information.
     signed_data, certificate, signer_info = instances from pyasn1, will be 
     mapped into plain python objets
     '''
     def __init__(self, asn1_message):
-        self.signed_data = SignedData(asn1_message.getComponentByName("signedData"))
-        self.certificates = [X509Certificate(cert) for cert in asn1_message.getComponentByName("certificates")] 
-        self.signer_infos = [SignerInfo(si) for si in asn1_message.getComponentByName("signerInfos")]
+        msg_content = asn1_message.getComponentByName("content")
+        
+        self.version = msg_content.getComponentByName("version")
+        self.digest_algorithms = self._extract_used_digest_algs(msg_content)
+        self.message = msg_content.getComponentByName("content").getComponentByName("signed_content").getContentValue()                 
+        self.certificates = [X509Certificate(cert) for cert in msg_content.getComponentByName("certificates")] 
+        self.signer_infos = [SignerInfo(si) for si in msg_content.getComponentByName("signerInfos")]
+    
+    def _extract_used_digest_algs(self, signed_data):
+        used_digests = signed_data.getComponentByName("digestAlgs")
+        result = []
+        for used_digest in used_digests:           
+            algorithm_key = tuple_to_OID(used_digest.getComponentByName("algorithm")._value)
+            result.append(algorithm_key)  
+        return result
+
+######
+#TSTinfo
+######
+class MsgImprint():
+    def __init__(self, asn1_msg_imprint):
+        self.alg = str(asn1_msg_imprint.getComponentByName("algId"))
+        self.imprint = str(asn1_msg_imprint.getComponentByName("imprint"))
+
+class TsAccuracy():
+    def __init__(self, asn1_acc):
+        secs = asn1_acc.getComponentByName("seconds")
+        if secs:
+            self.seconds = secs._value
+        milis = asn1_acc.getComponentByName("milis")
+        if milis:
+            self.milis = milis._value
+        micros = asn1_acc.getComponentByName("micros")
+        if micros:
+            self.micros = micros._value
+
+class TimeStampToken():
+    '''
+    Holder for Timestamp Token Info - attribute from the qtimestamp.    
+    '''
+    def __init__(self, asn1_tstInfo):
+        self.version = asn1_tstInfo.getComponentByName("version")._value
+        self.policy = str(asn1_tstInfo.getComponentByName("policy"))
+        self.msgImprint = MsgImprint(asn1_tstInfo.getComponentByName("messageImprint"))
+        self.serialNum = asn1_tstInfo.getComponentByName("serialNum")._value
+        self.genTime = asn1_tstInfo.getComponentByName("genTime")._value
+        self.accuracy = TsAccuracy(asn1_tstInfo.getComponentByName("accuracy"))
+        self.tsa = Name(asn1_tstInfo.getComponentByName("tsa"))
+        #self.extensions = asn1_tstInfo.getComponentByName("extensions")

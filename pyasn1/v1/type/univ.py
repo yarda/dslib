@@ -416,8 +416,9 @@ class SequenceOf(SetOf):
 class StructuredOctetString(SetOf):
     #componentType = OctetString()
     tagSet = tag.initTagSet(
-                            tag.Tag(tag.tagClassUniversal, tag.tagFormatConstructed, 0x04)
-                            )
+        tag.Tag(tag.tagClassUniversal, tag.tagFormatConstructed, 0x04)
+        )
+    
     def __add__(self, value):
         self._componentValues.append(value)
         return self
