@@ -22,10 +22,17 @@ def _verify_date(certificate):
     '''
     tbs = certificate.getComponentByName("tbsCertificate")
     validity = tbs.getComponentByName("validity")
-    start = validity.getComponentByName("notBefore")
-    end = validity.getComponentByName("notAfter")
-    now = time.time()
-    return True
+    start = validity.getComponentByName("notBefore").getComponentByPosition(0)._value
+    
+    format = '%y%m%d%H%M%SZ'
+    start_time = time.strptime(start, format)
+    end = validity.getComponentByName("notAfter").getComponentByPosition(0)._value
+    end_time = time.strptime(end, format)
+    now = time.gmtime()    
+    
+    if (start_time < now) and (end_time > now):    
+        return True
+    return False
     
 
 def verify_certificate(cert, trusted_ca_certs):
