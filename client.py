@@ -199,7 +199,7 @@ class Dispatcher(object):
     Returns tuple xml_document, pkcs7_data, verified, cert_verified
     '''
     # decode DER encoding
-    decoded_msg = pkcs7.decoder.decode_msg(der_encoded)
+    decoded_msg = pkcs7.pkcs7_decoder.decode_msg(der_encoded)
     # verify the message
     verified = self._verify_der_msg(decoded_msg)            
     # prepare PKCS7 to supply to the Message
