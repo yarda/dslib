@@ -8,8 +8,8 @@ import pkcs7.pkcs7_decoder
 import pkcs7.verifier
 import pkcs7.asn1_models.oid
 
-from pkcs7.asn1_models.TSTInfo import *
-from pkcs7.asn1_models.pkcsSignedData import *
+from pkcs7.asn1_models.TST_info import *
+from pkcs7.asn1_models.pkcs_signed_data import *
 
 from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful
 from pyasn1.codec.der import decoder, encoder
@@ -81,27 +81,6 @@ document = parser.parse(string = msg)
 
 '''
 messageImprint je totozny s dmHashom, ten je hash z elementu dmDm
-'''
-'''
-print msg
-
-start = msg.find("<p:dmDm")
-end = msg.find("</p:dmDm>")+len("</p:dmDm>")
-msg_copy = msg[start:end]
-
-tokens = msg_copy.split('<')
-buf = ''
-for token in tokens:
-    buf = buf + '<' + token.strip()
-
-msg_copy = buf[1:]
-
-print msg_copy
-
-import pkcs7.digest as digest
-digest_orig = digest.calculate_digest(msg_copy, "SHA-1")
-
-print base64.b64encode(digest_orig)
 '''
 
 

@@ -11,10 +11,10 @@ from pyasn1 import error
 
 import pkcs7.asn1_models
 
-from asn1_models.X509certificate import *
-from asn1_models.pkcsSignedData import *
+from asn1_models.X509_certificate import *
+from asn1_models.pkcs_signed_data import *
 from asn1_models.RSA import *
-from asn1_models.digestInfo import *
+from asn1_models.digest_info import *
 
 from rsa_verifier import *
 

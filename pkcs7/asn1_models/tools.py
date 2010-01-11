@@ -1,6 +1,5 @@
 '''
-Created on Dec 3, 2009
-
+Some usefull tools for working with ASN1 components.
 '''
 
 from RSA import *

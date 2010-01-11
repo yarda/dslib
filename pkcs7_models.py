@@ -6,7 +6,7 @@ Created on Dec 11, 2009
 from pkcs7.asn1_models.tools import *
 from pkcs7.asn1_models.oid import *
 from pkcs7.asn1_models.tools import *
-from pkcs7.asn1_models.X509certificate import *
+from pkcs7.asn1_models.X509_certificate import *
 from pkcs7.asn1_models.certificate_extensions import *
 from pkcs7.debug import *
 

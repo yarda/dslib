@@ -1,6 +1,5 @@
 '''
-Created on Dec 4, 2009
-
+Model for pkcs#7 v1.5 signedData content
 '''
 import sys, string, base64
 from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful
@@ -13,7 +12,7 @@ from general_types import *
 from oid import oid_map as oid_map
 
 
-class SignedContent(univ.SequenceOf):#StructuredOctetString):
+class SignedContent(univ.SequenceOf):
     #tagSet = univ.OctetString.tagSet.tagExplicitly(
     #                    tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0)
     #                )
@@ -107,18 +106,6 @@ class V1Content(univ.Sequence):
                                                                 subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x1))),
                         namedtype.NamedType("signerInfos", SignerInfos())
                 )
-
-class Message1(univ.Sequence):
-    componentType = namedtype.NamedTypes(
-                        namedtype.NamedType("type", MsgType()),                        
-                        namedtype.NamedType("signedData", SignedData().\
-                                                                subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0))),
-                        namedtype.OptionalNamedType("certificates", Certificates().\
-                                                                subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0))),
-                        namedtype.OptionalNamedType("crls", Crls().\
-                                                                subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x1))),
-                        namedtype.NamedType("signerInfos", SignerInfos())
-                        )
     
 class Message(univ.Sequence):
     componentType = namedtype.NamedTypes(
@@ -127,7 +114,7 @@ class Message(univ.Sequence):
                                             subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0)))
                         )
 ####################################
-####### TIMESTAMPS #################
+####### TIMESTAMP MODEL ############
 ####################################
 '''
 version CMSVersion,

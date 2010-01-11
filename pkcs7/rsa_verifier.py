@@ -9,7 +9,7 @@ import logging
 import types, base64
 import asn1_models
 
-from asn1_models.digestInfo import *
+from asn1_models.digest_info import *
 
 from pyasn1.codec.der import decoder
 from pyasn1 import error

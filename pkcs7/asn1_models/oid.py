@@ -1,7 +1,5 @@
 '''
-Created on Dec 3, 2009
-
-
+Map of OIDs and their names
 '''
 oid_map = {
        "1.3.14.3.2.26" : "SHA-1",

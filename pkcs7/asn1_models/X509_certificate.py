@@ -25,7 +25,7 @@ class Extension(univ.Sequence):
 
 class Extensions(univ.SequenceOf):
     componentType = Extension()
-    sizeSpec = univ.SequenceOf.sizeSpec + constraint.ValueSizeConstraint(1, MAX)
+    sizeSpec = univ.SequenceOf.sizeSpec# + constraint.ValueSizeConstraint(1, MAX)
 
 class SubjectPublicKeyInfo(univ.Sequence):
      componentType = namedtype.NamedTypes(

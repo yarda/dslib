@@ -1,4 +1,10 @@
 '''
+Model of TSTInfo - timestamp token sent back from TSA to the MVCR.
+This token is encapsulated into pkcs7 content and signed by MVCR 
+(Postsignum Qualified QCA)
+'''
+
+'''
 TSTInfo ::= SEQUENCE  {
    version                      INTEGER  { v1(1) },
    policy                       TSAPolicyId,
@@ -22,7 +28,7 @@ from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful
 from pyasn1.codec.der import decoder, encoder
 from pyasn1 import error
 
-from X509certificate import *
+from X509_certificate import *
 from general_types import *
 from oid import oid_map as oid_map
 

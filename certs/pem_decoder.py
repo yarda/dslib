@@ -6,8 +6,8 @@ from pyasn1.codec.der import decoder
 from pyasn1 import error
 
 import pkcs7.asn1_models
-import pkcs7.asn1_models.X509certificate
-from pkcs7.asn1_models.X509certificate import *
+import pkcs7.asn1_models.X509_certificate
+from pkcs7.asn1_models.X509_certificate import *
 
 
 def _get_substrate(lines):
@@ -57,7 +57,8 @@ def parse_certificate(pem_file):
 
 def load_certificates_from_dir(cert_folder):
     '''
-    Tries to extract certificate from each file in the specified directory.
+    Tries to extract X509 certificate from each file in the specified directory.
+    Returns list of X509 certificates
     '''
     if cert_folder[len(cert_folder) - 1] != "/":
         cert_folder += "/"

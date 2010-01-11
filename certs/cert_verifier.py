@@ -1,3 +1,6 @@
+'''
+Module for certificate verification.
+'''
 import logging
 
 from pyasn1.codec.der import encoder
@@ -15,7 +18,7 @@ import time
 SHA1RSA_NAME = "SHA1/RSA"
 SHA256RSA_NAME = "SHA256/RSA"
 
-# TODO finish
+
 def _verify_date(certificate): 
     '''
     Checks date boundaries in the certificate (actual time must be inside). 
@@ -36,6 +39,9 @@ def _verify_date(certificate):
     
 
 def verify_certificate(cert, trusted_ca_certs):
+    '''
+    Verifies the certificate - checks signature and date validity.
+    '''
     if len(trusted_ca_certs) == 0:
         raise Exception("No trusted certificate found")
     # extract tbs certificate
