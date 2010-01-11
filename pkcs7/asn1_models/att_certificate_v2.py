@@ -1,6 +1,6 @@
-import sys, string, base64
-from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful
-from pyasn1.codec.der import decoder, encoder
+import string
+from pyasn1.type import tag,namedtype,namedval,univ,char,useful
+
 from pyasn1 import error
 
 from X509_certificate import *

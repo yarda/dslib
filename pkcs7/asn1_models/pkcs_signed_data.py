@@ -6,7 +6,7 @@ from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful
 from pyasn1.codec.der import decoder, encoder
 from pyasn1 import error
 
-from X509certificate import Certificates
+from X509_certificate import Certificates
 from att_certificate_v2 import CertificateSet
 from general_types import *
 from oid import oid_map as oid_map

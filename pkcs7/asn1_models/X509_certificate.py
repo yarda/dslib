@@ -20,12 +20,10 @@ class Extension(univ.Sequence):
         namedtype.NamedType('extnValue', univ.OctetString())
         #namedtype.NamedType('extnValue', ExtensionValue())
         )
-   
-
 
 class Extensions(univ.SequenceOf):
     componentType = Extension()
-    sizeSpec = univ.SequenceOf.sizeSpec# + constraint.ValueSizeConstraint(1, MAX)
+    sizeSpec = univ.SequenceOf.sizeSpec
 
 class SubjectPublicKeyInfo(univ.Sequence):
      componentType = namedtype.NamedTypes(
