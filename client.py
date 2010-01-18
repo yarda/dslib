@@ -40,6 +40,13 @@ class Dispatcher(object):
   Dispatcher is a simple client that handles one of these parts
   """
 
+  # this is a map between a signed version of a method and its
+  # normal counterpart which should be used to decode the content after it's
+  # unpacked from pkcs7 
+  SIGNED_TO_DECODING_METHOD = {"SignedMessageDownload":"MessageDownload",
+                               "SignedSentMessageDownload":"MessageDownload",
+                               "GetSignedDeliveryInfo":"GetDeliveryInfo",}
+
   def __init__(self, ds_client, wsdl_url, soap_url=None, proxy=None, trusted_certs_dir=None):
     """proxy can be a string 'hostname:port' or None"""
     self.ds_client = ds_client # this is a Client instance; username, password, etc. will be take from it
@@ -183,30 +190,39 @@ class Dispatcher(object):
         logging.debug("Verification of pkcs7 message failed")
     return verification_result
     
-  def _xml_parse_msg(self, string_msg):
+  def _xml_parse_msg(self, string_msg, method):
     import suds.sax.parser as p
     parser = p.Parser()
-    document = parser.parse(string = string_msg)
-    return document
+    soapbody = parser.parse(string = string_msg)
+    meth_name = method.method.name
+    decoding_method = Dispatcher.SIGNED_TO_DECODING_METHOD.get(meth_name, None)
+    if not decoding_method:
+      raise Exception("Decoding of XML result of '%s' is not supported." % meth_name)
+    internal_method = getattr(self.soap_client.service, decoding_method).method  
+    document = internal_method.binding.input
+    soapbody = document.multiref.process(soapbody)
+    nodes = document.replycontent(internal_method, soapbody)
+    rtypes = document.returned_types(internal_method)
+    if len(rtypes) > 1:
+        result = document.replycomposite(rtypes, nodes)
+        return result
+    if len(rtypes) == 1:
+        if rtypes[0].unbounded():
+            result = document.replylist(rtypes[0], nodes)
+            return result
+        if len(nodes):
+            unmarshaller = document.unmarshaller()
+            resolved = rtypes[0].resolve(nobuiltin=True)
+            result = unmarshaller.process(nodes[0], resolved)
+            return result
+    return None
+    
 
-  def _create_message_instance(self, xml_document, message_type):
-    m = None
-    if (message_type == "Message"):
-        m = models.Message(xml_document = xml_document, 
-                   path_to_content=models.Message.SIG_MESSAGE_CONTENT_PATH)
-    if (message_type == "DeliveryInfo"):
-        m = models.Message(xml_document = xml_document, 
-                   path_to_content=models.Message.SIG_DELIVERY_CONTENT_PATH)
-    if ( m == None):
-        print "Unknown type of message: %s" % message_type
-        print "Expected: 'Message' or 'DeliveryInfo'"
-    return m
-  
   def _prepare_PKCS7_data(self, decoded_msg):    
     pkcs_data = models.PKCS7_data(decoded_msg)
     return pkcs_data
   
-  def _generic_get_signed(self, der_encoded):
+  def _generic_get_signed(self, der_encoded, method):
     '''
     "Base" of methods downloading signed versions of messages and
     delivery information.
@@ -221,7 +237,7 @@ class Dispatcher(object):
     # extract sent message from pkcs7 document
     str_msg = pkcs_data.message
     # parse string xml to create xml document
-    xml_document = self._xml_parse_msg(str_msg)
+    xml_document = self._xml_parse_msg(str_msg, method)
     
     # verify certificate
     certificates_ok = False
@@ -246,9 +262,10 @@ class Dispatcher(object):
     reply = method.__call__(msg_id)
     der_encoded = base64.b64decode(reply.dmSignature)  
    
-    xml_document, pkcs_data, verified, cert_verified  = self._generic_get_signed(der_encoded)
+    xml_document, pkcs_data, verified, cert_verified  = self._generic_get_signed(der_encoded, method)
     
-    message = self._create_message_instance(xml_document, "Message")        
+    #message = self._create_message_instance(xml_document, "Message")
+    message = xml_document.dmReturnedMessage
     message.pkcs7_data = pkcs_data
     if (verified):
         message.is_verified = True
@@ -303,11 +320,12 @@ class Dispatcher(object):
     return self._signed_msg_download("SignedSentMessageDownload", msgId)
     
   def GetSignedDeliveryInfo(self, msgId):
-    reply = self.soap_client.service.GetSignedDeliveryInfo(msgId)
+    method = self.soap_client.service.GetSignedDeliveryInfo
+    reply = method(msgId)
     der_encoded = base64.b64decode(reply.dmSignature)  
-    xml_document, pkcs_data, verified, cert_verified  = self._generic_get_signed(der_encoded)
+    xml_document, pkcs_data, verified, cert_verified  = self._generic_get_signed(der_encoded, method)
     # create Message instance to return 
-    message = self._create_message_instance(xml_document, "DeliveryInfo")        
+    message = xml_document.dmDelivery        
     message.pkcs7_data = pkcs_data
     if (verified):
         message.is_verified = True
