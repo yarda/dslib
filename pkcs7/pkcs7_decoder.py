@@ -1,18 +1,14 @@
-import sys, string, base64
-from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful
-from pyasn1.codec.der import decoder, encoder
+'''
+Decoding of PKCS7 messages
+'''
+from pyasn1.codec.der import decoder
 from pyasn1 import error
 
 import pkcs7.asn1_models
 
-from asn1_models.X509_certificate import *
 from asn1_models.pkcs_signed_data import *
-from asn1_models.RSA import *
 from asn1_models.digest_info import *
 from asn1_models.TST_info import *
-
-from debug import *
-            
 
 def decode_msg(message):    
     '''

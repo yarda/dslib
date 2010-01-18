@@ -56,8 +56,7 @@ class TagSet:
         self.__superTags = superTags
         self.__hashedSuperTags = hash(superTags)
         self.__lenOfSuperTags = len(superTags)
-        self.EOCcounter = 0
-                
+                        
     def __repr__(self):
         return '%s(%s)' % (
             self.__class__.__name__,

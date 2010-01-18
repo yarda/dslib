@@ -1,3 +1,5 @@
+majorVersionId = '1'
+'''
 import os
 import sys
 import string
@@ -25,3 +27,4 @@ if os.environ.has_key('PYASN1_API_VERSION'):
         switchApiVersion(v)   # do not load any API
 else:
     switchApiVersion(subDirs[-1])  # take the most recent version
+'''

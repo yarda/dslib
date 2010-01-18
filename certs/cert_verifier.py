@@ -60,8 +60,8 @@ def verify_certificate(cert, trusted_ca_certs):
         raise Exception("Unknown certificate signature algorithm: %s" % sig_alg)
 
     # look for signing certificate among certificates
-    issuer = str(tbs.getComponentByName("issuer"))    
-    signing_cert = find_cert_by_subject(issuer, trusted_ca_certs)    
+    issuer = str(tbs.getComponentByName("issuer"))        
+    signing_cert = find_cert_by_subject(issuer, trusted_ca_certs)        
     if not signing_cert:
         msg = "No certificate found for %s" % issuer
         logging.error(msg)

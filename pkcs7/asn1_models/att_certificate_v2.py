@@ -1,5 +1,5 @@
 import string
-from pyasn1.type import tag,namedtype,namedval,univ,char,useful
+from pyasn1.type import tag,namedtype,univ
 
 from pyasn1 import error
 

@@ -2,9 +2,8 @@
 Created on Dec 3, 2009
 
 '''
-import sys, string, base64
-from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful
-from pyasn1.codec.der import decoder, encoder
+import string
+from pyasn1.type import tag,namedtype,univ,useful
 from pyasn1 import error
 
 from tools import *
@@ -38,6 +37,9 @@ class Time(univ.Choice):
         namedtype.NamedType('utcTime', useful.UTCTime()),
         namedtype.NamedType('generalTime', useful.GeneralizedTime())
         )
+    
+    def __str__(self):
+        return str(self.getComponent())
     
 class Validity(univ.Sequence):
     componentType = namedtype.NamedTypes(

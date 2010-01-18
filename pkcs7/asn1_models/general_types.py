@@ -2,7 +2,7 @@
 Created on Dec 9, 2009
 
 '''
-from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful
+from pyasn1.type import tag,namedtype,namedval,univ,char,useful
 from pyasn1 import error
 
 from tools import *
@@ -77,7 +77,7 @@ class Name(univ.Choice):
     
     def __str__(self):
         return str(self.getComponent())
-           
+        
                
 class AlgorithmIdentifier(univ.Sequence):
     componentType = namedtype.NamedTypes(

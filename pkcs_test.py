@@ -21,6 +21,7 @@ import models
 from certs.cert_verifier import *
 from certs.pem_decoder import *
 
+from pkcs7.asn1_models.crl import *
 
 def getTimestampFromQts(dmQTimestamp):
     '''
@@ -47,8 +48,7 @@ def getTimestampFromQts(dmQTimestamp):
     
     t = models.TimeStampToken(tstinfo)
     return vr, t
-    
-    
+
 
 '''
 subory v test_msgs obsahuju binarnu formu prijatych podpisanych sprav
@@ -133,5 +133,34 @@ if qts_verified:
     print "TEST: Timestamp created: %s" % genTime
     print "TEST: TS authority: %s" % tstinfo.tsa
     print "TEST: TS serial: %s" % tstinfo.serialNum
+
+
+from certs.crl_store import *
+
+certificate = m.pkcs7_data.certificates[0]
+issuer = str(certificate.tbsCertificate.issuer)
+
+dps = extract_crl_distpoints(certificate)
+
+url = dps[0][1]
+'''
+a = CRL_cache()
+added = a.add_issuer(issuer)
+added.add_dist_point(url)
+added.init_dist_point(url)
+added.refresh_dist_point(url)
+
+a.pickle()
+'''
+revoked = 209144
+
+b = restore_cache()
+if b is not None:   
+
+    i = b.get_issuer(issuer)
+    i.refresh_dist_point(url)
+    
+    print b.is_certificate_revoked(issuer, revoked)
+    
 
 

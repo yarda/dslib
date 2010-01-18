@@ -23,9 +23,8 @@ TSTInfo ::= SEQUENCE  {
    tsa                          [0] GeneralName          OPTIONAL,
    extensions                   [1] IMPLICIT Extensions   OPTIONAL  }
 '''
-import sys, string, base64
-from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful
-from pyasn1.codec.der import decoder, encoder
+import string
+from pyasn1.type import tag,namedtype,univ,char,useful
 from pyasn1 import error
 
 from X509_certificate import *
@@ -34,7 +33,6 @@ from oid import oid_map as oid_map
 
 from certificate_extensions import *
 
-#.subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x0))
 
 class MessageImprint(univ.Sequence):
     componentType = namedtype.NamedTypes(
@@ -66,7 +64,6 @@ class TSTInfo(univ.Sequence):
                         namedtype.OptionalNamedType("accuracy", Accuracy()),
                         namedtype.DefaultedNamedType("ordering", univ.Boolean('False')),
                         namedtype.OptionalNamedType("nonce", univ.Integer()),
-                        namedtype.OptionalNamedType("tsa", TSAName().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0))),
-                        #namedtype.OptionalNamedType("tsa", GeneralName().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0))),#RDNSequence().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0))),
+                        namedtype.OptionalNamedType("tsa", TSAName().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0))),                        
                         namedtype.OptionalNamedType("extensions", univ.Sequence().subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x1)))
                     )

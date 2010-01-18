@@ -231,12 +231,18 @@ class CRLdistPointExt():
         dp = asn1_crl_dp.getComponentByName("distPoint")
         if dp is not None:
             self.dist_point = str(dp.getComponent())
+        else:
+            self.dist_point = None
         reasons = asn1_crl_dp.getComponentByName("reasons")
         if reasons is not None:
             self.reasons = Reasons(reasons)
+        else:
+            self.reasons = None
         issuer = asn1_crl_dp.getComponentByName("issuer")
         if issuer is not None:
             self.issuer = str(issuer)
+        else:
+            self.issuer = None
 
 class QcStatementExt():
     '''

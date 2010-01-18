@@ -15,7 +15,7 @@ def find_cert_by_subject(subject, certs):
             return cert
     return None
 
-def find_certificate_by_serial(serial_number, certificates):
+def find_cert_by_serial(serial_number, certificates):
     '''
     Looks for certificate with serial_number.
     Returns the certificate or None.
@@ -29,4 +29,18 @@ def find_certificate_by_serial(serial_number, certificates):
         except Exception as ex:
             logging.error(ex)
             continue
+    return None
+
+def find_cert_in_crl(cert_sn, crl):
+    '''
+    Looks for certificate with specified serial number in
+    certificate revocation list.
+    '''
+    revoked = crl.getComponentByName("tbsCertList").\
+                getComponentByName("revokedCertificates")
+    for cert in revoked:
+        csn = cert.getComponentByName("userCertificate")._value
+        if csn == cert_sn:
+            return csn
+    
     return None

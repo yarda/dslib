@@ -1,31 +1,23 @@
 '''
-Created on Dec 9, 2009
-
+Verifying of PKCS7 messages
 '''
 import logging
 
-import sys, string, base64
-from pyasn1.type import tag,namedtype,namedval,univ,constraint,char,useful
-from pyasn1.codec.der import decoder, encoder
+import string
+from pyasn1.codec.der import encoder
 from pyasn1 import error
 
 import pkcs7.asn1_models
-
+from asn1_models.tools import *
+from asn1_models.oid import *
 from asn1_models.X509_certificate import *
 from asn1_models.pkcs_signed_data import *
 from asn1_models.RSA import *
 from asn1_models.digest_info import *
 
 from rsa_verifier import *
-
 from debug import *
-
-from asn1_models.tools import *
-
-from asn1_models.oid import *
-
 from digest import *
-
 from certs.cert_finder import *
 
 MESSAGE_DIGEST_KEY = "1.2.840.113549.1.9.4"
@@ -99,7 +91,7 @@ def _verify_data(data, certificates, signer_infos):
     for signer_info in signer_infos:
         id = signer_info.getComponentByName("issuerAndSerialNum").\
                         getComponentByName("serialNumber")._value
-        cert = find_certificate_by_serial(id, certificates)
+        cert = find_cert_by_serial(id, certificates)
         
         if cert is None:
             raise Exception("No certificate found for signer %d" % id)

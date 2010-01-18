@@ -26,6 +26,11 @@ oid_map = {
        "2.5.29.31" : "id-ce-CRLDistributionPoints ",
        "2.5.29.35" : "id-ce-authorityKeyIdentifier ",
        
+       "2.5.29.20" : "CRL Number",
+       "2.5.29.21" : "Reason Code",
+       "2.5.29.24" : "Invalidity Data",
+       
+       
        "1.2.840.113549.1.9.3" : "contentType",
        "1.2.840.113549.1.9.4" : "messageDigest",
        "1.2.840.113549.1.9.5" : "Signing Time"       
