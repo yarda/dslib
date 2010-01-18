@@ -173,7 +173,6 @@ def SignedSentMessageDownload():
     print envelope.dmID
     reply = ds_client.SignedSentMessageDownload(envelope.dmID)    
     print reply.status
-    #print reply.data
     print "Verified message: %s" % reply.data.is_verified
     print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified
     break
@@ -184,7 +183,6 @@ def GetSignedDeliveryInfo():
     print envelope.dmID
     reply = ds_client.GetSignedDeliveryInfo(envelope.dmID)    
     print reply.status
-    #print reply.data
     print "Verified message: %s" % reply.data.is_verified
     print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified
     break

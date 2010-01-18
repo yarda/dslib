@@ -263,9 +263,11 @@ class Dispatcher(object):
     der_encoded = base64.b64decode(reply.dmSignature)  
    
     xml_document, pkcs_data, verified, cert_verified  = self._generic_get_signed(der_encoded, method)
-    
-    #message = self._create_message_instance(xml_document, "Message")
-    message = xml_document.dmReturnedMessage
+    if method.method.name in ("SignedSentMessageDownload","SignedMessageDownload"):
+      message = models.Message(xml_document.dmReturnedMessage)
+    else:
+      raise Exception("Unsupported signed method '%s'" % method.method.name) 
+      
     message.pkcs7_data = pkcs_data
     if (verified):
         message.is_verified = True
@@ -325,7 +327,7 @@ class Dispatcher(object):
     der_encoded = base64.b64decode(reply.dmSignature)  
     xml_document, pkcs_data, verified, cert_verified  = self._generic_get_signed(der_encoded, method)
     # create Message instance to return 
-    message = xml_document.dmDelivery        
+    message = models.Message(xml_document.dmDelivery)        
     message.pkcs7_data = pkcs_data
     if (verified):
         message.is_verified = True
