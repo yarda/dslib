@@ -296,7 +296,7 @@ def restore_cache():
         map = []
         fnames = os.listdir(CRL_DUMP_DIR)
         for fname in fnames:        
-            if fname.startswith(".iss_"):
+            if fname.startswith(CRL_ISSUER_PREF):
                 # remember number of processed file
                 # to know the order in which the issuers
                 # were added to cache
