@@ -87,6 +87,7 @@ def load_certificates_from_dir(cert_folder):
     files = os.listdir(cert_folder)
     result = []
     for file in files:
+        certificate = None
         if file.endswith(PEM_SUFFIX):
             certificate = parse_pem(cert_folder + file)
         if file.endswith(CER_SUFFIX):
