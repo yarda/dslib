@@ -217,6 +217,16 @@ class Message(Model):
           return True
       else:
           return False
+        
+  def is_verified(self):
+    return self.is_verified
+  
+  def is_signature_verified(self):
+    """was the certificate used for signing the message verified"""
+    if hasattr(self, "pkcs7_data") and hasattr(self.pkcs7_data, "certificates"):
+      if self.pkcs7_data.certificates:
+        if hasattr(self.pkcs7_data.certificates[0], "is_verified"):
+          return message.pkcs7_data.certificates[0].is_verified
 
 
   # ---------- private methods ----------
