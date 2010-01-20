@@ -31,7 +31,7 @@ from ds_exceptions import DSException
 import models
 import pkcs7.tstamp_helper
 
-import certs.pem_decoder
+import certs.cert_loader
 
 class Dispatcher(object):
   """
@@ -63,7 +63,7 @@ class Dispatcher(object):
       self.soap_client = SudsClient(self.wsdl_url, transport=transport, location=self.soap_url)
     self.trusted_certs = []
     if trusted_certs_dir is not None:
-        self.trusted_certs = certs.pem_decoder.load_certificates_from_dir(trusted_certs_dir)
+        self.trusted_certs = certs.cert_loader.load_certificates_from_dir(trusted_certs_dir)
 
     
   def __getattr__(self, name):

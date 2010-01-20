@@ -9,6 +9,8 @@ import pkcs7.asn1_models
 import pkcs7.asn1_models.X509_certificate
 from pkcs7.asn1_models.X509_certificate import *
 
+PEM_SUFFIX = ".pem"
+CER_SUFFIX = ".cer"
 
 def _get_substrate(lines):
     '''
@@ -38,7 +40,7 @@ def _get_substrate(lines):
     return substrate
 
 
-def parse_certificate(pem_file):
+def parse_pem(pem_file):
     '''
     Parses PEM certificate.
     Returns pyasn Certificate object or None, if parsing failed.
@@ -46,6 +48,25 @@ def parse_certificate(pem_file):
     f = open(pem_file, "r")
     lines = f.readlines()
     substrate = _get_substrate(lines)
+    pattern = Certificate()
+    try:
+        certificate = decoder.decode(substrate, asn1Spec=pattern)[0]
+    except Exception, e:
+        print e.message
+        return None
+    
+    return certificate
+
+def parse_cer(der_file):
+    '''
+    Parses certificate file in DER format.
+    Returns pyasn Certificate or None, if parsing failed
+    '''
+    f = open(der_file, "r")
+    lines = f.readlines()
+    substrate = ''
+    for line in lines:
+        substrate += line    
     pattern = Certificate()
     try:
         certificate = decoder.decode(substrate, asn1Spec=pattern)[0]
@@ -66,7 +87,11 @@ def load_certificates_from_dir(cert_folder):
     files = os.listdir(cert_folder)
     result = []
     for file in files:
-        certificate = parse_certificate(cert_folder + file)
+        if file.endswith(PEM_SUFFIX):
+            certificate = parse_pem(cert_folder + file)
+        if file.endswith(CER_SUFFIX):
+            certificate = parse_cer(cert_folder + file)
+            
         if certificate:
             result.append(certificate)
     return result
