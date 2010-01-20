@@ -270,7 +270,7 @@ class Dispatcher(object):
       
     message.pkcs7_data = pkcs_data
     if (verified):
-        message.is_verified = True
+        message.is_verified = False #True
     
     # TODO: distinguish among certificates (may be more signers, but highly improbable)
     if cert_verified:

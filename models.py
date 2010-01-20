@@ -183,7 +183,7 @@ class Message(Model):
   SIG_MESSAGE_CONTENT_PATH =  "MessageDownloadResponse/dmReturnedMessage" 
   
   # has meaning only if msg contains pkcs7_data
-  is_verified = False
+  is_verified = None
   # all PKCS7 data are stored in pkcs7_data attribute
   pkcs7_data = None
   
@@ -217,6 +217,11 @@ class Message(Model):
           return True
       else:
           return False
+
+  def message_verification_attempted(self):
+    if self.is_verified == None:
+      return False
+    return True
         
   def is_message_verified(self):
     return self.is_verified
