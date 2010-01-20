@@ -315,7 +315,6 @@ class Dispatcher(object):
     try:
       res = certs.cert_verifier.verify_certificate(certificate, self.trusted_certs)
     except Exception, e:
-      print dir(e)
       if e.message == "No trusted certificate found":
         res = False
       else:
