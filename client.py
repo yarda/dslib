@@ -312,7 +312,14 @@ class Dispatcher(object):
         
   def _verify_certificate(self, certificate):
     import certs.cert_verifier
-    res = certs.cert_verifier.verify_certificate(certificate, self.trusted_certs)
+    try:
+      res = certs.cert_verifier.verify_certificate(certificate, self.trusted_certs)
+    except Exception, e:
+      print dir(e)
+      if e.message == "No trusted certificate found":
+        res = False
+      else:
+        raise e
     return res
      
   def SignedMessageDownload(self, msgId):

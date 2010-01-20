@@ -218,7 +218,7 @@ class Message(Model):
       else:
           return False
         
-  def is_verified(self):
+  def is_message_verified(self):
     return self.is_verified
   
   def is_signature_verified(self):
@@ -226,7 +226,7 @@ class Message(Model):
     if hasattr(self, "pkcs7_data") and hasattr(self.pkcs7_data, "certificates"):
       if self.pkcs7_data.certificates:
         if hasattr(self.pkcs7_data.certificates[0], "is_verified"):
-          return message.pkcs7_data.certificates[0].is_verified
+          return self.pkcs7_data.certificates[0].is_verified
 
 
   # ---------- private methods ----------
