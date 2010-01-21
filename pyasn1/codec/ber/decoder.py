@@ -438,7 +438,7 @@ class Decoder:
                     size = size + 1
                 state = stGetValueDecoder
                 substrate = substrate[size:]
-                if length != -1 and len(substrate) < length:
+                if length != -1 and len(substrate) < length:                    
                     raise error.SubstrateUnderrunError(
                         '%d-octet short' % (length - len(substrate))
                         )

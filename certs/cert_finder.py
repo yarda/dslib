@@ -15,6 +15,7 @@ def find_cert_by_subject(subject, certs):
             return cert
     return None
 
+
 def find_cert_by_serial(serial_number, certificates):
     '''
     Looks for certificate with serial_number.
@@ -30,6 +31,20 @@ def find_cert_by_serial(serial_number, certificates):
             logging.error(ex)
             continue
     return None
+
+def find_cert_by_iss_sn(certs, issuer, sn):
+  '''
+  Looks for certificate with specified issuer and serial number.
+  Difference is that certs are objects pkcs7_models.X509certificate,
+  not pyAsn components.
+  '''
+  for cert in certs:
+    logging.debug("Cert issuer/from DER: %s" % str(cert.tbsCertificate.issuer))
+    logging.debug("Cert issuer/from python obj: %s" % issuer)      
+    if str(cert.tbsCertificate.issuer) == issuer:
+      if cert.tbsCertificate.serial_number == sn:
+        return cert
+  return None 
 
 def find_cert_in_crl(cert_sn, crl):
     '''
