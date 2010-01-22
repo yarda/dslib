@@ -194,6 +194,9 @@ class Dispatcher(object):
     return verification_result
     
   def _xml_parse_msg(self, string_msg, method):
+    '''
+    Parses content of pkcs7 message. Outputs xml document.
+    '''
     import suds.sax.parser as p
     parser = p.Parser()
     soapbody = parser.parse(string = string_msg)
@@ -221,7 +224,10 @@ class Dispatcher(object):
     return None
     
 
-  def _prepare_PKCS7_data(self, decoded_msg):    
+  def _prepare_PKCS7_data(self, decoded_msg): 
+    '''
+    Creates objects representing pkcs7 message.
+    '''   
     pkcs_data = models.PKCS7_data(decoded_msg)
     return pkcs_data
   
@@ -336,6 +342,9 @@ class Dispatcher(object):
             return False
         
   def _verify_certificate(self, certificate):
+    '''
+    Verfies certificate by calling method from cert_verifier
+    '''
     import certs.cert_verifier
     try:
       res = certs.cert_verifier.verify_certificate(certificate, self.trusted_certs)

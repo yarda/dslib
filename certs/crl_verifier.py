@@ -35,7 +35,7 @@ def verify_crl(crl, certificate):
         raise Exception("Unknown certificate signature algorithm: %s" % sig_alg)
     
     alg, key_material = pkcs7.verifier._get_key_material(certificate)
-    # decrypt signature in explored certificate
+    
     signature = crl.getComponentByName("signatureValue").toOctets()
     
     # problem - very weird RSA signature format -looks like it 
