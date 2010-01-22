@@ -19,7 +19,7 @@ import models
 
 
 from certs.cert_verifier import *
-from certs.pem_decoder import *
+from certs.cert_loader import *
 
 from pkcs7.asn1_models.crl import *
 
@@ -134,7 +134,7 @@ if qts_verified:
     print "TEST: TS authority: %s" % tstinfo.tsa
     print "TEST: TS serial: %s" % tstinfo.serialNum
 
-
+# try something from crls
 from certs.crl_store import *
 
 certificate = m.pkcs7_data.certificates[0]
@@ -143,24 +143,25 @@ issuer = str(certificate.tbsCertificate.issuer)
 dps = extract_crl_distpoints(certificate)
 
 url = dps[0][1]
-'''
-a = CRL_cache()
-added = a.add_issuer(issuer)
-added.add_dist_point(url)
-added.init_dist_point(url)
-added.refresh_dist_point(url)
-
-a.pickle()
-'''
-revoked = 209144
 
 b = restore_cache()
-if b is not None:   
-
+if b is None:
+    print "CRL cache not found locally, downloading..."
+    b = CRL_cache()
+    added = b.add_issuer(issuer)
+    added.add_dist_point(url)
+    added.init_dist_point(url, verification=cert)
+    print "Refreshing distribution point..."
+    added.refresh_dist_point(url)
+    print "Done"
+else:
+    print "CRL cache read from local store"
     i = b.get_issuer(issuer)
     i.refresh_dist_point(url)
-    
-    print b.is_certificate_revoked(issuer, revoked)
-    
 
+revoked = 330011
+print "Date of revocation of cetificate %s: %s" % (str(revoked), b.is_certificate_revoked(issuer, revoked))    
+
+
+b.pickle()
 
