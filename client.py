@@ -160,7 +160,7 @@ class Dispatcher(object):
 
   def CreateMessage(self, envelope, files):
     """returns message id as reply.data"""
-    soap_envelope = self.soap_client.factory.create("dmEnvelope")
+    soap_envelope = self.soap_client.factory.create("tMessageEnvelopeSub")
     envelope.copy_to_soap_object(soap_envelope)
     soap_files = self.soap_client.factory.create("dmFiles")
     for f in files:
