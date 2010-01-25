@@ -189,6 +189,10 @@ def GetSignedDeliveryInfo():
 
 
 if __name__ == "__main__":
+  #import logging
+  #logging.basicConfig(level=logging.INFO)
+  #logging.getLogger('suds').setLevel(logging.DEBUG)
+  
   def list_tests(tests):
     print "Available tests:"
     for i,test in enumerate(tests):
@@ -260,6 +264,4 @@ if __name__ == "__main__":
       print
   else:
     list_tests(tests)
-  #import logging
-  #logging.basicConfig(level=logging.INFO)
-  #logging.getLogger('suds.transport.http').setLevel(logging.DEBUG)
+
