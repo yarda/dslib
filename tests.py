@@ -214,7 +214,7 @@ def ChangeISDSPassword():
 
 if __name__ == "__main__":
   #import logging
-  #logging.basicConfig(level=logging.INFO)
+  #logging.basicConfig(level=logging.DEBUG)
   #logging.getLogger('suds').setLevel(logging.DEBUG)
   
   def list_tests(tests):
