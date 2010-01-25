@@ -299,7 +299,7 @@ class Dispatcher(object):
       
     message.pkcs7_data = pkcs_data
     if (verified):
-        message.is_verified = False #True
+        message.is_verified = True
     
     # set verified attribute of certificates
     for c in message.pkcs7_data.certificates:
