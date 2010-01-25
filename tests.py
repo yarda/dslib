@@ -53,6 +53,7 @@ def MessageDownload():
     print "Attachments:"
     for f in message.dmFiles:
       print "  '%s' saved" % f.save_file("./")
+    break # just the first one
 
 
 @active
