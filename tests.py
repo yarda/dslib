@@ -53,6 +53,7 @@ def MessageDownload():
     print "Attachments:"
     for f in message.dmFiles:
       print "  '%s' saved" % f.save_file("./")
+    break # just the first one
 
 
 @active
@@ -209,6 +210,10 @@ def ChangeISDSPassword():
 
 
 if __name__ == "__main__":
+  #import logging
+  #logging.basicConfig(level=logging.INFO)
+  #logging.getLogger('suds').setLevel(logging.DEBUG)
+  
   def list_tests(tests):
     print "Available tests:"
     for i,test in enumerate(tests):
@@ -281,6 +286,4 @@ if __name__ == "__main__":
       print
   else:
     list_tests(tests)
-  #import logging
-  #logging.basicConfig(level=logging.INFO)
-  #logging.getLogger('suds.transport.http').setLevel(logging.DEBUG)
+

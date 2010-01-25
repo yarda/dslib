@@ -2,7 +2,7 @@
 <!--  *********************************************************************
      WSDL pro služby manipulujícími s datovými schránkami 
      
-                          23.6.2009   verze 2.2 novela 
+                          verze 2.7  
       *********************************************************************                    
 Seznam služeb: 
 ==============
@@ -25,13 +25,11 @@ Seznam služeb:
   ClearEffectiveOVM
   Activate
   CreateDataBoxPFOInfo
-  SetVault
-  ClearVault
+  GetDataBoxUsers
+  
                           
  změny:
    3.2.2009  verze 0.1
-  23.2.2009  verze 0.2   - do CreateDataBoxRequest přidán další part name="dbFormerNames"
-                          - sjednoceny jména parts z dbUser na dbUserInfo   
   24.2.2009  verze 0.3   - změna namespace                        
    2.3.2009  verze 0.4   - změna zápisu importu XSD                                 
   20.3.2009  verze 1.0   - formální úpravy vyhovující WS-I Basic Profile    
@@ -41,7 +39,10 @@ Seznam služeb:
                          - přidána dvojice služeb [Set|Clear]EffectiveOVM
   11.6.2009  verze 2.1   - přidána WS Activate
                          - přidána WS CreateDataBoxPFOInfo
-  23.6.2009  verze 2.2   - přidána dvojice služeb [Set|Clear]Vault                     
+  23.6.2009  verze 2.2   - přidána dvojice služeb [Set|Clear]Vault
+  1.10.2009  verze 2.5   - zrušena dvojice služeb [Set|Clear]Vault
+  1.11.2009  verze 2.6   - 
+  1.1.2010   verze 2.7   - přesunuta WS GetDataBoxUsers ze zrušeného db_supplementary.wsdl                     
  ************************************************************************ -->
 
 <definitions name="ISDS_db" targetNamespace="http://isds.czechpoint.cz/v20" 
@@ -183,18 +184,11 @@ Seznam služeb:
     <part name="parameter" element="tns:CreateDataBoxPFOInfoResponse" />        
   </message>
 
-  <message name="SetVaultRequest">
-    <part name="parameter" element="tns:SetVault" />        
+  <message name="GetDataBoxUsersRequest">
+    <part name="parameter" element="tns:GetDataBoxUsers" />        
   </message>
-  <message name="SetVaultResponse">
-    <part name="parameter" element="tns:SetVaultResponse" />        
-  </message>
-
-  <message name="ClearVaultRequest">
-    <part name="parameter" element="tns:ClearVault" />        
-  </message>
-  <message name="ClearVaultResponse">
-    <part name="parameter" element="tns:ClearVaultResponse" />        
+  <message name="GetDataBoxUsersResponse">
+    <part name="parameter" element="tns:GetDataBoxUsersResponse" />        
   </message>
 
   <!-- ******************************************************************* -->
@@ -289,14 +283,9 @@ Seznam služeb:
       <output message="tns:CreateDataBoxPFOInfoResponse"/>
     </operation>
 
-    <operation name="SetVault">
-      <input  message="tns:SetVaultRequest"/>
-      <output message="tns:SetVaultResponse"/>
-    </operation>
-
-    <operation name="ClearVault">
-      <input  message="tns:ClearVaultRequest"/>
-      <output message="tns:ClearVaultResponse"/>
+    <operation name="GetDataBoxUsers">
+      <input  message="tns:GetDataBoxUsersRequest"/>
+      <output message="tns:GetDataBoxUsersResponse"/>
     </operation>
 
   </portType>
@@ -484,23 +473,13 @@ Seznam služeb:
       </output>
     </operation>
 
-    <operation name="SetVault">
+    <operation name="GetDataBoxUsers">
       <soap:operation soapAction="" />
       <input>
-        <soap:body use="literal"/>
+        <soap:body use="literal" />
       </input>
       <output>
-        <soap:body use="literal"/>
-      </output>
-    </operation>
-
-    <operation name="ClearVault">
-      <soap:operation soapAction="" />
-      <input>
-        <soap:body use="literal"/>
-      </input>
-      <output>
-        <soap:body use="literal"/>
+        <soap:body use="literal" />
       </output>
     </operation>
 

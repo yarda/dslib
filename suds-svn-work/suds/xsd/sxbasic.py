@@ -143,7 +143,7 @@ class TypedContent(Content):
     """
     def resolve(self, nobuiltin=False):
         qref = self.qref()
-        if qref and qref[0] == 'string' and len(self.rawchildren)>0:
+        if qref and (qref[0] == 'string' or qref[0] == 'int') and len(self.rawchildren)>0:
             # this node has children but was resolved to string, this should not happen
             return self
         if qref is None:

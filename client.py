@@ -112,8 +112,8 @@ class Dispatcher(object):
 
   def MessageEnvelopeDownload(self, msgid):
     reply = self.soap_client.service.MessageEnvelopeDownload(msgid)
-    if hasattr(reply, 'dmReturnedMessageEnvelope'):
-      message = models.Message(reply.dmReturnedMessageEnvelope)
+    if hasattr(reply, 'dmReturnedMessageEnvelope') and hasattr(reply.dmReturnedMessageEnvelope, 'dmDm'):
+      message = models.Message(reply.dmReturnedMessageEnvelope.dmDm)
     else:
       message = None
     # check the timestamp
@@ -126,8 +126,8 @@ class Dispatcher(object):
 
   def MessageDownload(self, msgid):
     reply = self.soap_client.service.MessageDownload(msgid)
-    if hasattr(reply, 'dmReturnedMessage'):
-      message = models.Message(reply.dmReturnedMessage)
+    if hasattr(reply, 'dmReturnedMessage') and hasattr(reply.dmReturnedMessage, 'dmDm'):
+      message = models.Message(reply.dmReturnedMessage.dmDm)
     else:
       message = None
     # check the timestamp
@@ -160,7 +160,7 @@ class Dispatcher(object):
 
   def CreateMessage(self, envelope, files):
     """returns message id as reply.data"""
-    soap_envelope = self.soap_client.factory.create("dmEnvelope")
+    soap_envelope = self.soap_client.factory.create("tMessageEnvelopeSub")
     envelope.copy_to_soap_object(soap_envelope)
     soap_files = self.soap_client.factory.create("dmFiles")
     for f in files:
@@ -307,7 +307,7 @@ class Dispatcher(object):
       
     message.pkcs7_data = pkcs_data
     if (verified):
-        message.is_verified = False #True
+        message.is_verified = True
     
     # set verified attribute of certificates
     for c in message.pkcs7_data.certificates:
@@ -435,8 +435,7 @@ class Client(object):
                           "DummyOperation": "operations",
                           "GetDeliveryInfo": "info",
                           "FindDataBox": "search",
-                          "CreateMessage": "operations",                          
-                          "SignedMessageDownload" : "operations",
+                          "CreateMessage": "operations",                          "SignedMessageDownload" : "operations",
                           "SignedSentMessageDownload" : "operations",
                           "GetSignedDeliveryInfo" : "info",
                           "GetPasswordInfo" : "access",
@@ -451,10 +450,8 @@ class Client(object):
                                            "soap_url_end": "dz"},
                             "search": {"wsdl_name": "db_search.wsdl",
                                        "soap_url_end": "df"},
-                            "supplementary": {"wsdl_name": "db_supplementary.wsdl",
-                                              "soap_url_end": "DsManage"},
-                            "access" : {"wsdl_name" : "db_access.wsdl",
-                                        "soap_url_end" : "DsManage"}
+                            "access": {"wsdl_name": "db_access.wsdl",
+                                       "soap_url_end": "DsManage"},
                             }
   test2soap_url = {True: "https://www.czebox.cz/",
                    False: "https://www.mojedatovaschranka.cz/"}

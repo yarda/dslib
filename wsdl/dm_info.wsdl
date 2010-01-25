@@ -8,15 +8,17 @@
         5. Podepsané oznámení o dodání, doručení, nedoručení datové zprávy (Dodejka, Doručenka, Nedoručenka) - GetSignedDeliveryInfo
         6. Stažení seznamů odeslaných datových zpráv - GetListOfSentMessages
         7. Stažení seznamů přijatých datových zpráv - GetListOfReceivedMessages
+        8. Doručení komerční datové zprávy - ConfirmDelivery
         
               
-                         3.6.2009   verze 2.0 novela 
+                          verze 2.6  
 
    Změny:  
      4.2.2009 verze 0.1
     20.3.2009 verze 1.0   - formální úpravy vyhovující WS-I Basic Profile   
      8.4.2009 verze 1.2   - změna názvů WSDL, rozložení operací mezi WSDL
      3.6.2009 verze 2.0   - novela                               
+    1.11.2009 verze 2.6   - přidána WS ConfirmDelivery 
 ************************************************************************ -->
 
 <definitions name="ISDS_dmMessCreate" targetNamespace="http://isds.czechpoint.cz/v20" 
@@ -81,6 +83,13 @@
   <message name="ListOfReceivedMessagesResponse">
     <part name="parameter" element="tns:GetListOfReceivedMessagesResponse" />        
   </message>
+
+  <message name="ConfirmDeliveryRequest">
+    <part name="parameter" element="tns:ConfirmDelivery" />        
+  </message>
+  <message name="ConfirmDeliveryResponse">
+    <part name="parameter" element="tns:ConfirmDeliveryResponse" />        
+  </message>
   
 <!-- ******************************************************************* -->
   <portType name="dmInfoPortType">
@@ -120,7 +129,12 @@
       <output message="tns:ListOfReceivedMessagesResponse"/>
     </operation>
 
-  </portType>
+     <operation name="ConfirmDelivery">
+      <input  message="tns:ConfirmDeliveryRequest"/>
+      <output message="tns:ConfirmDeliveryResponse"/>
+    </operation>
+
+ </portType>
 
   <!-- ******************************************************************* -->
  <binding name="dmInfoBinding" type="tns:dmInfoPortType">
@@ -196,12 +210,22 @@
       </output>
     </operation>
  
+     <operation name="ConfirmDelivery">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    
   </binding>
 
   <!-- ******************************************************************* -->
   <service name="dmInfoWebService">
     <port name="dmInfoPortType" binding="tns:dmInfoBinding">
-      <soap:address location="https://www.czebox.cz/DS/dx"/>
+      <soap:address location="https://www.mojedatovaschranka.cz/DS/dx"/>
     </port>
   </service>
 
