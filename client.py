@@ -416,7 +416,7 @@ class Client(object):
                           "GetDeliveryInfo": "info",
                           "FindDataBox": "search",
                           "CreateMessage": "operations",
-                          "GetOwnerInfoFromLogin": "supplementary",
+                          "GetOwnerInfoFromLogin": "access",
                           "SignedMessageDownload" : "operations",
                           "SignedSentMessageDownload" : "operations",
                           "GetSignedDeliveryInfo" : "info"
@@ -428,8 +428,9 @@ class Client(object):
                                            "soap_url_end": "dz"},
                             "search": {"wsdl_name": "db_search.wsdl",
                                        "soap_url_end": "df"},
-                            "supplementary": {"wsdl_name": "db_supplementary.wsdl",
-                                              "soap_url_end": "DsManage"}
+                            "access": {"wsdl_name": "db_access.wsdl",
+                                       "soap_url_end": "DsManage"},
+                                              
                             }
   test2soap_url = {True: "https://www.czebox.cz/",
                    False: "https://www.mojedatovaschranka.cz/"}
