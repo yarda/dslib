@@ -31,7 +31,7 @@ from ds_exceptions import DSException
 import models
 import pkcs7.tstamp_helper
 
-import certs.cert_loader
+import certs.pem_decoder
 
 class Dispatcher(object):
   """
@@ -63,7 +63,7 @@ class Dispatcher(object):
       self.soap_client = SudsClient(self.wsdl_url, transport=transport, location=self.soap_url)
     self.trusted_certs = []
     if trusted_certs_dir is not None:
-        self.trusted_certs = certs.cert_loader.load_certificates_from_dir(trusted_certs_dir)
+        self.trusted_certs = certs.pem_decoder.load_certificates_from_dir(trusted_certs_dir)
 
     
   def __getattr__(self, name):
@@ -270,7 +270,7 @@ class Dispatcher(object):
       
     message.pkcs7_data = pkcs_data
     if (verified):
-        message.is_verified = False #True
+        message.is_verified = True
     
     # TODO: distinguish among certificates (may be more signers, but highly improbable)
     if cert_verified:
@@ -312,13 +312,7 @@ class Dispatcher(object):
         
   def _verify_certificate(self, certificate):
     import certs.cert_verifier
-    try:
-      res = certs.cert_verifier.verify_certificate(certificate, self.trusted_certs)
-    except Exception, e:
-      if e.message == "No trusted certificate found":
-        res = False
-      else:
-        raise e
+    res = certs.cert_verifier.verify_certificate(certificate, self.trusted_certs)
     return res
      
   def SignedMessageDownload(self, msgId):

@@ -132,17 +132,7 @@ def FindDataBox():
   print (u"%-10s %-30s %-20s %-20s" % ("ID","Name","Street","City")).encode("utf-8")
   for owner in reply.data:
     print (u"%-10s %-30s %-20s %-20s" % (owner.dbID, owner.firmName, owner.adStreet, owner.adCity)).encode('utf-8')
-#  # part 6
-#  info = models.dbOwnerInfo()
-#  info.dbType = "PO"
-#  info.firmName = u"*Ko"
-#  reply = ds_client.FindDataBox(info)
-#  print
-#  #print " * Searching using IC - should find Slapanice"
-#  print (u"%-10s %-30s %-20s %-20s" % ("ID","Name","Street","City")).encode("utf-8")
-#  for owner in reply.data:
-#    print (u"%-10s %-30s %-20s %-20s" % (owner.dbID, owner.firmName, owner.adStreet, owner.adCity)).encode('utf-8')
-
+  
     
     
 @active

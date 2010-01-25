@@ -183,7 +183,7 @@ class Message(Model):
   SIG_MESSAGE_CONTENT_PATH =  "MessageDownloadResponse/dmReturnedMessage" 
   
   # has meaning only if msg contains pkcs7_data
-  is_verified = None
+  is_verified = False
   # all PKCS7 data are stored in pkcs7_data attribute
   pkcs7_data = None
   
@@ -217,21 +217,6 @@ class Message(Model):
           return True
       else:
           return False
-
-  def message_verification_attempted(self):
-    if self.is_verified == None:
-      return False
-    return True
-        
-  def is_message_verified(self):
-    return self.is_verified
-  
-  def is_signature_verified(self):
-    """was the certificate used for signing the message verified"""
-    if hasattr(self, "pkcs7_data") and hasattr(self.pkcs7_data, "certificates"):
-      if self.pkcs7_data.certificates:
-        if hasattr(self.pkcs7_data.certificates[0], "is_verified"):
-          return self.pkcs7_data.certificates[0].is_verified
 
 
   # ---------- private methods ----------
