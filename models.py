@@ -346,3 +346,9 @@ class dbOwnerInfo(Model):
                  "biState", "adCity", "adStreet", "adNumberInStreet", "adNumberInMunicipality",
                  "adZipCode", "adState", "nationality", "identifier", "registryCode",
                  "dbState", "dbEffectiveOVM", "dbOpenAddressing")
+
+class dbUserInfo(Model):
+  KNOWN_ATTRS = ("pnFirstName", "pnMiddleName", "pnLastName","pnLastNameAtBirth",
+                 "adCity", "adStreet", "adNumberInStreet", "adNumberInMunicipality",
+                 "adZipCode", "adState", "biDate", "userID", "userType", "userPrivils",
+                 "ic", "firmName", "caStreet", "caCity", "caZipCode")

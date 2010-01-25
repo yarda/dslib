@@ -181,7 +181,15 @@ class Dispatcher(object):
     else:
       message = None
     return Reply(self._extract_status(reply), message)
-  
+
+  def GetUserInfoFromLogin(self):
+    reply = self.soap_client.service.GetUserInfoFromLogin()
+    if hasattr(reply, 'dbUserInfo'):
+      message = models.dbUserInfo(reply.dbUserInfo)
+    else:
+      message = None
+    return Reply(self._extract_status(reply), message)
+ 
   def _verify_der_msg(self, der_message):
     '''
     Verifies message in DER format (decoded b64 content of dmSIgnature)
@@ -398,8 +406,20 @@ class Dispatcher(object):
         else:
             message.qts_imprint_matches_hash = False
     return Reply(self._extract_status(reply), message)
-     
-
+  
+  def GetPasswordInfo(self):
+    reply = self.soap_client.service.GetPasswordInfo()    
+    # minOccur = 0, maxOccur = 1
+    expiry_date = None
+    if hasattr(reply, 'pswExpDate'):
+      expiry_date = reply.pswExpDate    
+    return Reply(self._extract_status(reply), expiry_date)
+  
+  def ChangeISDSPassword(self, old_pass, new_pass):
+    reply = self.soap_client.service.ChangeISDSPassword(old_pass, new_pass) 
+    status = models.dbStatus(reply)   
+    return Reply(status, None)
+    
 class Client(object):
 
   cur_path = os.path.dirname(os.path.abspath(__file__))
@@ -415,11 +435,14 @@ class Client(object):
                           "DummyOperation": "operations",
                           "GetDeliveryInfo": "info",
                           "FindDataBox": "search",
-                          "CreateMessage": "operations",
-                          "GetOwnerInfoFromLogin": "supplementary",
+                          "CreateMessage": "operations",                          
                           "SignedMessageDownload" : "operations",
                           "SignedSentMessageDownload" : "operations",
-                          "GetSignedDeliveryInfo" : "info"
+                          "GetSignedDeliveryInfo" : "info",
+                          "GetPasswordInfo" : "access",
+                          "GetOwnerInfoFromLogin": "access",
+                          "GetUserInfoFromLogin": "access",
+                          "ChangeISDSPassword" : "access"
                           }
 
   dispatcher_name2config = {"info": {"wsdl_name": "dm_info.wsdl",
@@ -429,7 +452,9 @@ class Client(object):
                             "search": {"wsdl_name": "db_search.wsdl",
                                        "soap_url_end": "df"},
                             "supplementary": {"wsdl_name": "db_supplementary.wsdl",
-                                              "soap_url_end": "DsManage"}
+                                              "soap_url_end": "DsManage"},
+                            "access" : {"wsdl_name" : "db_access.wsdl",
+                                        "soap_url_end" : "DsManage"}
                             }
   test2soap_url = {True: "https://www.czebox.cz/",
                    False: "https://www.mojedatovaschranka.cz/"}

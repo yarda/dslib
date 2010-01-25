@@ -158,6 +158,12 @@ def GetOwnerInfoFromLogin():
   print reply.data
 
 @active
+def GetUserInfoFromLogin():
+  reply = ds_client.GetUserInfoFromLogin()
+  print reply.status
+  print reply.data
+
+@active
 def SignedMessageDownload():
   for envelope in ds_client.GetListOfReceivedMessages().data:
     print "ID:", envelope.dmID
@@ -186,6 +192,20 @@ def GetSignedDeliveryInfo():
     print "Verified message: %s" % reply.data.is_verified
     print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified
     break
+
+@active
+def GetPasswordInfo():
+  reply = ds_client.GetPasswordInfo()
+  print "Password expires: %s" %reply.data
+  
+@active
+def ChangeISDSPassword():
+  #old_pass = "Matej1234"
+  old_pass = "123456789ABCDEFGH"
+  new_pass = "prilisslabe"
+  reply = ds_client.ChangeISDSPassword(old_pass, new_pass)
+  print "%s : %s"% (reply.status.dbStatusCode, reply.status.dbStatusMessage)
+  
 
 
 if __name__ == "__main__":
@@ -254,6 +274,7 @@ if __name__ == "__main__":
                        proxy=proxy, trusted_certs_dir="trusted_certificates")
     for test in to_run:
       print "==================== %s ====================" % test.__name__
+      # if testing password change, pass current password      
       test()
       print "==================== end of %s ====================" % test.__name__  
       print
