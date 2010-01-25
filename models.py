@@ -241,7 +241,7 @@ class Message(Model):
     _origin = soap.__class__.__name__
     for a in Message.KNOWN_ATTRS:
       if a in Message.OUTSIDE_ATTRS or _origin not in Message.SPLIT_ORIGINS:
-        # get if directly
+        # get it directly
         parent = soap
       else:
         parent = soap.dmDm
