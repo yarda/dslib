@@ -202,8 +202,9 @@ def GetPasswordInfo():
 @active
 def ChangeISDSPassword():
   #old_pass = "Matej1234"
-  old_pass = "123456789ABCDEFGH"
-  new_pass = "prilisslabe"
+  import getpass
+  old_pass = getpass.getpass("Current password:")
+  new_pass = getpass.getpass("New password:")
   reply = ds_client.ChangeISDSPassword(old_pass, new_pass)
   print "%s : %s"% (reply.status.dbStatusCode, reply.status.dbStatusMessage)
   
