@@ -1,18 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- ************************************************************************
    XSD schema typů použitých ve WSDL pro manipulaci s datovými schránkami a ve WSDL pro vyhledávání DS
-                       verze 2.1   11.6.2009 novela     
+                       verze 2.7    
 
  změny:
   9.2.2009  verze 0.1
- 23.2.2009  verze 0.2  - odstraněn element corporateRegistrationState z tDbOwnerInfo
-                       - ve skupině gBirthInfo byly tři integer elementy pro den, měsíc a rok nahrazeny jedním biDate typu date
-                       - přidán typ tDbType (enumerace FO, PO atd. - zkratky asi zůstanou česky) pro element dbType
-                       - přejmenován element dbOwner na dbOwnerInfo a dbUser na dbUserInfo
- 24.2.2009  verze 0.3  - změněn základní namespace na http://isds.czechpoint.cz
-  4.3.2009  verze 0.4  - do typu tDbUserInfo přidány 2 elementy biDate a userPrivils                      
-  5.3.2009  verze 0.5  - doplněny enumerace typ DS a typ osoby
- 17.3.2009  verze 0.6  - doplněny 2 elementy (email a telNumber) do tDbOwnerInfo
  20.3.2009  verze 1.0  - přidány elementy (na první úrovni) k jednotlivým typům pro použití jako parametry ve WSDL (document/literal)+komplexní typy pro tyto elementy popisující jednotlivé parametry operací
  25.3.2009  verze 1.1  - do výstupních parametrů CreateDataBox přidán element dbID pro číslo vytvářené DS, přidán complex type tCreateDBOutput jako typ pro CreateDataBoxResponse
  21.4.2009  verze 1.2  - změněn typ elementu u adNumberInStreet a adNumberInMunicipality z int na string
@@ -44,11 +36,17 @@
                        - přidány elementy a typy pro WS ClearEffectiveOVM  
                        - přidány elementy a typy pro WS SetOpenAddressing  
                        - přidány elementy a typy pro WS ClearOpenAddressing  
-11.6.2009 - verze 2.1  - upraveny elementy služby NewAccessData - dbAccessDataId přesunut ze vstupu na výstup a přidán element dbVirtual na vstup
-                       - přidány nepovinné elementy dbApproved a dbExterRefNumber v grupě gExtApproval na vstup všech služeb SM
-                       - změna namespace pro verzi ISDS 2.0
-                       - přidány elementy pro WS Activate
-                       - přidány elementy pro WS CreateDataBoxPFOInfo
+ 11.6.2009 - verze 2.1  - upraveny elementy služby NewAccessData - dbAccessDataId přesunut ze vstupu na výstup a přidán element dbVirtual na vstup
+                        - přidány nepovinné elementy dbApproved a dbExterRefNumber v grupě gExtApproval na vstup všech služeb SM
+                        - změna namespace pro verzi ISDS 2.0
+                        - přidány elementy pro WS Activate
+                        - přidány elementy pro WS CreateDataBoxPFOInfo
+ 1.10.2009 - verze 2.5  - změna délky typu tUserID z 6 na 6-12		
+ 1.11.2009 - verze 2.6  - komerční provoz
+ 12.12.2009 - verze 2.7 - přidány elementy pro WS ChangePassword
+                        - přidány elementy pro WS GetPasswordInfo
+                        - přidány elementy pro WS GetUserInfoFromLogin  
+                        
 **************************************************************************** -->
 <xs:schema xmlns:tns="http://isds.czechpoint.cz/v20" elementFormDefault="qualified" targetNamespace="http://isds.czechpoint.cz/v20" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:simpleType name="tIdDb">
@@ -72,7 +70,7 @@
   </xs:complexType>
   <xs:simpleType name="tDbType">
     <xs:annotation>
-      <xs:documentation>typ DS - výčet FO,PO,FPO a OVM. Některé mají podtypy, např. FPO_ADVOK aj.</xs:documentation>
+      <xs:documentation>typ DS - výčet FO,PO,FPO a OVM. Některé mají podtypy, např. FPO_INSSPR aj.</xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string">
       <xs:enumeration value="FO" />
@@ -111,7 +109,8 @@
       <xs:documentation>ID uživatele</xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string">
-      <xs:length value="6" />
+      <xs:minLength value="6" />
+      <xs:maxLength value="12" />
     </xs:restriction>
   </xs:simpleType>
   <xs:simpleType name="tDbAccessDataId">
@@ -121,7 +120,11 @@
     <xs:sequence>
       <xs:element name="dbStatusCode" type="xs:string" />
       <xs:element name="dbStatusMessage" type="xs:string" />
-      <xs:element minOccurs="0" maxOccurs="1" name="dbStatusRefNumber" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" maxOccurs="1" name="dbStatusRefNumber" nillable="true" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>nepovinné referenční číslo žádosti</xs:documentation>
+        </xs:annotation>
+      </xs:element>
     </xs:sequence>
   </xs:group>
   <xs:complexType name="tDbReqStatus">
@@ -213,7 +216,7 @@
       </xs:element>
       <xs:element name="dbOpenAddressing" nillable="true" type="xs:boolean">
         <xs:annotation>
-          <xs:documentation>příznak, že ne-OVM DS má aktivováno volné adresování §18a</xs:documentation>
+          <xs:documentation>příznak, že ne-OVM DS má aktivováno otevřené adresování §18a</xs:documentation>
         </xs:annotation>
       </xs:element>
     </xs:sequence>
@@ -389,6 +392,7 @@
   <xs:element name="DisableOwnDataBox" type="tns:tOwnerInfoInput" />
   <xs:element name="DisableOwnDataBoxResponse" type="tns:tReqStatusOutput" />
   <xs:element name="EnableOwnDataBox" type="tns:tOwnerInfoInput" />
+  <xs:element name="EnableOwnDataBoxResponse" type="tns:tReqStatusOutput" />
   <xs:element name="GetDataBoxUsers" type="tns:tIdDbInput" />
   <xs:complexType name="tGetDBUsersOutput">
     <xs:sequence>
@@ -397,28 +401,6 @@
     </xs:sequence>
   </xs:complexType>
   <xs:element name="GetDataBoxUsersResponse" type="tns:tGetDBUsersOutput" />
-  <xs:complexType name="tGetOwnerFromLoginInput">
-    <xs:sequence>
-      <xs:element name="dbDummy" type="xs:string" />
-    </xs:sequence>
-  </xs:complexType>
-  <xs:element name="GetOwnerInfoFromLogin" type="tns:tGetOwnerFromLoginInput" />
-  <xs:element name="GetOwnerInfoFromLoginResponse" type="tns:tGetOwnInfoOutput" />
-  <xs:complexType name="tGetOwnInfoOutput">
-    <xs:sequence>
-      <xs:element name="dbOwnerInfo" type="tns:tDbOwnerInfo" />
-      <xs:element name="dbStatus" type="tns:tDbReqStatus" />
-    </xs:sequence>
-  </xs:complexType>
-  <xs:complexType name="tStoreDelivDateInput">
-    <xs:sequence>
-      <xs:element name="dbOwnerInfo" type="tns:tDbOwnerInfo" />
-      <xs:element name="dbDeliveryDate" type="xs:date" />
-    </xs:sequence>
-  </xs:complexType>
-  <xs:element name="StoreAccessDataDeliveryInfo" type="tns:tStoreDelivDateInput" />
-  <xs:element name="StoreAccessDataDeliveryInfoResponse" type="tns:tReqStatusOutput" />
-  <xs:element name="EnableOwnDataBoxResponse" type="tns:tReqStatusOutput" />
   <xs:element name="CheckDataBox" type="tns:tIdDbInput" />
   <xs:complexType name="tCheckDBOutput">
     <xs:sequence>
@@ -482,4 +464,57 @@
     </xs:sequence>
   </xs:complexType>
   <xs:element name="CreateDataBoxPFOInfoResponse" type="tns:tCreateDBPFOInfoOutput" />
+  <xs:complexType name="tDummyInput">
+    <xs:sequence>
+      <xs:element name="dbDummy" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="GetOwnerInfoFromLogin" type="tns:tDummyInput" />
+  <xs:element name="GetOwnerInfoFromLoginResponse" type="tns:tGetOwnInfoOutput" />
+  <xs:complexType name="tGetOwnInfoOutput">
+    <xs:sequence>
+      <xs:element name="dbOwnerInfo" type="tns:tDbOwnerInfo" />
+      <xs:element name="dbStatus" type="tns:tDbReqStatus" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="GetUserInfoFromLogin" type="tns:tDummyInput" />
+  <xs:element name="GetUserInfoFromLoginResponse" type="tns:tGetUserInfoOutput" />
+  <xs:complexType name="tGetUserInfoOutput">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="1" name="dbUserInfo" type="tns:tDbUserInfo">
+        <xs:annotation>
+          <xs:documentation>informace o uživateli</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="dbStatus" type="tns:tDbReqStatus" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="GetPasswordInfo" type="tns:tDummyInput" />
+  <xs:element name="GetPasswordInfoResponse" type="tns:tGetPasswInfoOutput" />
+  <xs:complexType name="tGetPasswInfoOutput">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="1" name="pswExpDate" nillable="true" type="xs:dateTime">
+        <xs:annotation>
+          <xs:documentation>datum a čas exiprace hesla</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="dbStatus" type="tns:tDbReqStatus" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ChangeISDSPassword" type="tns:tChngPasswInput" />
+  <xs:complexType name="tChngPasswInput">
+    <xs:sequence>
+      <xs:element minOccurs="1" maxOccurs="1" name="dbOldPassword" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>původní heslo</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="1" maxOccurs="1" name="dbNewPassword" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>nové heslo</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ChangeISDSPasswordResponse" type="tns:tReqStatusOutput" />
 </xs:schema>
