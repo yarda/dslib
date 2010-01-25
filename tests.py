@@ -200,8 +200,7 @@ def GetPasswordInfo():
   print "Password expires: %s" %reply.data
   
 @active
-def ChangeISDSPassword():
-  #old_pass = "Matej1234"
+def ChangeISDSPassword():  
   import getpass
   old_pass = getpass.getpass("Current password:")
   new_pass = getpass.getpass("New password:")
