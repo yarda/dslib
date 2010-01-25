@@ -301,7 +301,7 @@ class Dispatcher(object):
    
     xml_document, pkcs_data, verified, bad_certs  = self._generic_get_signed(der_encoded, method)
     if method.method.name in ("SignedSentMessageDownload","SignedMessageDownload"):
-      message = models.Message(xml_document.dmReturnedMessage)
+      message = models.Message(xml_document.dmReturnedMessage.dmDm)
     else:
       raise Exception("Unsupported signed method '%s'" % method.method.name) 
       
