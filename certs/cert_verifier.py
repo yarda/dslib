@@ -15,8 +15,7 @@ from cert_finder import *
 
 import time
 
-SHA1RSA_NAME = "SHA1/RSA"
-SHA256RSA_NAME = "SHA256/RSA"
+from constants import *
 
 
 def _verify_date(certificate): 
@@ -74,7 +73,7 @@ def verify_certificate(cert, trusted_ca_certs):
     # extract public key from matching certificate
     alg, key_material = pkcs7.verifier._get_key_material(signing_cert)
     # decrypt signature in explored certificate
-    signature = cert.getComponentByName("signatureValue").toOctets()
+    signature = cert.getComponentByName("signatureValue").toOctets()    
     # compare calculated hash and decrypted signature
     res = pkcs7.rsa_verifier.rsa_verify(calculated_digest, signature, key_material)
         

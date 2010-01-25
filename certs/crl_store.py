@@ -46,8 +46,14 @@ class CRL_dist_point():
         self.revoked_certs = {}
         self.lastUpdated = None
         self.nextUpdate = None
+        self.changed = False
 
     def __fill_revoked(self, revoked_list):
+        '''
+        Fills list of revoked certs with new certificates.
+        Returns number of added certificates
+        '''
+        added_certs = 0
         for revoked in revoked_list:
             #sn = revoked.getComponentByName("userCertificate")._value
             sn = revoked.getComponentByPosition(0)._value
@@ -55,6 +61,9 @@ class CRL_dist_point():
                 #time = str(revoked.getComponentByName("revocationDate"))
                 time = str(revoked.getComponentByPosition(1))
                 self.revoked_certs[sn] = time
+                self.changed = True
+                added_certs += 1
+        return added_certs
         
     def find_certificate(self, cert_sn):
         '''
@@ -70,7 +79,8 @@ class CRL_dist_point():
     def update_revoked_list(self, crl):   
         '''
         Updates current list of revoked certificates with data from the 
-        downloaded and parsed crl
+        downloaded and parsed crl. 
+        Returns number of added certificates
         '''
         thisUpdate = str(crl.getComponentByName("tbsCertList").\
                             getComponentByName("thisUpdate"))
@@ -80,12 +90,13 @@ class CRL_dist_point():
         self.nextUpdate = nextUpdate
         revoked = crl.getComponentByName("tbsCertList").\
                         getComponentByName("revokedCertificates")
-        self.__fill_revoked(revoked)
+        return self.__fill_revoked(revoked)
         
     def pickle(self, fname):
+        self.changed = False
         f = open(fname, "w")
         pickle.dump(self, f)
-        f.close()
+        f.close()        
     
     @classmethod
     def unpickle(self, fname):
@@ -97,10 +108,11 @@ class CRL_dist_point():
 class CRL_issuer():
     
     dist_points = []
-    
+        
     def __init__(self, name):
         self.name = name
-    
+        self.changed = False
+        
     def __decode_crl(self, der_data):
         crl = decoder.decode(der_data, asn1Spec=RevCertificateList())[0]
         return crl
@@ -132,23 +144,35 @@ class CRL_issuer():
                 return dpoint
         return None
     
+    
     def add_dist_point(self, url):
         dpoint = self.find_dpoint(url)
         if dpoint is None:
             dpoint = CRL_dist_point(url)       
             self.dist_points.append(dpoint)
+            self.changed = True
             return dpoint
         else:
             raise 'Issuer already contains this dist point'
     
-    def init_dist_point(self, url):
+    def init_dist_point(self, url, verification=None):
         dpoint = self.find_dpoint(url)
         if dpoint is not None:
+            self.changed = True
             if dpoint.lastUpdated is None:
                 logger.debug("Initializing dpoint %s", url)
                 downloaded = self.__download_crl(url)
                 crl = self.__decode_crl(downloaded)
+                if (verification is not None):
+                    import crl_verifier
+                    verified = crl_verifier.verify_crl(crl, verification)
+                    if not verified:
+                        print 'CRL verification failed'
+                    else:
+                        logger.info("CRL verified")
                 dpoint.update_revoked_list(crl)
+        else:
+            logger.error("Distpoint %s not found. Has it already been added?"%url)
     
     def is_certificate_revoked(self, cert_sn):
         '''
@@ -180,26 +204,30 @@ class CRL_issuer():
                 crl = self.__decode_crl(downloaded)
                 downloaded_update_time = str(crl.getComponentByName("tbsCertList").getComponentByName("thisUpdate"))
                 if dpoint.lastUpdated != downloaded_update_time:
-                    dpoint.update_revoked_list(crl)
+                    added_certs = dpoint.update_revoked_list(crl)
+                    if added_certs:
+                        self.changed = True
             else:
                 logger.debug("Last update value was found in the beggining of CRL = our copy is actual")
                 return
     
     
     def pickle(self, fname):
+        self.changed = False
         import hashlib
         f = open(fname, "w")
         pickle.dump(self, f)
         f.close()
         
         for i in xrange(len(self.dist_points)):
-            dpoint = self.dist_points[i]
+            dpoint = self.dist_points[i]            
             s = hashlib.sha1()
             s.update(dpoint.url)
             fname = s.hexdigest()
-            dpoint.pickle(CRL_DUMP_DIR+ "/"+\
-                          CRL_ISSUER_DIR_PREF+str(i)+\
-                          "/"+CRL_DPOINT_PREF+str(i))
+            if (dpoint.changed):
+                dpoint.pickle(CRL_DUMP_DIR+ "/"+\
+                              CRL_ISSUER_DIR_PREF+str(i)+\
+                              "/"+CRL_DPOINT_PREF+str(i))
     
     @classmethod
     def unpickle(self, from_file):
@@ -215,7 +243,8 @@ class CRL_cache():
     object.
     '''
         
-    issuers = []
+    issuers = []    
+    changed = False
         
     def add_issuer(self, issuer_name):
         '''
@@ -227,6 +256,7 @@ class CRL_cache():
         if iss is None:
             iss = CRL_issuer(issuer_name)        
             self.issuers.append(iss)
+            self.changed = True
             return iss
         else:
             logger.warn('Cache already contains this issuer')
@@ -256,18 +286,33 @@ class CRL_cache():
         '''
         Stores the cache instance into a file
         ''' 
+        # check if we have to pickle
+        has_to_pickle = False
+        if self.changed:
+            has_to_pickle = True
+        else:
+            for iss in self.issuers:
+                if iss.changed:
+                    has_to_pickle = True
+                    break
+        if not has_to_pickle:
+            logging.info("No changes since last load, pickling aborted")
+            return
         try:
             os.mkdir(CRL_DUMP_DIR)            
             for i in xrange(len(self.issuers)):
                 os.mkdir(CRL_DUMP_DIR+"/"+CRL_ISSUER_DIR_PREF+str(i))
         except:
             pass
+        # set changed to False, which is the right value after unpickling
+        self.changed = False
         f = open(CRL_DUMP_DIR+"/"+CRL_DUMP_FILE, "w")
         pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
         f.close()
         iss_id = 0
         for issuer in self.issuers:
-            issuer.pickle(CRL_DUMP_DIR + "/" + \
+            if issuer.changed:
+                issuer.pickle(CRL_DUMP_DIR + "/" + \
                           CRL_ISSUER_PREF + str(iss_id))
             iss_id += 1
     
@@ -303,7 +348,7 @@ def restore_cache():
                 number = int(fname[::-1][0])
                 map.append(number)
                 iss = CRL_issuer.unpickle(CRL_DUMP_DIR+"/"+fname)
-                cache.add_issuer(iss.name)
+                cache.issuers.append(iss)#add_issuer(iss.name)
         # restore issuers     
         for fname in fnames:
             if fname.startswith(CRL_ISSUER_DIR_PREF):
@@ -315,8 +360,10 @@ def restore_cache():
                 dpoints = _restore_dpoints(CRL_DUMP_DIR+"/"+fname)
                 issuer.dist_points = dpoints
         return cache
-    except:
-        logger.warning("Cache restore failed")
+    except Exception as ex:
+        logger.warning(ex)
+        logger.warning("Cache restore failed")        
         return None
-    
+
+
     

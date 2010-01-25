@@ -116,10 +116,10 @@ def _rsa_decode(encoded, pub_key):
 
 def _get_hash_from_signature(signature, pub_key):
     """
-    Decodes (not decrypts!) RSA signature and returns the hash, which was signed
+    Decodes RSA signature and returns the hash, which was signed
     """
-    # decrypt the signature
-    decrypted = _rsa_decode(signature, pub_key)  
+    # decrypt the signature    
+    decrypted = _rsa_decode(signature, pub_key)
     # get the DER encoded (DigestInfo component) bytes from the decrypted signature
     decoded_bytes = _extract_hash_from_decoded_sig(decrypted)
     #show_bytes(hash)    

@@ -65,7 +65,7 @@ class RDNSequence(univ.SequenceOf):
         buf = ''        
         for component in self._componentValues:            
             buf += str(component)
-            buf += '; '
+            buf += ','
         buf = buf[:len(buf)-1]
         return buf
             

@@ -182,7 +182,10 @@ class Dispatcher(object):
       message = None
     return Reply(self._extract_status(reply), message)
   
-  def _verify_der_msg(self, der_message):    
+  def _verify_der_msg(self, der_message):
+    '''
+    Verifies message in DER format (decoded b64 content of dmSIgnature)
+    '''    
     verification_result = pkcs7.verifier.verify_msg(der_message)
     if verification_result:        
         logging.debug("Message verified")
@@ -191,6 +194,9 @@ class Dispatcher(object):
     return verification_result
     
   def _xml_parse_msg(self, string_msg, method):
+    '''
+    Parses content of pkcs7 message. Outputs xml document.
+    '''
     import suds.sax.parser as p
     parser = p.Parser()
     soapbody = parser.parse(string = string_msg)
@@ -218,7 +224,10 @@ class Dispatcher(object):
     return None
     
 
-  def _prepare_PKCS7_data(self, decoded_msg):    
+  def _prepare_PKCS7_data(self, decoded_msg): 
+    '''
+    Creates objects representing pkcs7 message.
+    '''   
     pkcs_data = models.PKCS7_data(decoded_msg)
     return pkcs_data
   
@@ -226,7 +235,10 @@ class Dispatcher(object):
     '''
     "Base" of methods downloading signed versions of messages and
     delivery information.
-    Returns tuple xml_document, pkcs7_data, verified, cert_verified
+    Returns tuple xml_document, pkcs7_data, verified,  wrong_cert_ids
+    Wrong_cert_ids is array with tuples consisting of issuer and serial number
+    of certificate, which verification failed. If it is empty, all certificates
+    are verified.
     '''
     # decode DER encoding
     decoded_msg = pkcs7.pkcs7_decoder.decode_msg(der_encoded)
@@ -240,18 +252,35 @@ class Dispatcher(object):
     xml_document = self._xml_parse_msg(str_msg, method)
     
     # verify certificate
-    certificates_ok = False
+    wrong_certificates_ids = []    
     certs = decoded_msg.getComponentByName("content").getComponentByName("certificates")
     for cert in certs:
         if self._verify_certificate(cert):
-            certificates_ok = True
+            continue
         else:
-            # if certificate is not trusted, set to false and exit cycle
-            certificates_ok = False
-            break
+            tbs = cert.getComponentByName("tbsCertificate")
+            sn = tbs.getComponentByName("serialNumber")._value
+            issuer = str(tbs.getComponentByName("issuer"))
+            wrong_certificates_ids.append((issuer, sn))
         
-    return xml_document, pkcs_data, verified, certificates_ok
+    return xml_document, pkcs_data, verified, wrong_certificates_ids
   
+
+  
+  def _mark_invalid_certificates(self, message, bad_certs_ids):
+    '''
+    In messages's pkcs7 data mark invalid certificates       
+    (sets their 'is_cerified' attribute to False)
+    bad_certs_ids is array of tuples with issuer name and cert sn
+    '''
+    import certs.cert_finder as finder
+    msg_certs = message.pkcs7_data.certificates
+    for cert in bad_certs_ids:
+      found = finder.find_cert_by_iss_sn(msg_certs, cert[0], cert[1])
+      if found:
+        found.is_verified = False
+          
+      
   def _signed_msg_download(self, ws_name, msg_id):
     '''
     Common method for downloading signed message (sent or received)
@@ -262,7 +291,7 @@ class Dispatcher(object):
     reply = method.__call__(msg_id)
     der_encoded = base64.b64decode(reply.dmSignature)  
    
-    xml_document, pkcs_data, verified, cert_verified  = self._generic_get_signed(der_encoded, method)
+    xml_document, pkcs_data, verified, bad_certs  = self._generic_get_signed(der_encoded, method)
     if method.method.name in ("SignedSentMessageDownload","SignedMessageDownload"):
       message = models.Message(xml_document.dmReturnedMessage)
     else:
@@ -272,11 +301,13 @@ class Dispatcher(object):
     if (verified):
         message.is_verified = True
     
-    # TODO: distinguish among certificates (may be more signers, but highly improbable)
-    if cert_verified:
-        for c in message.pkcs7_data.certificates:
-            c.is_verified = True
-    
+    # set verified attribute of certificates
+    for c in message.pkcs7_data.certificates:
+      c.is_verified = True
+    if len(bad_certs) > 0:
+      self._mark_invalid_certificates(message, bad_certs)        
+            
+    # check the timestamp
     if self._check_timestamp(message):
         message.qts_imprint_matches_hash = True
     else:
@@ -286,8 +317,8 @@ class Dispatcher(object):
   
   def _check_timestamp(self, message):
     '''
-    Checks message timestamp - parses and verifies it. Result of verification
-    and TimeStampToken are attached to the message.
+    Checks message timestamp - parses and verifies it. TimeStampToken
+    is attached to the message.
     Method returns flag that says, if the content of messages's dmHash element
     is the same as the message imprint
     '''
@@ -311,6 +342,9 @@ class Dispatcher(object):
             return False
         
   def _verify_certificate(self, certificate):
+    '''
+    Verfies certificate by calling method from cert_verifier
+    '''
     import certs.cert_verifier
     res = certs.cert_verifier.verify_certificate(certificate, self.trusted_certs)
     return res
@@ -325,18 +359,20 @@ class Dispatcher(object):
     method = self.soap_client.service.GetSignedDeliveryInfo
     reply = method(msgId)
     der_encoded = base64.b64decode(reply.dmSignature)  
-    xml_document, pkcs_data, verified, cert_verified  = self._generic_get_signed(der_encoded, method)
+    xml_document, pkcs_data, verified, bad_certs  = self._generic_get_signed(der_encoded, method)
     # create Message instance to return 
     message = models.Message(xml_document.dmDelivery)        
     message.pkcs7_data = pkcs_data
     if (verified):
         message.is_verified = True
     
-    # TODO: distinguish among certificates (may be more signers, but highly improbable)
-    if cert_verified:
-        for c in message.pkcs7_data.certificates:
-            c.is_verified = True
-            
+    # set verified value of message certificates    
+    for c in message.pkcs7_data.certificates:
+      c.is_verified = True
+    if len(bad_certs) > 0:
+      self._mark_invalid_certificates(message, bad_certs) 
+    
+    # check the timestamp
     if self._check_timestamp(message):
         message.qts_imprint_matches_hash = True
     else:
