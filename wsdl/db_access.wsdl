@@ -1,20 +1,18 @@
 <?xml version = '1.0' encoding = 'UTF-8'?>
 <!--  *********************************************************************
-     WSDL pro doplňkové služby manipulujícími s datovými schránkami 
+     WSDL pro doplňkové služby související s přihlašováním 
      
-                       3.6.2009  verze 2.0 novela
+                       verze 2.7
       *********************************************************************                    
 Seznam služeb: 
 ==============
-  GetDataBoxUsers                         
   GetOwnerInfoFromLogin
-  StoreAccessDataDeliveryInfo
+  GetUserInfoFromLogin
+  ChangeISDSPassword
+  GetPasswordInfo
 
   Změny:  
-     9.02.2009  verze 0.1
-     2.03.2009  verze 0.4   - změna zápisu importu XSD                                 
-    20.03.2009  verze 1.0   - formální úpravy vyhovující WS-I Basic Profile                               
-      3.6.2009  verze 2.0   - novela                          
+     9.12.2009  verze 2.7
 ************************************************************************ -->
 
 <definitions name="ISDS_db_suppl" targetNamespace="http://isds.czechpoint.cz/v20" 
@@ -30,13 +28,6 @@ Seznam služeb:
   </types>
   
   <!-- ******************************************************************* -->
-  <message name="GetDataBoxUsersRequest">
-    <part name="parameter" element="tns:GetDataBoxUsers" />        
-  </message>
-  <message name="GetDataBoxUsersResponse">
-    <part name="parameter" element="tns:GetDataBoxUsersResponse" />        
-  </message>
-
   <message name="GetOwnerInfoFromLoginRequest">
     <part name="parameter" element="tns:GetOwnerInfoFromLogin" />        
   </message>
@@ -44,44 +35,55 @@ Seznam služeb:
     <part name="parameter" element="tns:GetOwnerInfoFromLoginResponse" />        
   </message>
 
-  <message name="StoreAccessDataDeliveryInfoRequest">
-    <part name="parameter" element="tns:StoreAccessDataDeliveryInfo" />        
+  <message name="GetUserInfoFromLoginRequest">
+    <part name="parameter" element="tns:GetUserInfoFromLogin" />        
   </message>
-  <message name="StoreAccessDataDeliveryInfoResponse">
-    <part name="parameter" element="tns:StoreAccessDataDeliveryInfoResponse" />        
+  <message name="GetUserInfoFromLoginResponse">
+    <part name="parameter" element="tns:GetUserInfoFromLoginResponse" />        
+  </message>
+ 
+  <message name="ChangeISDSPasswordRequest">
+    <part name="parameter" element="tns:ChangeISDSPassword" />        
+  </message>
+  <message name="ChangeISDSPasswordResponse">
+    <part name="parameter" element="tns:ChangeISDSPasswordResponse" />        
+  </message>
+
+  <message name="GetPasswordInfoRequest">
+    <part name="parameter" element="tns:GetPasswordInfo" />        
+  </message>
+  <message name="GetPasswordInfoResponse">
+    <part name="parameter" element="tns:GetPasswordInfoResponse" />        
   </message>
 
   <!-- ******************************************************************* -->
-  <portType name="DataBoxSupplementaryPortType">
-    <operation name="GetDataBoxUsers">
-      <input  message="tns:GetDataBoxUsersRequest"/>
-      <output message="tns:GetDataBoxUsersResponse"/>
-    </operation>
+  <portType name="DataBoxAccessPortType">
 
     <operation name="GetOwnerInfoFromLogin"> 
       <input   message="tns:GetOwnerInfoFromLoginRequest"/>
       <output  message="tns:GetOwnerInfoFromLoginResponse"/>
     </operation>
   
-    <operation name="StoreAccessDataDeliveryInfo">
-      <input  message="tns:StoreAccessDataDeliveryInfoRequest"/>
-      <output message="tns:StoreAccessDataDeliveryInfoResponse"/>
+    <operation name="GetUserInfoFromLogin"> 
+      <input   message="tns:GetUserInfoFromLoginRequest"/>
+      <output  message="tns:GetUserInfoFromLoginResponse"/>
+    </operation>
+  
+    <operation name="ChangeISDSPassword"> 
+      <input   message="tns:ChangeISDSPasswordRequest"/>
+      <output  message="tns:ChangeISDSPasswordResponse"/>
+    </operation>
+  
+    <operation name="GetPasswordInfo"> 
+      <input   message="tns:GetPasswordInfoRequest"/>
+      <output  message="tns:GetPasswordInfoResponse"/>
     </operation>
   
   </portType>
 
   <!-- ******************************************************************* -->
-  <binding name="DataBoxSupplementaryBinding" type="tns:DataBoxSupplementaryPortType">
+  <binding name="DataBoxAccessBinding" type="tns:DataBoxAccessPortType">
     <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
-    <operation name="GetDataBoxUsers">
-      <soap:operation soapAction="" />
-      <input>
-        <soap:body use="literal" />
-      </input>
-      <output>
-        <soap:body use="literal" />
-      </output>
-    </operation>
 
     <operation name="GetOwnerInfoFromLogin">
       <soap:operation soapAction=""  />
@@ -93,8 +95,28 @@ Seznam služeb:
       </output>
     </operation>
 
-    <operation name="StoreAccessDataDeliveryInfo">
-      <soap:operation soapAction="" />
+    <operation name="GetUserInfoFromLogin">
+      <soap:operation soapAction=""  />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+
+    <operation name="ChangeISDSPassword">
+      <soap:operation soapAction=""  />
+      <input>
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+      </output>
+    </operation>
+
+    <operation name="GetPasswordInfo">
+      <soap:operation soapAction=""  />
       <input>
         <soap:body use="literal" />
       </input>
@@ -106,9 +128,9 @@ Seznam služeb:
   </binding>
 
   <!-- ******************************************************************* -->
-  <service name="DataBoxSupplementary">
-    <port name="DataBoxSupplementaryPortType" binding="tns:DataBoxSupplementaryBinding">
-      <soap:address location="https://www.czebox.cz/DS/DsManage"/>
+  <service name="DataBoxAccess">
+    <port name="DataBoxAccessPortType" binding="tns:DataBoxAccessBinding">
+      <soap:address location="https://www.mojedatovaschranka.cz/DS/DsManage"/>
     </port>
   </service>
 
