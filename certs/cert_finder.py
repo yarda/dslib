@@ -27,7 +27,7 @@ def find_cert_by_serial(serial_number, certificates):
                                 .getComponentByName("serialNumber")        
             if sn == serial_number:
                 return cert
-        except Exception as ex:
+        except Exception, ex:
             logging.error(ex)
             continue
     return None

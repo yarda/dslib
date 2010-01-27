@@ -360,7 +360,7 @@ def restore_cache():
                 dpoints = _restore_dpoints(CRL_DUMP_DIR+"/"+fname)
                 issuer.dist_points = dpoints
         return cache
-    except Exception as ex:
+    except Exception, ex:
         logger.warning(ex)
         logger.warning("Cache restore failed")        
         return None
