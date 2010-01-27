@@ -270,9 +270,6 @@ class Extension():
         self.value = extension.getComponentByName("extnValue")._value
         # if we know the type of value, parse it
         if (self.id == "2.5.29.17"):
-            f = open("err", "w")
-            f.write(self.value)
-            f.close()
             v = decoder.decode(self.value, asn1Spec=GeneralNames())[0]
             val = SubjectAltNameExt(v)
             self.value = val
