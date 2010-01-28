@@ -19,9 +19,6 @@ from pkcs7.asn1_models.crl import *
 import pickle 
 CRL_DUMP_DIR = ".crl_dumps"
 CRL_DUMP_FILE = ".crl_dump"
-CRL_ISSUER_PREF = ".iss_"
-CRL_ISSUER_DIR_PREF = ".dir_iss_"
-CRL_DPOINT_PREF  = ".dp_"
 
 CRL_DIST_POINT_EXT_ID = '2.5.29.31'
 
@@ -100,19 +97,7 @@ class CRL_dist_point():
         import fast_rev_cert_parser as fast_parser
         revoked_sns = fast_parser.parse_all(revoked._value)
         return self.__fill_revoked(revoked_sns)
-        
-    def pickle(self, fname):
-        self.changed = False
-        f = open(fname, "w")
-        pickle.dump(self, f)
-        f.close()        
     
-    @classmethod
-    def unpickle(self, fname):
-        f = open(fname, "r")
-        me = pickle.load(f)
-        f.close()
-        return me
         
 class CRL_issuer():
         
@@ -247,30 +232,6 @@ class CRL_issuer():
                 return 0
     
     
-    def pickle(self, fname, issuer_id):
-        self.changed = False
-        import hashlib
-        f = open(fname, "w")
-        pickle.dump(self, f)
-        f.close()
-        
-        for i in xrange(len(self.dist_points)):
-            dpoint = self.dist_points[i]            
-            s = hashlib.sha1()
-            s.update(dpoint.url)
-            fname = s.hexdigest()
-            if (dpoint.changed):
-                dpoint.pickle(CRL_DUMP_DIR+ "/"+\
-                              CRL_ISSUER_DIR_PREF+str(issuer_id)+\
-                              "/"+CRL_DPOINT_PREF+str(i))
-    
-    @classmethod
-    def unpickle(self, from_file):
-        f = open(from_file, "r")
-        issuer = pickle.load(f)
-        f.close()                  
-        return issuer
-
 class CRL_cache():
     '''
     Represents cache of CRLs. Contains issuers of CRLs.
@@ -343,7 +304,7 @@ class CRL_cache():
         pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
         f.close()
         
-        
+       
     @classmethod
     def unpickle(self,fname):
         '''
@@ -353,7 +314,8 @@ class CRL_cache():
         cache = pickle.load(f)
         f.close()   
         return cache
-
+    
+    
 def _restore_dpoints(dir):
     dps = []
     fnames = os.listdir(dir)
