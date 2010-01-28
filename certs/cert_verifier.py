@@ -2,6 +2,8 @@
 Module for certificate verification.
 '''
 import logging
+logger = logging.getLogger("certs.cert_verifier")
+logger.setLevel(logging.DEBUG)
 
 from pyasn1.codec.der import encoder
 from pyasn1 import error
@@ -16,6 +18,8 @@ from cert_finder import *
 import time
 
 from constants import *
+
+import certs.crl_store as crl_store
 
 
 def _verify_date(certificate): 
@@ -35,9 +39,58 @@ def _verify_date(certificate):
     if (start_time < now) and (end_time > now):    
         return True
     return False
+
+def _check_crl(checked_cert, issuer_cert):
+    '''
+    Checks if the certificate is not revoked by its issuer.
+    '''    
+    # extract CDT from issuer certificate
+    # find issuer and its cdt in cache
+    # add them eventually to cache
+    # check the issuer and sn of checked cert if they are in the cache
+    # if yes, return False
+    
+    # serial number of checked certificate
+    cert_sn = checked_cert.getComponentByName("tbsCertificate").\
+                            getComponentByName("serialNumber")._value
+    # get the CRL cache
+    crl_cache = crl_store.CRL_cache_manager.get_cache()
+    # get the name of issuer of CRL
+    issuer_name = str(checked_cert.getComponentByName("tbsCertificate").\
+                          getComponentByName("issuer"))
+    from pkcs7_models import X509Certificate
+    # extract CDPs from checked certificate
+    c = X509Certificate(checked_cert)
+    dist_points = crl_store.extract_crl_distpoints(c)
+    # look for CRL issuer in the cache
+    iss = crl_cache.get_issuer(issuer_name)
+    if iss is None:
+      # add new CRL issuer
+      added = crl_cache.add_issuer(issuer_name)
+      # add issuer's CDPs to issuer
+      for dp in dist_points:
+        added_dp = added.add_dist_point(dp)
+        if added_dp is not None:
+          crl_cache.changed = True
+          # initialize added CDP
+          added.init_dist_point(dp, verification=issuer_cert)
+    else:
+      # if CRL issuer exists, only refresh his CDPs
+      for dp in iss.dist_points:
+        added_certs = iss.refresh_dist_point(dp.url, verification=issuer_cert)
+        if iss.changed:
+          crl_cache.changed = True
+    # check the CRL cache for the certificate issuer and serial number
+    is_revoked = crl_cache.is_certificate_revoked(issuer_name, cert_sn)
+    # if it is not revoked, checked certificate is ok
+    if is_revoked is False:
+      return True
+    else:
+      return False
+    
     
 
-def verify_certificate(cert, trusted_ca_certs):
+def verify_certificate(cert, trusted_ca_certs, check_crl=False):
     '''
     Verifies the certificate - checks signature and date validity.
     '''
@@ -63,12 +116,21 @@ def verify_certificate(cert, trusted_ca_certs):
     signing_cert = find_cert_by_subject(issuer, trusted_ca_certs)        
     if not signing_cert:
         msg = "No certificate found for %s" % issuer
-        logging.error(msg)
+        logger.error(msg)
         raise Exception(msg)
+    # if we want to download and check the crl of issuing authority 
+    # for certificate being checked
+    if check_crl:
+        is_ok = _check_crl(cert, signing_cert)
+        csn = tbs.getComponentByName("serialNumber")._value
+        if not is_ok:
+          logger.error("Certificate %d of %s is revoked" % (csn,issuer))
+        else:
+          logger.info("Certificate %d of %s is not on CRL" % (csn,issuer))
     # check validity of certificate - validity period etc.
     if not _verify_date(signing_cert):
         msg = "Signing certificate out of validity period"
-        logging.error(msg)
+        logger.error(msg)
         raise Exception(msg)
     # extract public key from matching certificate
     alg, key_material = pkcs7.verifier._get_key_material(signing_cert)

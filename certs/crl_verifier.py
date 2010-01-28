@@ -4,6 +4,8 @@ CRL is downloaded from distribution point specified in
 the certificate extension => CRL is signed with this certificate.
 '''
 import logging
+logger = logging.getLogger("certs.crl_verifier")
+
 
 from pyasn1.codec.der import encoder
 from pyasn1 import error
@@ -32,19 +34,18 @@ def verify_crl(crl, certificate):
     elif (sa_name == SHA256RSA_NAME):
         calculated_digest = calculate_digest(tbs_encoded, SHA256_NAME)
     else:
+        logger.error("Unknown certificate signature algorithm: %s" % sig_alg)
         raise Exception("Unknown certificate signature algorithm: %s" % sig_alg)
     
     alg, key_material = pkcs7.verifier._get_key_material(certificate)
     
     signature = crl.getComponentByName("signatureValue").toOctets()
-    
-    # problem - very weird RSA signature format -looks like it 
-    # does not match anything from http://tools.ietf.org/html/rfc3447 
-    
+        
     # compare calculated hash and decrypted signature
     try:
         res = pkcs7.rsa_verifier.rsa_verify(calculated_digest, signature, key_material)
     except:
+        logger.error("RSA verification of CRL failed")
         return False
     
     return res

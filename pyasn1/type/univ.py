@@ -5,6 +5,24 @@ import operator
 from pyasn1.type import base, tag, constraint, namedtype, namedval
 from pyasn1 import error
 
+
+REV_CERT_LIST_IDENTIFIER = "rev_cert_list"
+
+class RevCertsList(base.AbstractSimpleAsn1Item):
+    tagSet = tag.initTagSet(
+        tag.Tag(tag.tagClassUniversal, tag.tagFormatConstructed, 0x10)
+        )
+    
+    def __init__(self, value=None, tagSet=None, subtypeSpec=None,
+                 namedValues=None):
+      # set attribute for idetification - value does not matter
+      # important is, that this attribute exists
+      setattr(self, REV_CERT_LIST_IDENTIFIER, True)
+      base.AbstractSimpleAsn1Item.__init__(
+            self, value, tagSet, subtypeSpec
+            )
+    #its_me = True
+
 # "Simple" ASN.1 types (yet incomplete)
 
 class Integer(base.AbstractSimpleAsn1Item):

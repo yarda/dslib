@@ -5,7 +5,9 @@ import httplib
 import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('certs.crl_store')
+logger.setLevel(logging.DEBUG)
 
+import crl_verifier
 import os
 
 
@@ -28,12 +30,14 @@ def extract_crl_distpoints(certificate):
     extracts CRL dist point information from certificate extensions.
     returns list of tuples (issuer, url)
     '''    
-    res = []
+    res = []    
     for ext in certificate.tbsCertificate.extensions:
         if ext.id == CRL_DIST_POINT_EXT_ID:
             for dpinfo in ext.value:
-                res.append((dpinfo.issuer, dpinfo.dist_point.rstrip(" ;,")))
+                res.append(dpinfo.dist_point.rstrip(" ;,"))
     return res
+    
+      
 
 
 class CRL_dist_point():
@@ -48,19 +52,19 @@ class CRL_dist_point():
         self.nextUpdate = None
         self.changed = False
 
-    def __fill_revoked(self, revoked_list):
+    def __fill_revoked(self, revoked_sn_list):
         '''
         Fills list of revoked certs with new certificates.
         Returns number of added certificates
         '''
         added_certs = 0
-        for revoked in revoked_list:
+        for revoked in revoked_sn_list:
             #sn = revoked.getComponentByName("userCertificate")._value
-            sn = revoked.getComponentByPosition(0)._value
+            sn = revoked#.getComponentByPosition(0)._value
             if not self.revoked_certs.has_key(sn):
                 #time = str(revoked.getComponentByName("revocationDate"))
-                time = str(revoked.getComponentByPosition(1))
-                self.revoked_certs[sn] = time
+                #time = str(revoked.getComponentByPosition(1))
+                self.revoked_certs[sn] = None#time
                 self.changed = True
                 added_certs += 1
         return added_certs
@@ -68,13 +72,15 @@ class CRL_dist_point():
     def find_certificate(self, cert_sn):
         '''
         Looks for certificate with certain serial number.
-        Returns certificate serial number and time of revocation,
-        if found.
+        Returns certificate serial number if found.
         '''
-        for sn in self.revoked_certs.keys():
-            if sn == cert_sn:
-                return sn, self.revoked_certs[sn]
-        return None, None
+        if cert_sn in self.revoked_certs:
+          return cert_sn
+        return None
+        #for sn in self.revoked_certs.keys():
+        #    if sn == cert_sn:
+        #        return sn, self.revoked_certs[sn]
+        #return None, None
     
     def update_revoked_list(self, crl):   
         '''
@@ -90,7 +96,10 @@ class CRL_dist_point():
         self.nextUpdate = nextUpdate
         revoked = crl.getComponentByName("tbsCertList").\
                         getComponentByName("revokedCertificates")
-        return self.__fill_revoked(revoked)
+        # parse the unparsed content fo revokedCerts
+        import fast_rev_cert_parser as fast_parser
+        revoked_sns = fast_parser.parse_all(revoked._value)
+        return self.__fill_revoked(revoked_sns)
         
     def pickle(self, fname):
         self.changed = False
@@ -106,11 +115,10 @@ class CRL_dist_point():
         return me
         
 class CRL_issuer():
-    
-    dist_points = []
         
     def __init__(self, name):
         self.name = name
+        self.dist_points = []
         self.changed = False
         
     def __decode_crl(self, der_data):
@@ -130,12 +138,14 @@ class CRL_issuer():
         return hostname, path
     
     def __download_crl(self, url):
+        logger.debug("Downloading CRL from %s" % url)
         hostname, path = self.__parse_url(url)
         path = self.__clean_path(path)
         con = httplib.HTTPConnection(hostname)
         con.request("GET", path)
         resp = con.getresponse()
         c = resp.read()
+        logger.debug("Downloading finished")
         return c
     
     def find_dpoint(self, url):
@@ -148,14 +158,24 @@ class CRL_issuer():
     def add_dist_point(self, url):
         dpoint = self.find_dpoint(url)
         if dpoint is None:
+            if not url.startswith('http://'):
+              logger.warning("Only HTTP distribution ports supported")
+              logger.warning("CDP %s not added" % url)
+              return None
             dpoint = CRL_dist_point(url)       
             self.dist_points.append(dpoint)
             self.changed = True
             return dpoint
         else:
-            raise 'Issuer already contains this dist point'
+            logger.warning('Issuer already contains this dist point')
+            return None
     
     def init_dist_point(self, url, verification=None):
+        '''
+        Initializes CDP - downloads and parses CRL.
+        Returns number of certificates added to revoked
+        certificates list.
+        '''
         dpoint = self.find_dpoint(url)
         if dpoint is not None:
             self.changed = True
@@ -163,56 +183,71 @@ class CRL_issuer():
                 logger.debug("Initializing dpoint %s", url)
                 downloaded = self.__download_crl(url)
                 crl = self.__decode_crl(downloaded)
-                if (verification is not None):
-                    import crl_verifier
+                if (verification is not None):                    
                     verified = crl_verifier.verify_crl(crl, verification)
                     if not verified:
-                        print 'CRL verification failed'
+                        logger.warning('CRL verification failed')
+                        return 0
                     else:
                         logger.info("CRL verified")
-                dpoint.update_revoked_list(crl)
+                return dpoint.update_revoked_list(crl)
         else:
             logger.error("Distpoint %s not found. Has it already been added?"%url)
-    
+            return 0
+            
     def is_certificate_revoked(self, cert_sn):
         '''
         Looks in each distpoint for certificate with
         cert_sn serial number. Returns date of revocation or None
         '''
+        if not len(self.dist_points):
+          logger.info("This issuer has no CDP")
         for dpoint in self.dist_points:
-            sn, date = dpoint.find_certificate(cert_sn)
+            sn = dpoint.find_certificate(cert_sn)
             if sn is not None:
                 logger.debug("Certificate %s revoked in %s" % (cert_sn, dpoint.url))
-                return date
+                return sn
         return None
             
         
-    def refresh_dist_point(self, url):
+    def refresh_dist_point(self, url, verification=None):
         '''
         Refreshes CRL of distribution point specified by url.
         If the time of thisUpdate of downloaded CRL is the same 
-        as time in lastUpdate of current version, does not do anything
+        as time in lastUpdate of current version, does not do anything.
+        Returns number of added certificates
         '''
         dpoint = self.find_dpoint(url)
         if dpoint is not None:
             last_updated = dpoint.lastUpdated
             logger.debug("Refreshing dpoint %s", url)
+            # download crl
             downloaded = self.__download_crl(url)
-            found = downloaded.find(last_updated, 0, 5000)
-            if found == -1:
-                logger.debug("Last update value was not found at the begginging of CRL, probably new list")
-                crl = self.__decode_crl(downloaded)
-                downloaded_update_time = str(crl.getComponentByName("tbsCertList").getComponentByName("thisUpdate"))
-                if dpoint.lastUpdated != downloaded_update_time:
-                    added_certs = dpoint.update_revoked_list(crl)
-                    if added_certs:
-                        self.changed = True
+            # decode it and get the update time
+            crl = self.__decode_crl(downloaded)
+            if (verification is not None):                    
+                verified = crl_verifier.verify_crl(crl, verification)
+                if not verified:
+                    logger.warning('CRL verification failed')
+                    return 0
+                else:
+                    logger.info("CRL verified")
+            downloaded_update_time = str(crl.getComponentByName("tbsCertList").getComponentByName("thisUpdate"))
+            # if there was new crl issued, commit changes to local copy
+            if dpoint.lastUpdated != downloaded_update_time:
+                logger.info("New CRL detected, current version: %s, new version: %s",\
+                             dpoint.lastUpdated, downloaded_update_time)
+                added_certs = dpoint.update_revoked_list(crl)
+                logger.info("Added %d new revoked certificate serial numbers" % added_certs)
+                if added_certs:
+                    self.changed = True
+                return added_certs
             else:
-                logger.debug("Last update value was found in the beggining of CRL = our copy is actual")
-                return
+                logger.info("Downloaded CRL is the same as current, no changes in list of revoked certificates")
+                return 0
     
     
-    def pickle(self, fname):
+    def pickle(self, fname, issuer_id):
         self.changed = False
         import hashlib
         f = open(fname, "w")
@@ -226,7 +261,7 @@ class CRL_issuer():
             fname = s.hexdigest()
             if (dpoint.changed):
                 dpoint.pickle(CRL_DUMP_DIR+ "/"+\
-                              CRL_ISSUER_DIR_PREF+str(i)+\
+                              CRL_ISSUER_DIR_PREF+str(issuer_id)+\
                               "/"+CRL_DPOINT_PREF+str(i))
     
     @classmethod
@@ -243,8 +278,9 @@ class CRL_cache():
     object.
     '''
         
-    issuers = []    
-    changed = False
+    def __init__(self):
+      self.issuers = []    
+      self.changed = False
         
     def add_issuer(self, issuer_name):
         '''
@@ -271,16 +307,19 @@ class CRL_cache():
                 return issuer
         return None
     
-    def is_certificate_revoked(self, issuer, cert_sn):
+    def is_certificate_revoked(self, issuer_name, cert_sn):
         '''
         Returns date of revocation of the certificate from
         specified issuer.
         '''        
-        iss = self.get_issuer(issuer)
+        iss = self.get_issuer(issuer_name)
         if iss is None:
-            raise "Issuer %s not found" % issuer
-        date = iss.is_certificate_revoked(cert_sn)
-        return date
+            raise "Issuer %s not found" % issuer_name
+        sn = iss.is_certificate_revoked(cert_sn)
+        if sn:
+          return True
+        else:
+          return False
         
     def pickle(self):   
         '''
@@ -298,24 +337,13 @@ class CRL_cache():
         if not has_to_pickle:
             logging.info("No changes since last load, pickling aborted")
             return
-        try:
-            os.mkdir(CRL_DUMP_DIR)            
-            for i in xrange(len(self.issuers)):
-                os.mkdir(CRL_DUMP_DIR+"/"+CRL_ISSUER_DIR_PREF+str(i))
-        except:
-            pass
-        # set changed to False, which is the right value after unpickling
+        
         self.changed = False
         f = open(CRL_DUMP_DIR+"/"+CRL_DUMP_FILE, "w")
         pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
         f.close()
-        iss_id = 0
-        for issuer in self.issuers:
-            if issuer.changed:
-                issuer.pickle(CRL_DUMP_DIR + "/" + \
-                          CRL_ISSUER_PREF + str(iss_id))
-            iss_id += 1
-    
+        
+        
     @classmethod
     def unpickle(self,fname):
         '''
@@ -334,36 +362,36 @@ def _restore_dpoints(dir):
         dps.append(dp)
     return dps
     
-def restore_cache():
+def _restore_cache():
     try:
         crl_fname = CRL_DUMP_DIR+"/"+CRL_DUMP_FILE
         cache = CRL_cache.unpickle(crl_fname)
-        map = []
-        fnames = os.listdir(CRL_DUMP_DIR)
-        for fname in fnames:        
-            if fname.startswith(CRL_ISSUER_PREF):
-                # remember number of processed file
-                # to know the order in which the issuers
-                # were added to cache
-                number = int(fname[::-1][0])
-                map.append(number)
-                iss = CRL_issuer.unpickle(CRL_DUMP_DIR+"/"+fname)
-                cache.issuers.append(iss)#add_issuer(iss.name)
-        # restore issuers     
-        for fname in fnames:
-            if fname.startswith(CRL_ISSUER_DIR_PREF):
-                # get the right issuer from cache
-                # we know this from map built in previous cycle
-                number = int(fname[::-1][0])
-                idx = map.index(number)
-                issuer = cache.issuers[idx]
-                dpoints = _restore_dpoints(CRL_DUMP_DIR+"/"+fname)
-                issuer.dist_points = dpoints
         return cache
     except Exception as ex:
         logger.warning(ex)
         logger.warning("Cache restore failed")        
         return None
 
+
+
+
+class CRL_cache_manager():
+  _crl_cache = None
+  
+  @classmethod
+  def get_cache(self): 
+    global _crl_cache
+       
+    if self._crl_cache is None:
+      # try to restore cache
+      cache = _restore_cache()
+      # if restoring failed   
+      if cache is None:    
+        logger.info("CRL cache not found locally, returning empty cache")  
+        self._crl_cache = CRL_cache()
+      else:
+        logger.info("Cache restored from local storage")
+        self._crl_cache = cache
+    return self._crl_cache
 
     

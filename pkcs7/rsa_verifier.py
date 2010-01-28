@@ -14,45 +14,7 @@ from asn1_models.digest_info import *
 from pyasn1.codec.der import decoder
 from pyasn1 import error
 
-def bytes2int(bytes):
-    """Converts a list of bytes or a string to an integer
-
-    >>> (128*256 + 64)*256 + + 15
-    8405007
-    >>> l = [128, 64, 15]
-    >>> bytes2int(l)
-    8405007
-    """
-
-    if not (type(bytes) is types.ListType or type(bytes) is types.StringType):
-        raise TypeError("You must pass a string or a list")
-
-    # Convert byte stream to integer
-    integer = 0
-    for byte in bytes:
-        integer *= 256
-        if type(byte) is types.StringType: byte = ord(byte)
-        integer += byte
-
-    return integer
-
-def int2bytes(number):
-    """Converts a number to a string of bytes
-    
-    >>> bytes2int(int2bytes(123456789))
-    123456789
-    """
-
-    if not (type(number) is types.LongType or type(number) is types.IntType):
-        raise TypeError("You must pass a long or an int")
-
-    string = ""
-
-    while number > 0:
-        string = "%s%s" % (chr(number & 0xFF), string)
-        number /= 256
-    
-    return string
+from converters.bytes_converter import *
 
 def _fast_exponentiation(a, p, n):
     """Calculates r = a^p mod n
@@ -103,13 +65,13 @@ def _rsa_decode(encoded, pub_key):
     """
     "Decrypts" RSA signature (applies public exponent modulo n)
     """    
-    _enc = bytes2int(encoded)
-    _mod = bytes2int(pub_key["mod"])
+    _enc = bytes_to_int(encoded)
+    _mod = bytes_to_int(pub_key["mod"])
     _exp = pub_key["exp"]
     
     rr = _fast_exponentiation(_enc, _exp, _mod)
         
-    _decrypt = int2bytes(rr)    
+    _decrypt = int_to_bytes(rr)    
     
     return _decrypt
    
@@ -135,7 +97,7 @@ def _get_hash_from_signature(signature, pub_key):
 def rsa_verify(data_digest, signature, pub_key):    
     '''
     Verifies data digest against signature with public key
-    '''
+    '''    
     hash_signature = _get_hash_from_signature(signature, pub_key)
     if (data_digest == hash_signature):
         logging.debug("Signature OK")

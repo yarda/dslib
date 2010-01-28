@@ -178,6 +178,10 @@ class ObjectIdentifierEncoder(AbstractItemEncoder):
     
 class SequenceOfEncoder(AbstractItemEncoder):
     def _encodeValue(self, encodeFun, value, defMode, maxChunkSize):
+        # check if we are encoding REV_CERT_LIST
+        if hasattr(value, univ.REV_CERT_LIST_IDENTIFIER):
+          substrate = value._value
+          return substrate, 1
         if hasattr(value, 'setDefaultComponents'):
             value.setDefaultComponents()
         value.verifySizeSpec()

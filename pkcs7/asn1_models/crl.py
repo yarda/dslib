@@ -50,7 +50,8 @@ class TbsCertList(univ.Sequence):
         namedtype.NamedType('issuer', Name()),        
         namedtype.NamedType('thisUpdate', Time()),
         namedtype.OptionalNamedType('nextUpdate', Time()),
-        namedtype.OptionalNamedType('revokedCertificates', univ.Sequence()),#RevokedCertList()),
+        #namedtype.OptionalNamedType('revokedCertificates', univ.Sequence()),#RevokedCertList()), 
+        namedtype.OptionalNamedType('revokedCertificates', univ.RevCertsList()),#RevokedCertList()), 
         namedtype.OptionalNamedType('crlExtensions', Extensions().\
                                     subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x0))),
         )

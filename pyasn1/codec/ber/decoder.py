@@ -101,6 +101,17 @@ class BitStringDecoder(AbstractDecoder):
                 )
         return r, substrate
 
+class RevCertsListDecoder(AbstractDecoder):
+    '''
+    Decoder for RevCertsList - does not decode the content- returns
+    it as one string.
+    '''
+    protoComponent = univ.RevCertsList()
+    def valueDecoder(self, substrate, asn1Spec, tagSet, length,
+                     state, decodeFun):
+      r = self._createComponent(tagSet, asn1Spec).clone(substrate)
+      return r, substrate
+
 class OctetStringDecoder(AbstractDecoder):
     protoComponent = univ.OctetString('')
     def valueDecoder(self, substrate, asn1Spec, tagSet, length,
@@ -362,7 +373,8 @@ codecMap = {
     char.BMPString.tagSet: BMPStringDecoder(),
     # useful types
     useful.GeneralizedTime.tagSet: GeneralizedTimeDecoder(),
-    useful.UTCTime.tagSet: UTCTimeDecoder()
+    useful.UTCTime.tagSet: UTCTimeDecoder(),
+    
     }
 
 ( stDecodeTag, stDecodeLength, stGetValueDecoder, stGetValueDecoderByAsn1Spec,
@@ -494,8 +506,12 @@ class Decoder:
                         baseTagSet = tag.TagSet(baseTag, baseTag)
                     else:
                         baseTagSet = tag.TagSet()
-                    concreteDecoder = self.__codecMap.get( # tagged subtype
-                        baseTagSet
+                    # chceck if we are decoding special case - RevCertsList    
+                    if hasattr(__chosenSpec, univ.REV_CERT_LIST_IDENTIFIER):                    
+                        concreteDecoder = RevCertsListDecoder()
+                    else:
+                        concreteDecoder = self.__codecMap.get( # tagged subtype
+                                                    baseTagSet
                         )
                     if concreteDecoder:
                         asn1Spec = __chosenSpec
