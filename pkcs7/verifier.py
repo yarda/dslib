@@ -2,6 +2,7 @@
 Verifying of PKCS7 messages
 '''
 import logging
+logger = logging.getLogger('pkcs7.verifier')
 
 import string
 from pyasn1.codec.der import encoder
@@ -57,13 +58,13 @@ def _get_key_material(certificate):
     if oid_map.has_key(signing_alg):
         algorithm = oid_map[signing_alg]
     
-    logging.debug("Extracting key material form public key:")
+    logger.debug("Extracting key material form public key:")
     
     if (algorithm is None):
-        logging.error("Signing algorithm is: unknown OID: %s" % signing_alg)
+        logger.error("Signing algorithm is: unknown OID: %s" % signing_alg)
         raise Exception("Unrecognized signing algorithm")
     else:
-        logging.debug("Signing algorithm is: %s" % algorithm)
+        logger.debug("Signing algorithm is: %s" % algorithm)
     
     key_material = None
     if (algorithm == RSA_NAME):
@@ -74,14 +75,14 @@ def _get_key_material(certificate):
 def _get_digest_algorithm(signer_info):
     '''
     Extracts digest algorithm from signerInfo component.
-    Returns algorithm's name pr raises Exception
+    Returns algorithm's name or raises Exception
     '''
     digest_alg = str(signer_info.getComponentByName("digestAlg"))
     result = None
     if oid_map.has_key(digest_alg):
         result = oid_map[digest_alg]
     if result is None:
-        logging.error("Unknown digest algorithm: %s" % digest_alg)
+        logger.error("Unknown digest algorithm: %s" % digest_alg)
         raise Exception("Unrecognized digest algorithm")
     
     return result
@@ -105,13 +106,17 @@ def _verify_data(data, certificates, signer_infos):
             data_to_verify = data
         else:
             for attr in auth_attributes:
+                # get the messageDigest field of autheticatedAttributes
                 type = str(attr.getComponentByName("type"))
                 if (type == MESSAGE_DIGEST_KEY):
                     value = str(attr.getComponentByName("value"))
+                    # calculate hash of the content of the PKCS7 msg
+                    # to compare it with the message digest in authAttr
                     calculated = calculate_digest(data, digest_alg)
                     if (value != calculated):
                         raise Exception("Digest in authenticated attributes differs\
                                         from the digest of message!")
+            # prepare authAttributes to verification - change some headers in it
             data_to_verify = _prepare_auth_attributes_to_digest(auth_attributes)
     
         data_to_verify = calculate_digest(data_to_verify, digest_alg)    
@@ -121,7 +126,7 @@ def _verify_data(data, certificates, signer_infos):
         if (sig_algorithm == RSA_NAME):
             r = rsa_verify(data_to_verify, signature, key_material)
             if not r:
-                logging.debug("Verification of signature with id %d failed"%id)
+                logger.debug("Verification of signature with id %d failed"%id)
                 return False
             else:
                 result = True

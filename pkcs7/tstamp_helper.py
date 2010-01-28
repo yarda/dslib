@@ -6,6 +6,9 @@ of signed data message. Version of content is '3', so there are small
 differences.
 '''
 import logging
+logger = logging.getLogger("pkcs7.tstamp_helper")
+
+
 import base64
 import pkcs7
 import pkcs7.pkcs7_decoder
@@ -24,9 +27,9 @@ def parse_qts(dmQTimestamp, verify=True):
     if (verify):
         verif_result = pkcs7.verifier.verify_qts(qts)        
         if verif_result:
-            logging.info("QTimeStamp verified")
+            logger.info("QTimeStamp verified")
         else:
-            logging.error("QTimeStamp verification failed")
+            logger.error("QTimeStamp verification failed")
     
     tstData = qts.getComponentByName("content").getComponentByName("encapsulatedContentInfo").getComponentByName("eContent")._value    
     tstinfo = pkcs7.pkcs7_decoder.decode_tst(tstData)

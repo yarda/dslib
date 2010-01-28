@@ -1,5 +1,7 @@
 import hashlib
 import logging
+logger = logging.getLogger("pkcs7.digest")
+
 import base64
 
 RSA_NAME = "RSA"
@@ -26,12 +28,11 @@ def calculate_digest(data, alg):
         digest_alg = hashlib.sha512()
     
     if digest_alg is None:
-        logging.error("Unknown digest algorithm : %s" % alg)
+        logger.error("Unknown digest algorithm : %s" % alg)
         return None
     
     digest_alg.update(data)   
     dg = digest_alg.digest()       
     
-    logging.debug("Calculated hash from incoming file (digesting autheticatedAttributes):")
-    logging.debug(base64.b64encode(dg))
+    logger.debug("Calculated hash from input data: %s" % base64.b64encode(dg))    
     return dg

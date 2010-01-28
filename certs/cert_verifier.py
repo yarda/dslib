@@ -38,6 +38,8 @@ def _verify_date(certificate):
     
     if (start_time < now) and (end_time > now):    
         return True
+    log.warning("Out of boundaries of validity:  %s - %s." %\
+                (start, end))
     return False
 
 def _check_crl(checked_cert, issuer_cert):
@@ -109,29 +111,43 @@ def verify_certificate(cert, trusted_ca_certs, check_crl=False):
     elif (sa_name == SHA256RSA_NAME):
         calculated_digest = calculate_digest(tbs_encoded, SHA256_NAME)
     else:
-        raise Exception("Unknown certificate signature algorithm: %s" % sig_alg)
-
-    # look for signing certificate among certificates
-    issuer = str(tbs.getComponentByName("issuer"))        
-    signing_cert = find_cert_by_subject(issuer, trusted_ca_certs)        
-    if not signing_cert:
-        msg = "No certificate found for %s" % issuer
+        msg = "Unknown certificate signature algorithm: %s" % sig_alg
         logger.error(msg)
         raise Exception(msg)
+
+    # look for signing certificate among certificates
+    issuer = str(tbs.getComponentByName("issuer"))  
+    subject = str(tbs.getComponentByName("subject"))
+    signing_cert = find_cert_by_subject(issuer, trusted_ca_certs)        
+    if not signing_cert:
+        msg = "No certificate found for %s, needed to verify certificate of %s" %\
+               (issuer,subject)
+        logger.error(msg)
+        raise Exception(msg)
+    
+    # check validity of signing certificate - validity period etc.
+    if not _verify_date(signing_cert):
+        msg = "Signing certificate out of validity period"
+        logger.error(msg)
+        raise Exception(msg)
+    # check validity of certificate - validity period etc.
+    if not _verify_date(cert):
+        msg = "Certificate out of validity period"
+        logger.error(msg)
+        raise Exception(msg)
+      
     # if we want to download and check the crl of issuing authority 
     # for certificate being checked
     if check_crl:
         is_ok = _check_crl(cert, signing_cert)
         csn = tbs.getComponentByName("serialNumber")._value
         if not is_ok:
-          logger.error("Certificate %d of %s is revoked" % (csn,issuer))
+          msg = "Certificate %d of %s is revoked" % (csn,issuer)
+          logger.error(msg)
+          raise Excpetion(msg)
         else:
           logger.info("Certificate %d of %s is not on CRL" % (csn,issuer))
-    # check validity of certificate - validity period etc.
-    if not _verify_date(signing_cert):
-        msg = "Signing certificate out of validity period"
-        logger.error(msg)
-        raise Exception(msg)
+    
     # extract public key from matching certificate
     alg, key_material = pkcs7.verifier._get_key_material(signing_cert)
     # decrypt signature in explored certificate

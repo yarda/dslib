@@ -5,6 +5,8 @@ Verifying RSA signatures.
 Uses parts ofcode from  http://stuvel.eu/rsa
 '''
 import logging
+logger = logging.getLogger('pkcs7.rsa_verifier')
+logger.setLevel(logging.DEBUG)
 
 import types, base64
 import asn1_models
@@ -17,7 +19,8 @@ from pyasn1 import error
 from converters.bytes_converter import *
 
 def _fast_exponentiation(a, p, n):
-    """Calculates r = a^p mod n
+    """
+    Calculates r = a^p mod n
     """
     result = a % n
     remainders = []
@@ -49,6 +52,7 @@ def _extract_hash_from_decoded_sig(pkcs1_5_encoded_bytes):
     msg is DER encoded DigestInfo, which contains hash alg specification
     and the hash itself
     '''
+    logger.debug("Decoding RSA EMSA-PKCS-v1.5 encoding scheme")  
     idx = 0
     for byte in pkcs1_5_encoded_bytes:
         if ord(byte) == 0x01 or ord(byte) == 0xff:
@@ -88,8 +92,7 @@ def _get_hash_from_signature(signature, pub_key):
     # get the bytes of the hash
     hash = _get_hash_from_DER(decoded_bytes)
     
-    logging.debug("Hash from decoded signature:")
-    logging.debug(base64.b64encode(hash))
+    logger.debug("Hash from decoded signature: %s" % base64.b64encode(hash))
         
     return hash
 
@@ -100,8 +103,8 @@ def rsa_verify(data_digest, signature, pub_key):
     '''    
     hash_signature = _get_hash_from_signature(signature, pub_key)
     if (data_digest == hash_signature):
-        logging.debug("Signature OK")
+        logger.debug("RSA signature OK")
         return True
     else:
-        logging.debug("Verification failed")
+        logger.debug("RSA verification failed")
         return False
