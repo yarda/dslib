@@ -112,8 +112,8 @@ class Dispatcher(object):
 
   def MessageEnvelopeDownload(self, msgid):
     reply = self.soap_client.service.MessageEnvelopeDownload(msgid)
-    if hasattr(reply, 'dmReturnedMessageEnvelope') and hasattr(reply.dmReturnedMessageEnvelope, 'dmDm'):
-      message = models.Message(reply.dmReturnedMessageEnvelope.dmDm)
+    if hasattr(reply, 'dmReturnedMessageEnvelope'):
+      message = models.Message(reply.dmReturnedMessageEnvelope)
     else:
       message = None
     # check the timestamp
@@ -126,8 +126,8 @@ class Dispatcher(object):
 
   def MessageDownload(self, msgid):
     reply = self.soap_client.service.MessageDownload(msgid)
-    if hasattr(reply, 'dmReturnedMessage') and hasattr(reply.dmReturnedMessage, 'dmDm'):
-      message = models.Message(reply.dmReturnedMessage.dmDm)
+    if hasattr(reply, 'dmReturnedMessage'):
+      message = models.Message(reply.dmReturnedMessage)
     else:
       message = None
     # check the timestamp
@@ -136,7 +136,6 @@ class Dispatcher(object):
             message.qts_imprint_matches_hash = True
         else:
             message.qts_imprint_matches_hash = False
-            
     return Reply(self._extract_status(reply), message)
 
   def DummyOperation(self):

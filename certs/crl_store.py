@@ -367,7 +367,7 @@ def _restore_cache():
         crl_fname = CRL_DUMP_DIR+"/"+CRL_DUMP_FILE
         cache = CRL_cache.unpickle(crl_fname)
         return cache
-    except Exception as ex:
+    except Exception, ex:
         logger.warning(ex)
         logger.warning("Cache restore failed")        
         return None
