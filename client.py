@@ -260,7 +260,7 @@ class Dispatcher(object):
     
     # verify certificate
     wrong_certificates_ids = []    
-    certs = decoded_msg.getComponentByName("content").getComponentByName("certificates")
+    certs = decoded_msg.getComponentByName("content").getComponentByName("certificates")    
     for cert in certs:
         if self._verify_certificate(cert):
             continue
@@ -354,6 +354,7 @@ class Dispatcher(object):
     '''
     import certs.cert_verifier
     try:
+      # addd check_crl=True parameter to check the crl
       res = certs.cert_verifier.verify_certificate(certificate, self.trusted_certs)
     except Exception, e:
       if e.message == "No trusted certificate found":

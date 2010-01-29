@@ -79,6 +79,7 @@ def _check_crl(checked_cert, issuer_cert):
     else:
       # if CRL issuer exists, only refresh his CDPs
       for dp in iss.dist_points:
+        time_delta = dp.seconds_from_last_update()
         added_certs = iss.refresh_dist_point(dp.url, verification=issuer_cert)
         if iss.changed:
           crl_cache.changed = True
@@ -97,7 +98,8 @@ def verify_certificate(cert, trusted_ca_certs, check_crl=False):
     Verifies the certificate - checks signature and date validity.
     '''
     if len(trusted_ca_certs) == 0:
-        raise Exception("No trusted certificate found")
+        logger.error("No trusted certificate found")
+        return False
     # extract tbs certificate
     tbs = cert.getComponentByName("tbsCertificate")
     # encode tbs into der
@@ -113,7 +115,7 @@ def verify_certificate(cert, trusted_ca_certs, check_crl=False):
     else:
         msg = "Unknown certificate signature algorithm: %s" % sig_alg
         logger.error(msg)
-        raise Exception(msg)
+        return False
 
     # look for signing certificate among certificates
     issuer = str(tbs.getComponentByName("issuer"))  
@@ -123,7 +125,7 @@ def verify_certificate(cert, trusted_ca_certs, check_crl=False):
         msg = "No certificate found for %s, needed to verify certificate of %s" %\
                (issuer,subject)
         logger.error(msg)
-        raise Exception(msg)
+        return False
     
     # check validity of signing certificate - validity period etc.
     if not _verify_date(signing_cert):
@@ -134,7 +136,7 @@ def verify_certificate(cert, trusted_ca_certs, check_crl=False):
     if not _verify_date(cert):
         msg = "Certificate out of validity period"
         logger.error(msg)
-        raise Exception(msg)
+        return False
       
     # if we want to download and check the crl of issuing authority 
     # for certificate being checked
@@ -144,7 +146,7 @@ def verify_certificate(cert, trusted_ca_certs, check_crl=False):
         if not is_ok:
           msg = "Certificate %d of %s is revoked" % (csn,issuer)
           logger.error(msg)
-          raise Excpetion(msg)
+          return False
         else:
           logger.info("Certificate %d of %s is not on CRL" % (csn,issuer))
     

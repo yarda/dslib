@@ -10,6 +10,7 @@ logger.setLevel(logging.DEBUG)
 import crl_verifier
 import os
 
+import time
 
 from pyasn1.codec.der import decoder
 from pyasn1 import error
@@ -55,16 +56,25 @@ class CRL_dist_point():
         Returns number of added certificates
         '''
         added_certs = 0
-        for revoked in revoked_sn_list:
-            #sn = revoked.getComponentByName("userCertificate")._value
-            sn = revoked#.getComponentByPosition(0)._value
-            if not self.revoked_certs.has_key(sn):
-                #time = str(revoked.getComponentByName("revocationDate"))
-                #time = str(revoked.getComponentByPosition(1))
-                self.revoked_certs[sn] = None#time
+        for revoked in revoked_sn_list:            
+            sn = revoked
+            if not self.revoked_certs.has_key(sn):                
+                self.revoked_certs[sn] = None
                 self.changed = True
                 added_certs += 1
         return added_certs
+    
+    def seconds_from_last_update(self):
+        '''
+        Returns number of seconds from the last update
+        '''
+        last = self.lastUpdated
+        format = '%y%m%d%H%M%SZ'        
+        t1 = time.mktime(time.strptime(last, format))         
+        t2 = time.mktime(time.gmtime())
+        
+        diff = t2 - t1
+        return diff
         
     def find_certificate(self, cert_sn):
         '''
@@ -74,10 +84,7 @@ class CRL_dist_point():
         if cert_sn in self.revoked_certs:
           return cert_sn
         return None
-        #for sn in self.revoked_certs.keys():
-        #    if sn == cert_sn:
-        #        return sn, self.revoked_certs[sn]
-        #return None, None
+        
     
     def update_revoked_list(self, crl):   
         '''
@@ -93,7 +100,7 @@ class CRL_dist_point():
         self.nextUpdate = nextUpdate
         revoked = crl.getComponentByName("tbsCertList").\
                         getComponentByName("revokedCertificates")
-        # parse the unparsed content fo revokedCerts
+        # parse the unparsed content for revokedCerts
         import fast_rev_cert_parser as fast_parser
         revoked_sns = fast_parser.parse_all(revoked._value)
         return self.__fill_revoked(revoked_sns)
