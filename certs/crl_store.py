@@ -131,15 +131,19 @@ class CRL_issuer():
     
     def __download_crl(self, url):
         logger.debug("Downloading CRL from %s" % url)
-        hostname, path = self.__parse_url(url)
-        path = self.__clean_path(path)
-        con = httplib.HTTPConnection(hostname)
-        con.request("GET", path)
-        resp = con.getresponse()
-        c = resp.read()
-        logger.debug("Downloading finished")
-        return c
-    
+        try:
+          hostname, path = self.__parse_url(url)
+          path = self.__clean_path(path)
+          con = httplib.HTTPConnection(hostname)
+          con.request("GET", path)
+          resp = con.getresponse()
+          c = resp.read()
+          logger.debug("Downloading finished")
+          return c
+        except:
+          logger.warning("Downloading crl from %s failed!" % url)
+          return None
+      
     def find_dpoint(self, url):
         for dpoint in self.dist_points:
             if dpoint.url == url:
@@ -174,18 +178,23 @@ class CRL_issuer():
             if dpoint.lastUpdated is None:
                 logger.debug("Initializing dpoint %s", url)
                 downloaded = self.__download_crl(url)
+                if downloaded is None:
+                  return False, 0
                 crl = self.__decode_crl(downloaded)
                 if (verification is not None):                    
                     verified = crl_verifier.verify_crl(crl, verification)
                     if not verified:
                         logger.warning('CRL verification failed')
-                        return 0
+                        return True, 0
                     else:
                         logger.info("CRL verified")
-                return dpoint.update_revoked_list(crl)
+                return True, dpoint.update_revoked_list(crl)
+            else:
+              logger.warning("CDP %s is already initialized. Try to refresh it" % url)
+              return True, 0
         else:
             logger.error("Distpoint %s not found. Has it already been added?"%url)
-            return 0
+            return True, 0
             
     def is_certificate_revoked(self, cert_sn):
         '''
@@ -213,15 +222,17 @@ class CRL_issuer():
         if dpoint is not None:
             last_updated = dpoint.lastUpdated
             logger.debug("Refreshing dpoint %s", url)
-            # download crl
+            # download CRL
             downloaded = self.__download_crl(url)
+            if downloaded is None:
+              return False, 0
             # decode it and get the update time
             crl = self.__decode_crl(downloaded)
             if (verification is not None):                    
                 verified = crl_verifier.verify_crl(crl, verification)
                 if not verified:
                     logger.warning('CRL verification failed')
-                    return 0
+                    return True, 0
                 else:
                     logger.info("CRL verified")
             downloaded_update_time = str(crl.getComponentByName("tbsCertList").getComponentByName("thisUpdate"))
@@ -233,10 +244,10 @@ class CRL_issuer():
                 logger.info("Added %d new revoked certificate serial numbers" % added_certs)
                 if added_certs:
                     self.changed = True
-                return added_certs
+                return True, added_certs
             else:
                 logger.info("Downloaded CRL is the same as current, no changes in list of revoked certificates")
-                return 0
+                return True, 0
     
     
 class CRL_cache():
@@ -349,7 +360,7 @@ class CRL_cache_manager():
   
   @classmethod
   def get_cache(self): 
-    global _crl_cache
+    #global _crl_cache
        
     if self._crl_cache is None:
       # try to restore cache

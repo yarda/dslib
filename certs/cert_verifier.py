@@ -66,6 +66,7 @@ def _check_crl(checked_cert, issuer_cert):
     dist_points = crl_store.extract_crl_distpoints(c)
     # look for CRL issuer in the cache
     iss = crl_cache.get_issuer(issuer_name)
+    download_crl_success = False
     if iss is None:
       # add new CRL issuer
       added = crl_cache.add_issuer(issuer_name)
@@ -75,14 +76,31 @@ def _check_crl(checked_cert, issuer_cert):
         if added_dp is not None:
           crl_cache.changed = True
           # initialize added CDP
-          added.init_dist_point(dp, verification=issuer_cert)
+          download_success, added_certs = added.init_dist_point(dp, verification=issuer_cert)
+          # if download of CRL was successful, ignore other CDP
+          if download_success:
+            download_crl_success = True
+            break
     else:
       # if CRL issuer exists, only refresh his CDPs
-      for dp in iss.dist_points:
-        time_delta = dp.seconds_from_last_update()
-        added_certs = iss.refresh_dist_point(dp.url, verification=issuer_cert)
+      for dp in iss.dist_points:        
+        download_success, added_certs = iss.refresh_dist_point(dp.url, verification=issuer_cert)        
         if iss.changed:
           crl_cache.changed = True
+        # if download was successful, do not try to refresh remaining CDPs 
+        if download_success:
+          download_crl_success = True
+          break
+    # if CRL download failed from each CDP and the cache
+    # is empty, return False - we cannot say anything about
+    # certificate revoked status
+    if not download_crl_success:
+      logger.warning("Cannot download CRL from any CDP!")
+      if (len(crl_cache.issuers) == 0):
+        logger.error("CRL cache empty, cannot say anything about certificate revoked status")
+        logger.error("Certificate check against CRL failed, download of CRLs failed")
+        return False
+      logger.warning("Using locally stored CRLs")
     # check the CRL cache for the certificate issuer and serial number
     is_revoked = crl_cache.is_certificate_revoked(issuer_name, cert_sn)
     # if it is not revoked, checked certificate is ok
