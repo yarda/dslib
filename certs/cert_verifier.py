@@ -82,6 +82,12 @@ def _check_crl(checked_cert, issuer_cert):
             break
     else:
       # if CRL issuer exists, only refresh his CDPs
+      download_crl_success, added_certs = iss.\
+                                      refresh_issuer(verification=issuer_cert, \
+                                                     force_crl_download=True)
+      if iss.changed:
+        crl_cache.change = True
+      '''
       for dp in iss.dist_points:        
         download_success, added_certs = iss.refresh_dist_point(dp.url, verification=issuer_cert)        
         if iss.changed:
@@ -90,6 +96,7 @@ def _check_crl(checked_cert, issuer_cert):
         if download_success:
           download_crl_success = True
           break
+      '''
     # if CRL download failed from each CDP and the cache
     # is empty, return False - we cannot say anything about
     # certificate revoked status

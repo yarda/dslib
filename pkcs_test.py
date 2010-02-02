@@ -217,7 +217,7 @@ else:
     logger.info("CRL cache read from local store")
     i = crl_cache.get_issuer(issuer)
     logger.info("Refreshing distribution point...")
-    i.refresh_dist_point(url, verification=cert)
+    i.refresh_dist_point(url, verification=cert, force_download=False)
     logger.info("Done")
 
 revoked = 330011

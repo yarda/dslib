@@ -210,9 +210,26 @@ class CRL_issuer():
                 logger.debug("Certificate %s revoked in %s" % (cert_sn, dpoint.url))
                 return sn
         return None
-            
+    
+    def refresh_issuer(self, verification=None, force_crl_download=False):
+        '''
+        Refresh CDPs of this issuer. Goes through
+        CDPS, tries to refresh them. Stops after first successful refresh.
+        Returns result of download attempt and number of added certificates
+        '''
+        logger.info("Refreshing issuer %s" % self.name)
+        for dp in self.dist_points:
+          success, added_certs = self.refresh_dist_point(dp.url, \
+                                                         verification,\
+                                                         force_crl_download)
+          if success:            
+            return True, added_certs
+          else:
+            logger.warning("CDP %s failed to download" % dp.url)
+        # refreshing of each CDP failed
+        return False, 0    
         
-    def refresh_dist_point(self, url, verification=None):
+    def refresh_dist_point(self, url, verification=None, force_download=False):
         '''
         Refreshes CRL of distribution point specified by url.
         If the time of thisUpdate of downloaded CRL is the same 
@@ -225,13 +242,17 @@ class CRL_issuer():
             logger.debug("Refreshing dpoint %s", url)
             # check time of next update - if it is in the future, return True,0
             # download only in case when nextUpdate time passed               
-            t1 = timeutil.to_time(dpoint.nextUpdate)         
-            t2 = timeutil.now()
-            if t2 >= t1:
-              logger.info("Next update time passed, downloading CRL")
+            if force_download:
+              logger.debug("Force download parameter set, ignoring nextUpdate parameter of CRL")             
             else:
-              logger.info("Next update scheduled on %s, not downloading anything" % dpoint.nextUpdate)
-              return True, 0
+              # if force download was not set, check the nextUpdate parameter
+              next_time = timeutil.to_time(dpoint.nextUpdate)         
+              current_time = timeutil.now()
+              if current_time >= next_time:
+                logger.info("Next update time passed, downloading CRL")
+              else:
+                logger.info("Next update scheduled on %s, not downloading anything" % dpoint.nextUpdate)
+                return True, 0
             # download CRL
             downloaded = self.__download_crl(url)
             if downloaded is None:
@@ -245,6 +266,8 @@ class CRL_issuer():
                     return True, 0
                 else:
                     logger.info("CRL verified")
+            else:
+              logger.info("CRL verification not performed, no certificate provided")
             downloaded_update_time = str(crl.getComponentByName("tbsCertList").getComponentByName("thisUpdate"))
             # if there was new crl issued, commit changes to local copy
             if dpoint.lastUpdated != downloaded_update_time:
@@ -294,6 +317,7 @@ class CRL_cache():
         for issuer in self.issuers:
             if issuer.name == issuer_name:
                 return issuer
+        logger.warning("Issuer %s not found in cache" % issuer_name)
         return None
     
     def is_certificate_revoked(self, issuer_name, cert_sn):
