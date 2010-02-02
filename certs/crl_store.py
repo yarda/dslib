@@ -3,6 +3,7 @@ Implementing CRL cache
 '''
 import httplib
 import logging
+import sys
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('certs.crl_store')
 logger.setLevel(logging.DEBUG)
@@ -10,7 +11,7 @@ logger.setLevel(logging.DEBUG)
 import crl_verifier
 import os
 
-import time
+import timeutil
 
 from pyasn1.codec.der import decoder
 from pyasn1 import error
@@ -69,9 +70,9 @@ class CRL_dist_point():
         Returns number of seconds from the last update
         '''
         last = self.lastUpdated
-        format = '%y%m%d%H%M%SZ'        
-        t1 = time.mktime(time.strptime(last, format))         
-        t2 = time.mktime(time.gmtime())
+        #format = '%y%m%d%H%M%SZ'        
+        t1 = timeutil.to_seconds_from_epoch(last)#time.mktime(time.strptime(last, format))         
+        t2 = timeutil.to_seconds_from_epoch()#time.mktime(time.gmtime())
         
         diff = t2 - t1
         return diff
@@ -216,12 +217,21 @@ class CRL_issuer():
         Refreshes CRL of distribution point specified by url.
         If the time of thisUpdate of downloaded CRL is the same 
         as time in lastUpdate of current version, does not do anything.
-        Returns number of added certificates
+        Returns boolean value telling the result of download attempt and number of added certificates
         '''
         dpoint = self.find_dpoint(url)
         if dpoint is not None:
             last_updated = dpoint.lastUpdated
             logger.debug("Refreshing dpoint %s", url)
+            # check time of next update - if it is in the future, return True,0
+            # download only in case when nextUpdate time passed               
+            t1 = timeutil.to_time(dpoint.nextUpdate)         
+            t2 = timeutil.now()
+            if t2 >= t1:
+              logger.info("Next update time passed, downloading CRL")
+            else:
+              logger.info("Next update scheduled on %s, not downloading anything" % dpoint.nextUpdate)
+              return True, 0
             # download CRL
             downloaded = self.__download_crl(url)
             if downloaded is None:
@@ -318,9 +328,16 @@ class CRL_cache():
             return
         
         self.changed = False
-        f = open(CRL_DUMP_DIR+"/"+CRL_DUMP_FILE, "w")
+        import os.path
+        if not os.path.exists(CRL_DUMP_DIR):
+          logger.debug("Creating directory %s to pickle the CRL cache" % CRL_DUMP_DIR)
+          os.mkdir(CRL_DUMP_DIR)
+        path_to_cache = CRL_DUMP_DIR+"/"+CRL_DUMP_FILE
+        logger.debug("Opening file %s to write the CRL cache" % CRL_DUMP_FILE)
+        f = open(path_to_cache, "w")
         pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
         f.close()
+        logger.debug("CRL cache stored to file %s" % path_to_cache)
         
        
     @classmethod

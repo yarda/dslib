@@ -15,7 +15,7 @@ import pkcs7.rsa_verifier
 
 from cert_finder import *
 
-import time
+import timeutil
 
 from constants import *
 
@@ -29,12 +29,11 @@ def _verify_date(certificate):
     tbs = certificate.getComponentByName("tbsCertificate")
     validity = tbs.getComponentByName("validity")
     start = validity.getComponentByName("notBefore").getComponentByPosition(0)._value
-    
-    format = '%y%m%d%H%M%SZ'
-    start_time = time.strptime(start, format)
+        
+    start_time = timeutil.to_time(start)#time.strptime(start, format)
     end = validity.getComponentByName("notAfter").getComponentByPosition(0)._value
-    end_time = time.strptime(end, format)
-    now = time.gmtime()    
+    end_time = timeutil.to_time(end)#time.strptime(end, format)
+    now = timeutil.now()#time.gmtime()    
     
     if (start_time < now) and (end_time > now):    
         return True
