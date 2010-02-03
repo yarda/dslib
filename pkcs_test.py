@@ -12,6 +12,8 @@ import pkcs7.pkcs7_decoder
 import pkcs7.verifier
 import pkcs7.asn1_models.oid
 
+import os
+
 from pkcs7.asn1_models.TST_info import *
 from pkcs7.asn1_models.pkcs_signed_data import *
 
@@ -98,6 +100,9 @@ def v_crl(cert):
   return r
 
 
+import properties.properties as p
+print p.Properties.VERIFY_MESSAGE
+p.Properties.load_from_file("properties/security.properties")
 
 '''
 subory v test_msgs obsahuju binarnu formu prijatych podpisanych sprav
@@ -105,7 +110,7 @@ t.j. odpoved na getSignedXXX obsahovala element dmSignature. Jeho obsah
 je base64 dekodovany a zapisany do danych suborov (podpisana prijata a odoslana 
 sprava, podpisana dorucenka).
 '''
-f = open("test_msgs/signedSentMessage", "r")
+f = open(os.path.join("test_msgs","signedSentMessage"), "rb")
 #f = open("test_msgs/signedReceivedMessage", "r")
 #f = open("test_msgs/sigDeliveryInfo", "r")
 coded = f.read()
@@ -153,7 +158,7 @@ logger.info("Msg encryption alg: %s" % pkcs7.asn1_models.oid.oid_map[e_alg_code]
 
 
 cert = decoded_msg.getComponentByName("content").getComponentByName("certificates")[0]
-trusted = load_certificates_from_dir("trusted_certificates/")
+trusted = load_certificates_from_dir("trusted_certificates")
 
 #v_crl(cert)
 

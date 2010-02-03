@@ -356,7 +356,7 @@ class CRL_cache():
         if not os.path.exists(CRL_DUMP_DIR):
           logger.debug("Creating directory %s to pickle the CRL cache" % CRL_DUMP_DIR)
           os.mkdir(CRL_DUMP_DIR)
-        path_to_cache = CRL_DUMP_DIR+"/"+CRL_DUMP_FILE
+        path_to_cache = os.path.join(CRL_DUMP_DIR, CRL_DUMP_FILE)
         logger.debug("Opening file %s to write the CRL cache" % CRL_DUMP_FILE)
         f = open(path_to_cache, "w")
         pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
@@ -369,23 +369,14 @@ class CRL_cache():
         '''
         Loads cache instance from a file
         '''
-        f = open(fname, "r")
+        f = open(fname, "rb")
         cache = pickle.load(f)
         f.close()   
         return cache
     
-    
-def _restore_dpoints(dir):
-    dps = []
-    fnames = os.listdir(dir)
-    for fname in fnames:
-        dp = CRL_dist_point.unpickle(dir+"/"+fname)
-        dps.append(dp)
-    return dps
-    
 def _restore_cache():
     try:
-        crl_fname = CRL_DUMP_DIR+"/"+CRL_DUMP_FILE
+        crl_fname = os.path.join(CRL_DUMP_DIR, CRL_DUMP_FILE)
         cache = CRL_cache.unpickle(crl_fname)
         return cache
     except Exception, ex:

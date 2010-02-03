@@ -84,7 +84,7 @@ def _check_crl(checked_cert, issuer_cert):
       # if CRL issuer exists, only refresh his CDPs
       download_crl_success, added_certs = iss.\
                                       refresh_issuer(verification=issuer_cert, \
-                                                     force_crl_download=True)
+                                                     force_crl_download=False)
       if iss.changed:
         crl_cache.change = True
       '''
