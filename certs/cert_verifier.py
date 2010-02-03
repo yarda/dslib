@@ -41,7 +41,7 @@ def _verify_date(certificate):
                 (start, end))
     return False
 
-def _check_crl(checked_cert, issuer_cert):
+def _check_crl(checked_cert, issuer_cert, force_download=False):
     '''
     Checks if the certificate is not revoked by its issuer.
     '''    
@@ -84,19 +84,10 @@ def _check_crl(checked_cert, issuer_cert):
       # if CRL issuer exists, only refresh his CDPs
       download_crl_success, added_certs = iss.\
                                       refresh_issuer(verification=issuer_cert, \
-                                                     force_crl_download=False)
+                                                     force_crl_download=force_download)
       if iss.changed:
         crl_cache.change = True
-      '''
-      for dp in iss.dist_points:        
-        download_success, added_certs = iss.refresh_dist_point(dp.url, verification=issuer_cert)        
-        if iss.changed:
-          crl_cache.changed = True
-        # if download was successful, do not try to refresh remaining CDPs 
-        if download_success:
-          download_crl_success = True
-          break
-      '''
+     
     # if CRL download failed from each CDP and the cache
     # is empty, return False - we cannot say anything about
     # certificate revoked status
@@ -117,7 +108,8 @@ def _check_crl(checked_cert, issuer_cert):
     
     
 
-def verify_certificate(cert, trusted_ca_certs, check_crl=False):
+def verify_certificate(cert, trusted_ca_certs,\
+                       check_crl=False, force_crl_download=False):
     '''
     Verifies the certificate - checks signature and date validity.
     '''
@@ -165,10 +157,10 @@ def verify_certificate(cert, trusted_ca_certs, check_crl=False):
     # if we want to download and check the crl of issuing authority 
     # for certificate being checked
     if check_crl:
-        is_ok = _check_crl(cert, signing_cert)
+        is_ok = _check_crl(cert, signing_cert, force_download=force_crl_download)
         csn = tbs.getComponentByName("serialNumber")._value
         if not is_ok:
-          msg = "Certificate %d of %s is revoked" % (csn,issuer)
+          msg = "Certificate %d issued by %s is revoked" % (csn,issuer)
           logger.error(msg)
           return False
         else:

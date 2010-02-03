@@ -23,6 +23,7 @@ def parse_qts(dmQTimestamp, verify=True):
     ts = base64.b64decode(dmQTimestamp)
 
     qts = pkcs7.pkcs7_decoder.decode_qts(ts)
+    verif_result = None
     #if we want to verify the timestamp
     if (verify):
         verif_result = pkcs7.verifier.verify_qts(qts)        
@@ -30,7 +31,9 @@ def parse_qts(dmQTimestamp, verify=True):
             logger.info("QTimeStamp verified")
         else:
             logger.error("QTimeStamp verification failed")
-    
+    else:
+        logger.info("Verification of timestamp skipped")
+        
     tstData = qts.getComponentByName("content").getComponentByName("encapsulatedContentInfo").getComponentByName("eContent")._value    
     tstinfo = pkcs7.pkcs7_decoder.decode_tst(tstData)
     

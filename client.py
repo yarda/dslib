@@ -33,6 +33,9 @@ import pkcs7.tstamp_helper
 
 import certs.cert_loader
 
+# properties
+from properties.properties import Properties as props
+
 class Dispatcher(object):
   """
   DS splits its functionality between several parts. These have different URLs
@@ -248,9 +251,12 @@ class Dispatcher(object):
     are verified.
     '''
     # decode DER encoding
-    decoded_msg = pkcs7.pkcs7_decoder.decode_msg(der_encoded)
-    # verify the message
-    verified = self._verify_der_msg(decoded_msg)            
+    decoded_msg = pkcs7.pkcs7_decoder.decode_msg(der_encoded)    
+    if props.VERIFY_MESSAGE:
+      # verify the message
+      verified = self._verify_der_msg(decoded_msg)
+    else:
+      verified = None            
     # prepare PKCS7 to supply to the Message
     pkcs_data = self._prepare_PKCS7_data(decoded_msg)
     # extract sent message from pkcs7 document
@@ -260,15 +266,17 @@ class Dispatcher(object):
     
     # verify certificate
     wrong_certificates_ids = []    
-    certs = decoded_msg.getComponentByName("content").getComponentByName("certificates")    
-    for cert in certs:
-        if self._verify_certificate(cert):
-            continue
-        else:
-            tbs = cert.getComponentByName("tbsCertificate")
-            sn = tbs.getComponentByName("serialNumber")._value
-            issuer = str(tbs.getComponentByName("issuer"))
-            wrong_certificates_ids.append((issuer, sn))
+    if props.VERIFY_CERTIFICATE:
+      # verify certificates
+      certs = decoded_msg.getComponentByName("content").getComponentByName("certificates")    
+      for cert in certs:
+          if self._verify_certificate(cert):
+              continue
+          else:
+              tbs = cert.getComponentByName("tbsCertificate")
+              sn = tbs.getComponentByName("serialNumber")._value
+              issuer = str(tbs.getComponentByName("issuer"))
+              wrong_certificates_ids.append((issuer, sn))
         
     return xml_document, pkcs_data, verified, wrong_certificates_ids
   
@@ -308,11 +316,12 @@ class Dispatcher(object):
     if (verified):
         message.is_verified = True
     
-    # set verified attribute of certificates
-    for c in message.pkcs7_data.certificates:
-      c.is_verified = True
-    if len(bad_certs) > 0:
-      self._mark_invalid_certificates(message, bad_certs)        
+    if props.VERIFY_CERTIFICATE:
+      # set verified attribute of certificates
+      for c in message.pkcs7_data.certificates:
+        c.is_verified = True
+      if len(bad_certs) > 0:
+        self._mark_invalid_certificates(message, bad_certs)        
             
     # check the timestamp
     if self._check_timestamp(message):
@@ -332,7 +341,8 @@ class Dispatcher(object):
     # if message had dmQtimestamp, parse and verify it
     if message.dmQTimestamp is not None:
         tstamp_verified, tstamp = pkcs7.tstamp_helper\
-                                        .parse_qts(message.dmQTimestamp)
+                                        .parse_qts(message.dmQTimestamp,\
+                                                   verify=props.VERIFY_TIMESTAMP)
         message.tstamp_verified = tstamp_verified
         message.tstamp_token = tstamp
         
@@ -355,7 +365,12 @@ class Dispatcher(object):
     import certs.cert_verifier
     try:
       # addd check_crl=True parameter to check the crl
-      res = certs.cert_verifier.verify_certificate(certificate, self.trusted_certs)
+      res = certs.cert_verifier.verify_certificate(\
+                                                   certificate,\
+                                                   self.trusted_certs,\
+                                                   check_crl = props.CHECK_CRL,\
+                                                   force_crl_download=props.FORCE_CRL_DOWNLOAD
+                                                   )
     except Exception, e:
       if e.message == "No trusted certificate found":
         res = False
@@ -380,11 +395,12 @@ class Dispatcher(object):
     if (verified):
         message.is_verified = True
     
-    # set verified value of message certificates    
-    for c in message.pkcs7_data.certificates:
-      c.is_verified = True
-    if len(bad_certs) > 0:
-      self._mark_invalid_certificates(message, bad_certs) 
+    if props.VERIFY_CERTIFICATE:
+      # set verified value of message certificates    
+      for c in message.pkcs7_data.certificates:
+        c.is_verified = True
+      if len(bad_certs) > 0:
+        self._mark_invalid_certificates(message, bad_certs) 
     
     # check the timestamp
     if self._check_timestamp(message):
