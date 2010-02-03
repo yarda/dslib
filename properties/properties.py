@@ -10,7 +10,7 @@ class Properties:
   CHECK_CRL = True
   FORCE_CRL_DOWNLOAD = False
   
-  # these properties are expected booelan
+  # these properties are expected boolean
   _boolean_values = [
                      "VERIFY_MESSAGE", "VERIFY_TIMESTAMP",
                      "VERIFY_CERTIFICATE", "CHECK_CRL", 
