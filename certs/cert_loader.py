@@ -84,7 +84,10 @@ def load_certificates_from_dir(cert_folder):
     if cert_folder[len(cert_folder) - 1] != "/":
         cert_folder += "/"
     import os
-    files = os.listdir(cert_folder)
+    try:
+      files = os.listdir(cert_folder)
+    except:
+      return []
     result = []
     for file in files:
         certificate = None
