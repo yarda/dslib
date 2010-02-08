@@ -265,23 +265,23 @@ class Message(Model):
     '''
     # if message had dmQtimestamp, parse and verify it
     if self.dmQTimestamp is not None:
-        tstamp_verified, tstamp = pkcs7.tstamp_helper\
-                                        .parse_qts(self.dmQTimestamp,\
-                                                   verify=props.VERIFY_TIMESTAMP)
-        self.tstamp_verified = tstamp_verified
-        self.tstamp_token = tstamp
-        
-        imprint = tstamp.msgImprint.imprint
-        imprint = base64.b64encode(imprint)
-    
-        hashFromMsg = self.dmHash.value
-    
-        if hashFromMsg == imprint:
-            logging.info("Message imprint in timestamp and dmHash value are the same")
-            return True
-        else:
-            logging.error("Message imprint in timestamp and dmHash value differ!")
-            return False
+      tstamp_verified, tstamp = pkcs7.tstamp_helper\
+                                      .parse_qts(self.dmQTimestamp,\
+                                                 verify=props.VERIFY_TIMESTAMP)
+      self.tstamp_verified = tstamp_verified
+      self.tstamp_token = tstamp
+      
+      imprint = tstamp.msgImprint.imprint
+      imprint = base64.b64encode(imprint)
+  
+      hashFromMsg = self.dmHash.value
+  
+      if hashFromMsg == imprint:
+        logging.info("Message imprint in timestamp and dmHash value are the same")
+        return True
+      else:
+        logging.error("Message imprint in timestamp and dmHash value differ!")
+        return False
 
 
   # ---------- private methods ----------
