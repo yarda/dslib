@@ -28,6 +28,7 @@ from pkcs7.asn1_models.tools import *
 from pkcs7.asn1_models.X509_certificate import *
 from pkcs7.asn1_models.certificate_extensions import *
 from pkcs7.debug import *
+import datetime, time
 
 
 #class SignedData():    
@@ -488,3 +489,19 @@ class TimeStampToken():
         self.accuracy = TsAccuracy(asn1_tstInfo.getComponentByName("accuracy"))
         self.tsa = Name(asn1_tstInfo.getComponentByName("tsa"))
         #self.extensions = asn1_tstInfo.getComponentByName("extensions")
+        
+    def get_genTime_as_datetime(self):
+      """
+      parses the genTime string and returns a datetime object;
+      it also adjusts the time according to local timezone, so that it is
+      compatible with other parts of the library
+      """
+      year = int(self.genTime[:4])
+      month = int(self.genTime[4:6])
+      day = int(self.genTime[6:8])
+      hour = int(self.genTime[8:10])
+      minute = int(self.genTime[10:12])
+      second = int(self.genTime[12:14])
+      micro = int(float(self.genTime[14:].strip("Z"))*1e6)
+      tz_delta = datetime.timedelta(seconds=time.timezone)
+      return datetime.datetime(year, month, day, hour, minute, second, micro) - tz_delta
