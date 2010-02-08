@@ -28,6 +28,9 @@ such as serialization, etc.
 import logging
 import os
 import constants
+import pkcs7
+import base64
+from properties.properties import Properties as props
 
 from pkcs7_models import *
 
@@ -195,7 +198,7 @@ class Message(Model):
                    "dmAttachmentSize","dmHash","dmQTimestamp","dmEvents")
 
   # origins in which some info (described above in OUTSIDE_ATTRS) is placed outside
-  SPLIT_ORIGINS = ("dmReturnedMessageEnvelope","dmReturnedMessage","dmDelivery")
+  SPLIT_ORIGINS = ("dmReturnedMessageEnvelope","dmReturnedMessage","dmDelivery","tDelivery")
   
   SIG_DELIVERY_CONTENT_PATH = "GetDeliveryInfoResponse/dmDelivery"
   
@@ -221,6 +224,7 @@ class Message(Model):
         raise Exception("Must specify path to the content of message!")
     self.content_path = path_to_content    
     Model.__init__(self, soap_message, xml_document)
+
     # ---------- public methods ----------
 
   def get_origin(self):
@@ -251,6 +255,33 @@ class Message(Model):
       if self.pkcs7_data.certificates:
         if hasattr(self.pkcs7_data.certificates[0], "is_verified"):
           return self.pkcs7_data.certificates[0].is_verified
+
+  def check_timestamp(self):
+    '''
+    Checks message timestamp - parses and verifies it. TimeStampToken
+    is attached to the message.
+    Method returns flag that says, if the content of messages's dmHash element
+    is the same as the message imprint
+    '''
+    # if message had dmQtimestamp, parse and verify it
+    if self.dmQTimestamp is not None:
+        tstamp_verified, tstamp = pkcs7.tstamp_helper\
+                                        .parse_qts(self.dmQTimestamp,\
+                                                   verify=props.VERIFY_TIMESTAMP)
+        self.tstamp_verified = tstamp_verified
+        self.tstamp_token = tstamp
+        
+        imprint = tstamp.msgImprint.imprint
+        imprint = base64.b64encode(imprint)
+    
+        hashFromMsg = self.dmHash.value
+    
+        if hashFromMsg == imprint:
+            logging.info("Message imprint in timestamp and dmHash value are the same")
+            return True
+        else:
+            logging.error("Message imprint in timestamp and dmHash value differ!")
+            return False
 
 
   # ---------- private methods ----------

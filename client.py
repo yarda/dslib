@@ -138,12 +138,6 @@ class Dispatcher(object):
       message = models.Message(reply.dmReturnedMessageEnvelope)
     else:
       message = None
-    # check the timestamp
-    if message:       
-        if self._check_timestamp(message):
-            message.qts_imprint_matches_hash = True
-        else:
-            message.qts_imprint_matches_hash = False
     return Reply(self._extract_status(reply), message)
 
   def MessageDownload(self, msgid):
@@ -152,12 +146,6 @@ class Dispatcher(object):
       message = models.Message(reply.dmReturnedMessage)
     else:
       message = None
-    # check the timestamp
-    if message:       
-        if self._check_timestamp(message):
-            message.qts_imprint_matches_hash = True
-        else:
-            message.qts_imprint_matches_hash = False
     return Reply(self._extract_status(reply), message)
 
   def DummyOperation(self):
@@ -341,41 +329,9 @@ class Dispatcher(object):
         c.is_verified = True
       if len(bad_certs) > 0:
         self._mark_invalid_certificates(message, bad_certs)        
-            
-    # check the timestamp
-    if self._check_timestamp(message):
-        message.qts_imprint_matches_hash = True
-    else:
-        message.qts_imprint_matches_hash = False
-        
+
     return Reply(self._extract_status(reply), message)
   
-  def _check_timestamp(self, message):
-    '''
-    Checks message timestamp - parses and verifies it. TimeStampToken
-    is attached to the message.
-    Method returns flag that says, if the content of messages's dmHash element
-    is the same as the message imprint
-    '''
-    # if message had dmQtimestamp, parse and verify it
-    if message.dmQTimestamp is not None:
-        tstamp_verified, tstamp = pkcs7.tstamp_helper\
-                                        .parse_qts(message.dmQTimestamp,\
-                                                   verify=props.VERIFY_TIMESTAMP)
-        message.tstamp_verified = tstamp_verified
-        message.tstamp_token = tstamp
-        
-        imprint = tstamp.msgImprint.imprint
-        imprint = base64.b64encode(imprint)
-    
-        hashFromMsg = message.dmHash.value
-    
-        if hashFromMsg == imprint:
-            logging.info("Message imprint in timestamp and dmHash value are the same")
-            return True
-        else:
-            logging.error("Message imprint in timestamp and dmHash value differ!")
-            return False
         
   def _verify_certificate(self, certificate):
     '''
@@ -420,12 +376,7 @@ class Dispatcher(object):
         c.is_verified = True
       if len(bad_certs) > 0:
         self._mark_invalid_certificates(message, bad_certs) 
-    
-    # check the timestamp
-    if self._check_timestamp(message):
-        message.qts_imprint_matches_hash = True
-    else:
-        message.qts_imprint_matches_hash = False
+
     return Reply(self._extract_status(reply), message)
 
   def GetDeliveryInfo(self, msgId):
@@ -434,12 +385,6 @@ class Dispatcher(object):
       message = models.Message(reply.dmDelivery)
     else:
       message = None
-    # check timestamp
-    if message:       
-        if self._check_timestamp(message):
-            message.qts_imprint_matches_hash = True
-        else:
-            message.qts_imprint_matches_hash = False
     return Reply(self._extract_status(reply), message)
   
   def GetPasswordInfo(self):
