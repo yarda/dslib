@@ -21,7 +21,7 @@ Module for certificate verification.
 '''
 import logging
 logger = logging.getLogger("certs.cert_verifier")
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 from pyasn1.codec.der import encoder
 from pyasn1 import error

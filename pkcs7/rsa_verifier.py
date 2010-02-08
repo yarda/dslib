@@ -24,7 +24,7 @@ Uses parts ofcode from  http://stuvel.eu/rsa
 '''
 import logging
 logger = logging.getLogger('pkcs7.rsa_verifier')
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 import types, base64
 import asn1_models
