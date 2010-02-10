@@ -122,6 +122,8 @@ def _check_crl(checked_cert, issuer_cert, force_download=False):
     if is_revoked is False:
       return True
     else:
+      rev_date = crl_cache.certificate_rev_date(issuer_name, cert_sn)
+      logger.warning("Certificate %s revoked on %s" % (cert_sn, rev_date))
       return False
     
     
@@ -130,10 +132,20 @@ def verify_certificate(cert, trusted_ca_certs,\
                        check_crl=False, force_crl_download=False):
     '''
     Verifies the certificate - checks signature and date validity.
-    '''
+    '''    
+    results = {"TRUSTED_CERTS_EXIST": None,
+               "SIGNING_ALG_OK" : None,
+               "TRUSTED_PARENT_FOUND":None,
+               "CERT_TIME_VALIDITY_OK": None,               
+               "CERT_NOT_REVOKED": None,
+               "CERT_SIGNATURE_OK": None
+    }
+    
     if len(trusted_ca_certs) == 0:
         logger.error("No trusted certificate found")
-        return False
+        results["TRUSTED_CERTS_EXIST"] = False
+    else:
+        results["TRUSTED_CERTS_EXIST"] = True
     # extract tbs certificate
     tbs = cert.getComponentByName("tbsCertificate")
     # encode tbs into der
@@ -144,12 +156,15 @@ def verify_certificate(cert, trusted_ca_certs,\
     
     if (sa_name == SHA1RSA_NAME):
         calculated_digest = calculate_digest(tbs_encoded, SHA1_NAME)
+        results["SIGNING_ALG_OK"] = True
     elif (sa_name == SHA256RSA_NAME):
         calculated_digest = calculate_digest(tbs_encoded, SHA256_NAME)
+        results["SIGNING_ALG_OK"] = True
     else:
         msg = "Unknown certificate signature algorithm: %s" % sig_alg
         logger.error(msg)
-        return False
+        #return False
+        results["SIGNING_ALG_OK"] = False
 
     # look for signing certificate among certificates
     issuer = str(tbs.getComponentByName("issuer"))  
@@ -159,18 +174,19 @@ def verify_certificate(cert, trusted_ca_certs,\
         msg = "No certificate found for %s, needed to verify certificate of %s" %\
                (issuer,subject)
         logger.error(msg)
-        return False
+        #return False
+        results["TRUSTED_PARENT_FOUND"] = False
+    else:
+        results["TRUSTED_PARENT_FOUND"] = True
     
-    # check validity of signing certificate - validity period etc.
-    if not _verify_date(signing_cert):
-        msg = "Signing certificate out of validity period"
-        logger.error(msg)
-        raise Exception(msg)
     # check validity of certificate - validity period etc.
     if not _verify_date(cert):
         msg = "Certificate out of validity period"
         logger.error(msg)
-        return False
+        #return False
+        results["CERT_TIME_VALIDITY_OK"] = False
+    else:
+        results["CERT_TIME_VALIDITY_OK"] = True
       
     # if we want to download and check the crl of issuing authority 
     # for certificate being checked
@@ -180,9 +196,11 @@ def verify_certificate(cert, trusted_ca_certs,\
         if not is_ok:
           msg = "Certificate %d issued by %s is revoked" % (csn,issuer)
           logger.error(msg)
-          return False
+          #return False
+          results["CERT_NOT_REVOKED"] = False
         else:
           logger.info("Certificate %d of %s is not on CRL" % (csn,issuer))
+          results["CERT_NOT_REVOKED"] = True
     
     # extract public key from matching certificate
     alg, key_material = pkcs7.verifier._get_key_material(signing_cert)
@@ -190,6 +208,8 @@ def verify_certificate(cert, trusted_ca_certs,\
     signature = cert.getComponentByName("signatureValue").toOctets()    
     # compare calculated hash and decrypted signature
     res = pkcs7.rsa_verifier.rsa_verify(calculated_digest, signature, key_material)
-        
-    return res
+    
+    results["CERT_SIGNATURE_OK"] = res
+    
+    return results
    

@@ -362,6 +362,7 @@ class Dispatcher(object):
         tstamp_verified, tstamp = pkcs7.tstamp_helper\
                                         .parse_qts(message.dmQTimestamp,\
                                                    verify=props.VERIFY_TIMESTAMP)
+        # TODO insert certificate verification
         message.tstamp_verified = tstamp_verified
         message.tstamp_token = tstamp
         

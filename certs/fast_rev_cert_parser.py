@@ -42,11 +42,26 @@ def _decode_len(substrate):
     length_str = substrate[1:size+1]
     length = bytes_to_int(length_str)
     return length, size
- 
+
+def _get_date(substrate):
+  '''
+  Extracts date string from substrate. According to postsignum policy, this is UTCTime.
+  Added also GeneralizedTime (... just to be sure...)
+  '''
+  date_tag = substrate[0]
+  if date_tag == chr(0x17) or chr(0x18):
+    date_len, size_of_len_str = _decode_len(substrate[1:])
+    # content starts after tag (+1) and the length specification (+size_of_len_str)
+    date_content_start = 1 + size_of_len_str
+    date = substrate[date_content_start : date_content_start + date_len]
+    return date
+  logger.warning("Date extraction from revoked cert list failed! Returning empty string.")
+  return ""
+  
 def _parse_one_serial(substrate):   
   '''
-  Parses one integer at the beggining of sequence.
-  Returns parsed serial number and string starting at
+  Parses one integer at the beggining of sequence and date immediately after it.
+  Returns parsed serial number, date of revocation (UTC format, in string) and string starting at
   the position of the next sequence with revoked certificate id.
   ''' 
   if substrate[0] == chr(0x30):
@@ -59,7 +74,7 @@ def _parse_one_serial(substrate):
     next_start = content_offset + object_len    
     if substrate[content_offset] == chr(0x02):      
       # ok - integer id first - certificate serial number
-      int_len, size_of_len_str = _decode_len(substrate[content_offset+1])
+      int_len, size_of_len_str = _decode_len(substrate[content_offset+1:])
       if (int_len == 0):
         logger.error("Error parsing integer object length")
       # position of start of serial number
@@ -68,29 +83,35 @@ def _parse_one_serial(substrate):
       absolute_end_of_int = absolute_start_of_int + int_len
       sn_bytes = substrate[absolute_start_of_int:absolute_end_of_int]
       sn = bytes_to_int(sn_bytes)      
-      return sn, substrate[next_start:]
+    
+      # continue with date immediately after the integer (spec says, that revocationTime is mandatory)
+      date_start = absolute_end_of_int
+      date = _get_date(substrate[date_start:])
+        
+      return sn, date, substrate[next_start:]   
     else:
       logger.error("Integer header expected (byte 0x2)")
-      return -1, ''
+      return -1,'', ''
       
   else:
     logger.error("Unexpected char: %x" % ord(substrate[0]))
     # return empty string to stop the parsing process
-    return -1, ''
+    return -1, '', ''
 
 def parse_all(rev_cert_list):
   '''
   Returns  list of revoked certificates serial numbers
   '''
   substrate = rev_cert_list
+ 
   res = []
   #f = open('parsed_sn', "w")
   while len(substrate) != 0:
-     sn, substrate = _parse_one_serial(substrate)
+     sn, rev_date, substrate = _parse_one_serial(substrate)
      #f.write('Parsed serial number: %x\n' % sn)
      if sn == -1:
        logger.error("Error parsing revoked certificates list") 
      else:
-       res.append(sn)
+       res.append([sn, rev_date])
   #f.close()
   return res

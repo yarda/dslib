@@ -42,6 +42,8 @@ from pyasn1 import error
 
 import models
 
+from properties.properties import Properties as props
+
 def parse_url( crl_url):
     url = crl_url
     if url.startswith("http://"):
@@ -119,9 +121,9 @@ def v_crl(cert):
   return r
 
 
-import properties.properties as p
-print p.Properties.VERIFY_MESSAGE
-p.Properties.load_from_file("properties/security.properties")
+#import properties.properties as p
+#print p.Properties.VERIFY_MESSAGE
+#p.Properties.load_from_file("properties/security.properties")
 
 '''
 subory v test_msgs obsahuju binarnu formu prijatych podpisanych sprav
@@ -182,7 +184,7 @@ trusted = load_certificates_from_dir("trusted_certificates")
 #v_crl(cert)
 
 
-certificate_verified = verify_certificate(cert, trusted, check_crl=True)
+certificate_verified = verify_certificate(cert, trusted, check_crl=True, force_crl_download= props.FORCE_CRL_DOWNLOAD)
 
 logger.info("Certificate verified?..... %s" % certificate_verified)
 
@@ -235,17 +237,29 @@ if crl_cache is None:
     added.add_dist_point(url)
     added.init_dist_point(url, verification=cert)
     logger.info("Refreshing distribution point...")
-    added.refresh_dist_point(url, verification=cert)
+    added.refresh_dist_point(url, verification=cert, force_download=props.FORCE_CRL_DOWNLOAD)
     logger.info("Done")
 else:
     logger.info("CRL cache read from local store")
     i = crl_cache.get_issuer(issuer)
     logger.info("Refreshing distribution point...")
-    i.refresh_dist_point(url, verification=cert, force_download=False)
+    i.refresh_dist_point(url, verification=cert, force_download=props.FORCE_CRL_DOWNLOAD)
     logger.info("Done")
 
 revoked = 330011
-logger.info("Is certificate %s revoked? %s" % (str(revoked), crl_cache.is_certificate_revoked(issuer, revoked)))    
+not_revoked = certificate.tbsCertificate.serial_number
+
+# revoked case
+is_rev = crl_cache.is_certificate_revoked(issuer, revoked)
+logger.info("Is certificate %s revoked? %s" % (str(revoked), is_rev))  
+if is_rev:
+    logger.info("Certificate %s revoked on %s" % (str(revoked), crl_cache.certificate_rev_date(issuer, revoked)))
+
+# not revoked_case
+is_rev = crl_cache.is_certificate_revoked(issuer, not_revoked)
+logger.info("Is certificate %s revoked? %s" % (str(not_revoked), is_rev))  
+if is_rev:
+    logger.info("Certificate %s revoked on %s" % (str(not_revoked), crl_cache.certificate_rev_date(issuer, not_revoked)))
 
 
 crl_cache.pickle()

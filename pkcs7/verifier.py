@@ -113,7 +113,7 @@ def _verify_data(data, certificates, signer_infos):
         cert = find_cert_by_serial(id, certificates)
         
         if cert is None:
-            raise Exception("No certificate found for signer %d" % id)
+            raise Exception("No certificate found for certificate %d" % id)
         
         sig_algorithm, key_material = _get_key_material(cert) 
         digest_alg = _get_digest_algorithm(signer_info)
