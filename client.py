@@ -252,10 +252,7 @@ class Dispatcher(object):
     '''
     "Base" of methods downloading signed versions of messages and
     delivery information.
-    Returns tuple xml_document, pkcs7_data, verified,  wrong_cert_ids
-    Wrong_cert_ids is array with tuples consisting of issuer and serial number
-    of certificate, which verification failed. If it is empty, all certificates
-    are verified.
+    Returns tuple xml_document, pkcs7_data, verified flag    
     '''
     # decode DER encoding
     decoded_msg = pkcs7.pkcs7_decoder.decode_msg(der_encoded)    
@@ -271,12 +268,16 @@ class Dispatcher(object):
     # parse string xml to create xml document
     xml_document = self._xml_parse_msg(str_msg, method)
     
-    # verify certificate
-    wrong_certificates_ids = []    
+    # verify certificates    
     if props.VERIFY_CERTIFICATE:
       # verify certificates
       certs = decoded_msg.getComponentByName("content").getComponentByName("certificates")    
+      cert_idx = 0
       for cert in certs:
+          ver_res = self._verify_certificate(cert)
+          pkcs_data.certificates[cert_idx].verification_results = ver_res
+          cert_idx += 1
+          '''
           if self._verify_certificate(cert):
               continue
           else:
@@ -284,8 +285,8 @@ class Dispatcher(object):
               sn = tbs.getComponentByName("serialNumber")._value
               issuer = str(tbs.getComponentByName("issuer"))
               wrong_certificates_ids.append((issuer, sn))
-        
-    return xml_document, pkcs_data, verified, wrong_certificates_ids
+          '''
+    return xml_document, pkcs_data, verified
   
 
   
@@ -313,7 +314,7 @@ class Dispatcher(object):
     reply = method.__call__(msg_id)
     der_encoded = base64.b64decode(reply.dmSignature)  
    
-    xml_document, pkcs_data, verified, bad_certs  = self._generic_get_signed(der_encoded, method)
+    xml_document, pkcs_data, verified  = self._generic_get_signed(der_encoded, method)
     if method.method.name in ("SignedSentMessageDownload","SignedMessageDownload"):
       message = models.Message(xml_document.dmReturnedMessage)
     else:
@@ -322,14 +323,14 @@ class Dispatcher(object):
     message.pkcs7_data = pkcs_data
     if (verified):
         message.is_verified = True
-    
+    '''
     if props.VERIFY_CERTIFICATE:
       # set verified attribute of certificates
       for c in message.pkcs7_data.certificates:
         c.is_verified = True
       if len(bad_certs) > 0:
         self._mark_invalid_certificates(message, bad_certs)        
-
+    '''
     return Reply(self._extract_status(reply), message)
   
 
@@ -345,7 +346,16 @@ class Dispatcher(object):
         tstamp_verified, tstamp = pkcs7.tstamp_helper\
                                         .parse_qts(message.dmQTimestamp,\
                                                    verify=props.VERIFY_TIMESTAMP)
-        # TODO insert certificate verification
+        
+        # certificate verification (if properties say so)
+        if props.VERIFY_CERTIFICATE:
+          for cert in tstamp.asn1_certificates:
+            ver_res = self._verify_certificate(cert)
+            c = models.X509Certificate(cert)
+            c.verification_results = ver_res
+            if not tstamp.certificates_contain(c.tbsCertificate.serial_number):
+              tstamp.certificates.append(c)            
+        
         message.tstamp_verified = tstamp_verified
         message.tstamp_token = tstamp
         
@@ -366,20 +376,13 @@ class Dispatcher(object):
     '''
     Verfies certificate by calling method from cert_verifier
     '''
-    import certs.cert_verifier
-    try:
-      # addd check_crl=True parameter to check the crl
-      res = certs.cert_verifier.verify_certificate(\
-                                                   certificate,\
-                                                   self.trusted_certs,\
-                                                   check_crl = props.CHECK_CRL,\
-                                                   force_crl_download=props.FORCE_CRL_DOWNLOAD
-                                                   )
-    except Exception, e:
-      if e.message == "No trusted certificate found":
-        res = False
-      else:
-        raise e
+    import certs.cert_verifier          
+    res = certs.cert_verifier.verify_certificate(\
+                                                 certificate,\
+                                                 self.trusted_certs,\
+                                                 check_crl = props.CHECK_CRL,\
+                                                 force_crl_download=props.FORCE_CRL_DOWNLOAD
+                                                 )
     return res
      
   def SignedMessageDownload(self, msgId):
@@ -392,20 +395,21 @@ class Dispatcher(object):
     method = self.soap_client.service.GetSignedDeliveryInfo
     reply = method(msgId)
     der_encoded = base64.b64decode(reply.dmSignature)  
-    xml_document, pkcs_data, verified, bad_certs  = self._generic_get_signed(der_encoded, method)
+    xml_document, pkcs_data, verified  = self._generic_get_signed(der_encoded, method)
     # create Message instance to return 
     message = models.Message(xml_document.dmDelivery)        
     message.pkcs7_data = pkcs_data
     if (verified):
         message.is_verified = True
     
+    '''
     if props.VERIFY_CERTIFICATE:
       # set verified value of message certificates    
       for c in message.pkcs7_data.certificates:
         c.is_verified = True
       if len(bad_certs) > 0:
         self._mark_invalid_certificates(message, bad_certs) 
-
+    '''
     return Reply(self._extract_status(reply), message)
 
   def GetDeliveryInfo(self, msgId):

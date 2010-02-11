@@ -22,6 +22,7 @@ Module for certificate verification.
 import logging
 logger = logging.getLogger("certs.cert_verifier")
 #logger.setLevel(logging.DEBUG)
+import types
 
 from pyasn1.codec.der import encoder
 from pyasn1 import error
@@ -140,7 +141,7 @@ def verify_certificate(cert, trusted_ca_certs,\
                "CERT_NOT_REVOKED": None,
                "CERT_SIGNATURE_OK": None
     }
-    
+     
     if len(trusted_ca_certs) == 0:
         logger.error("No trusted certificate found")
         results["TRUSTED_CERTS_EXIST"] = False

@@ -113,7 +113,7 @@ def _verify_data(data, certificates, signer_infos):
         cert = find_cert_by_serial(id, certificates)
         
         if cert is None:
-            raise Exception("No certificate found for certificate %d" % id)
+            raise Exception("No certificate found for serial num %d" % id)
         
         sig_algorithm, key_material = _get_key_material(cert) 
         digest_alg = _get_digest_algorithm(signer_info)
@@ -152,12 +152,12 @@ def _verify_data(data, certificates, signer_infos):
         # .....only RSA for now
     return result
     
-def verify_msg(decoded_pkcs7_msg):
+def verify_msg(asn1_pkcs7_msg):
     '''
     Method verifies decoded message (built from pyasn1 objects)
     Input is decoded pkcs7 message.
     '''
-    message_content = decoded_pkcs7_msg.getComponentByName("content")
+    message_content = asn1_pkcs7_msg.getComponentByName("content")
     
     signer_infos = message_content.getComponentByName("signerInfos")    
     certificates = message_content.getComponentByName("certificates")    

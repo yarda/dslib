@@ -191,7 +191,7 @@ def SignedMessageDownload():
     print reply.status
     print "ID matches:", reply.data.dmID, reply.data.dmID == envelope.dmID
     print "Verified message: %s" % reply.data.is_verified
-    print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified
+    print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified()
     break
 
 @active
@@ -202,7 +202,7 @@ def SignedSentMessageDownload():
     print reply.status
     print "ID matches:", reply.data.dmID, reply.data.dmID == envelope.dmID
     print "Verified message: %s" % reply.data.is_verified
-    print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified
+    print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified()
     break
   
 @active

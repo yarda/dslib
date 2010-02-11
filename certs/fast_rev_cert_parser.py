@@ -102,8 +102,7 @@ def parse_all(rev_cert_list):
   '''
   Returns  list of revoked certificates serial numbers
   '''
-  substrate = rev_cert_list
- 
+  substrate = rev_cert_list 
   res = []
   #f = open('parsed_sn', "w")
   while len(substrate) != 0:
