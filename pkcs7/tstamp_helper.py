@@ -69,6 +69,6 @@ def parse_qts(dmQTimestamp, verify=False):
         logger.error("No certificate found for timestamp signer")
         continue           
       
-      t.certificates.append(cert)
+      t.asn1_certificates.append(cert)
     
     return verif_result, t

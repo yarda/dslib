@@ -1,4 +1,3 @@
-
 #*    dslib - Python library for Datove schranky
 #*    Copyright (C) 2009-2010  CZ.NIC, z.s.p.o. (http://www.nic.cz)
 #*
