@@ -34,7 +34,7 @@ import pkcs7.verifier
 import models
 from certs.cert_finder import *
 
-def parse_qts(dmQTimestamp, verify=True):
+def parse_qts(dmQTimestamp, verify=False):
     '''
     Parses QTimestamp and verifies it.
     Returns result of verification and TimeStampTOken instance.
@@ -67,9 +67,8 @@ def parse_qts(dmQTimestamp, verify=True):
       cert = find_cert_by_serial(id, certificates)
       if cert is None:
         logger.error("No certificate found for timestamp signer")
-        continue
-      c = models.X509Certificate(cert)      
+        continue           
       
-      t.certificates.append(c)
+      t.certificates.append(cert)
     
     return verif_result, t

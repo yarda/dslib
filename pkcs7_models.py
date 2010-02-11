@@ -504,5 +504,5 @@ class TimeStampToken():
         self.genTime = asn1_tstInfo.getComponentByName("genTime")._value
         self.accuracy = TsAccuracy(asn1_tstInfo.getComponentByName("accuracy"))
         self.tsa = Name(asn1_tstInfo.getComponentByName("tsa"))
-        self.certificates = []
+        self.asn1_certificates = []
         #self.extensions = asn1_tstInfo.getComponentByName("extensions")
