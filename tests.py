@@ -211,9 +211,11 @@ def GetSignedDeliveryInfo():
     print "ID:", envelope.dmID
     reply = ds_client.GetSignedDeliveryInfo(envelope.dmID)    
     print reply.status
+    print reply.data
     print "ID matches:", reply.data.dmID, reply.data.dmID == envelope.dmID
     print "Verified message: %s" % reply.data.is_verified
     print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified
+    print "Timestamp verified: %s" % reply.data.check_timestamp()
     break
 
 @active

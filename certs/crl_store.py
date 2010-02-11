@@ -22,9 +22,9 @@ Implementing CRL cache
 import httplib
 import logging
 import sys
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('certs.crl_store')
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 import crl_verifier
 import os
