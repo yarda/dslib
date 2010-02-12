@@ -32,8 +32,9 @@ import pkcs7
 import pkcs7.pkcs7_decoder
 import pkcs7.verifier
 import models
+from certs.cert_finder import *
 
-def parse_qts(dmQTimestamp, verify=True):
+def parse_qts(dmQTimestamp, verify=False):
     '''
     Parses QTimestamp and verifies it.
     Returns result of verification and TimeStampTOken instance.
@@ -56,4 +57,18 @@ def parse_qts(dmQTimestamp, verify=True):
     tstinfo = pkcs7.pkcs7_decoder.decode_tst(tstData)
     
     t = models.TimeStampToken(tstinfo)
+    
+    certificates = qts.getComponentByName("content").getComponentByName("certificates")
+    # get the signer info and attach signing certificates to the TSTinfo
+    signer_infos = qts.getComponentByName("content").getComponentByName("signerInfos")
+    for signer_info in signer_infos:
+      id = signer_info.getComponentByName("issuerAndSerialNum").\
+                        getComponentByName("serialNumber")._value
+      cert = find_cert_by_serial(id, certificates)
+      if cert is None:
+        logger.error("No certificate found for timestamp signer")
+        continue           
+      
+      t.asn1_certificates.append(cert)
+    
     return verif_result, t

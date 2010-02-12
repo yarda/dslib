@@ -76,9 +76,10 @@ class CRL_dist_point():
         '''
         added_certs = 0
         for revoked in revoked_sn_list:            
-            sn = revoked
-            if not self.revoked_certs.has_key(sn):                
-                self.revoked_certs[sn] = None
+            sn = revoked[0]
+            if not self.revoked_certs.has_key(sn): 
+                # write the revocation time of this key (cert serial number)               
+                self.revoked_certs[sn] = revoked[1]
                 self.changed = True
                 added_certs += 1
         return added_certs
@@ -98,10 +99,10 @@ class CRL_dist_point():
     def find_certificate(self, cert_sn):
         '''
         Looks for certificate with certain serial number.
-        Returns certificate serial number if found.
+        Returns certificate revocation date if found.
         '''
         if cert_sn in self.revoked_certs:
-          return cert_sn
+          return self.revoked_certs[cert_sn]
         return None
         
     
@@ -215,7 +216,7 @@ class CRL_issuer():
             logger.error("Distpoint %s not found. Has it already been added?"%url)
             return True, 0
             
-    def is_certificate_revoked(self, cert_sn):
+    def certificate_revoked(self, cert_sn):
         '''
         Looks in each distpoint for certificate with
         cert_sn serial number. Returns date of revocation or None
@@ -223,10 +224,10 @@ class CRL_issuer():
         if not len(self.dist_points):
           logger.info("This issuer has no CDP")
         for dpoint in self.dist_points:
-            sn = dpoint.find_certificate(cert_sn)
-            if sn is not None:
-                logger.debug("Certificate %s revoked in %s" % (cert_sn, dpoint.url))
-                return sn
+            rev_date = dpoint.find_certificate(cert_sn)
+            if rev_date is not None:
+                logger.debug("Certificate %s revoked on %s" % (cert_sn, rev_date))
+                return rev_date
         return None
     
     def refresh_issuer(self, verification=None, force_crl_download=False):
@@ -341,16 +342,27 @@ class CRL_cache():
     def is_certificate_revoked(self, issuer_name, cert_sn):
         '''
         Returns date of revocation of the certificate from
-        specified issuer.
+        specified issuer. If certificate is not revoked, returns None
         '''        
         iss = self.get_issuer(issuer_name)
         if iss is None:
             raise "Issuer %s not found" % issuer_name
-        sn = iss.is_certificate_revoked(cert_sn)
-        if sn:
-          return True
-        else:
+        rev_date = iss.certificate_revoked(cert_sn)
+        if rev_date is None:
           return False
+        else:
+          return True
+      
+    def certificate_rev_date(self, issuer_name, cert_sn):
+        '''
+        Returns certificate revocation date (UTC string).
+        If certificate is not revoked, returns None
+        '''
+        iss = self.get_issuer(issuer_name)
+        if iss is None:
+            raise "Issuer %s not found" % issuer_name
+        rev_date = iss.certificate_revoked(cert_sn)
+        return rev_date
         
     def pickle(self):   
         '''

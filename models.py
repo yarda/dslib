@@ -259,7 +259,7 @@ class Message(Model):
   def check_timestamp(self):
     '''
     Checks message timestamp - parses and verifies it. TimeStampToken
-    is attached to the message.
+    is attached to the message.    
     Method returns flag that says, if the content of messages's dmHash element
     is the same as the message imprint
     '''
@@ -268,7 +268,7 @@ class Message(Model):
       tstamp_verified, tstamp = pkcs7.tstamp_helper\
                                       .parse_qts(self.dmQTimestamp,\
                                                  verify=props.VERIFY_TIMESTAMP)
-      self.tstamp_token = tstamp
+      
       imprint = tstamp.msgImprint.imprint
       imprint = base64.b64encode(imprint)
       hashFromMsg = self.dmHash.value

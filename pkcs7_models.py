@@ -67,10 +67,12 @@ class Name():
             for attr in name_part:
                 type = str(attr.getComponentByPosition(0).getComponentByName('type'))                
                 value = str(attr.getComponentByPosition(0).getComponentByName('value'))
-                self.__attributes[type] = value        
+                self.__attributes[type] = value 
+        self.__attributes.keys().sort()       
     
     def __str__(self):        
         result = ''
+        self.__attributes.keys().sort()
         for key in self.__attributes.keys():
             result += key
             result += ' => '
@@ -79,6 +81,7 @@ class Name():
         return result[:len(result)-1]
         
     def get_attributes(self):
+        self.__attributes.keys().sort()
         return self.__attributes.copy()
 
 class ValidityInterval():
@@ -408,7 +411,21 @@ class X509Certificate():
         self.signature = certificate.getComponentByName("signatureValue").toOctets()     
         tbsCert = certificate.getComponentByName("tbsCertificate")
         self.tbsCertificate = Certificate(tbsCert)   
-        self.is_verified = None
+        self.verification_results = None
+    
+    def is_verified(self):
+      '''
+      Checks if all values of verification_results dictionary are True,
+      which means that the certificate is valid
+      '''
+      if self.verification_results is None:
+        return False
+      for key in self.verification_results.keys():
+        if self.verification_results[key]:
+          continue
+        else:
+          return False
+      return True
         
 class Attribute():
     """
@@ -509,8 +526,23 @@ class TimeStampToken():
         self.genTime = asn1_tstInfo.getComponentByName("genTime")._value
         self.accuracy = TsAccuracy(asn1_tstInfo.getComponentByName("accuracy"))
         self.tsa = Name(asn1_tstInfo.getComponentByName("tsa"))
+        # place for parsed certificates in asn1 form
+        self.asn1_certificates = []
+        # place for certificates transformed to X509Certificate
+        self.certificates = []
         #self.extensions = asn1_tstInfo.getComponentByName("extensions")
-        
+    
+    def certificates_contain(self, cert_serial_num):
+        """
+        Checks if set of certificates of this timestamp contains
+        certificate with specified serial number.
+        Returns True if it does, False otherwise.
+        """
+        for cert in self.certificates:
+          if cert.tbsCertificate.serial_number == cert_serial_num:
+            return True
+        return False
+    
     def get_genTime_as_datetime(self):
       """
       parses the genTime string and returns a datetime object;

@@ -26,7 +26,7 @@ class Properties:
   VERIFY_TIMESTAMP =  True
   VERIFY_CERTIFICATE = True
   CHECK_CRL = True
-  FORCE_CRL_DOWNLOAD = False
+  FORCE_CRL_DOWNLOAD = True
   
   # these properties are expected boolean
   _boolean_values = [
