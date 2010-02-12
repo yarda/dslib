@@ -45,8 +45,9 @@ class Asn1ItemBase(Asn1Item):
         return self._tagSet.isSuperTagSetOf(other.getTagSet()) and \
                self._subtypeSpec.isSuperTypeOf(other.getSubtypeSpec())
 
-class __NoValue:
+class __NoValue(object):
     def __getattr__(self, attr):
+        raise AttributeError("")
         raise error.PyAsn1Error('No value for %s()' % attr)
 noValue = __NoValue()
 

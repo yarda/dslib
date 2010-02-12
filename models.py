@@ -254,7 +254,7 @@ class Message(Model):
     if hasattr(self, "pkcs7_data") and hasattr(self.pkcs7_data, "certificates"):
       if self.pkcs7_data.certificates:
         if hasattr(self.pkcs7_data.certificates[0], "is_verified"):
-          return self.pkcs7_data.certificates[0].is_verified
+          return self.pkcs7_data.certificates[0].is_verified()
 
   def check_timestamp(self):
     '''
@@ -268,7 +268,7 @@ class Message(Model):
       tstamp_verified, tstamp = pkcs7.tstamp_helper\
                                       .parse_qts(self.dmQTimestamp,\
                                                  verify=props.VERIFY_TIMESTAMP)
-      
+      self.tstamp_token = tstamp
       imprint = tstamp.msgImprint.imprint
       imprint = base64.b64encode(imprint)
       hashFromMsg = self.dmHash.value
