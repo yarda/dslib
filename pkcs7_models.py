@@ -91,6 +91,27 @@ class ValidityInterval():
     def __init__(self, validity):
         self.valid_from = validity.getComponentByName("notBefore").getComponent()._value
         self.valid_to = validity.getComponentByName("notAfter").getComponent()._value
+        
+    def get_valid_from_as_datetime(self):
+      return self._parse_date(self.valid_from)
+    
+    def get_valid_to_as_datetime(self):
+      return self._parse_date(self.valid_to)
+       
+    def _parse_date(self, date):
+      """
+      parses date string and returns a datetime object;
+      it also adjusts the time according to local timezone, so that it is
+      compatible with other parts of the library
+      """
+      year = 2000 + int(date[:2])
+      month = int(date[2:4])
+      day = int(date[4:6])
+      hour = int(date[6:8])
+      minute = int(date[8:10])
+      second = int(date[10:12])
+      tz_delta = datetime.timedelta(seconds=time.timezone)
+      return datetime.datetime(year, month, day, hour, minute, second) - tz_delta
 
 class PublicKeyInfo():
     '''

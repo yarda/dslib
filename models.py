@@ -278,6 +278,8 @@ class Message(Model):
       else:
         logging.error("Message imprint in timestamp and dmHash value differ!")
         return False
+    else:
+      return None
 
 
   # ---------- private methods ----------
