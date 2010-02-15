@@ -47,8 +47,8 @@ class Asn1ItemBase(Asn1Item):
 
 class __NoValue(object):
     def __getattr__(self, attr):
-        raise AttributeError("")
-        raise error.PyAsn1Error('No value for %s()' % attr)
+        raise AttributeError('No value for %s()' % attr)
+        #raise error.PyAsn1Error('No value for %s()' % attr)
 noValue = __NoValue()
 
 # Base class for "simple" ASN.1 objects. These are immutable.
