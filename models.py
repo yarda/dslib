@@ -254,7 +254,11 @@ class Message(Model):
     if hasattr(self, "pkcs7_data") and hasattr(self.pkcs7_data, "certificates"):
       if self.pkcs7_data.certificates:
         if hasattr(self.pkcs7_data.certificates[0], "is_verified"):
-          return self.pkcs7_data.certificates[0].is_verified()
+          if type(self.pkcs7_data.certificates[0].is_verified) == bool:
+            return self.pkcs7_data.certificates[0].is_verified
+          else:
+            return self.pkcs7_data.certificates[0].is_verified()
+    return False
 
   def check_timestamp(self):
     '''
