@@ -129,7 +129,7 @@ def _check_crl(checked_cert, issuer_cert, force_download=False):
     
     
 
-def verify_certificate(cert, trusted_ca_certs,\
+def verify_certificate(cert, trusted_ca_certs=[],\
                        check_crl=False, force_crl_download=False):
     '''
     Verifies the certificate - checks signature and date validity.
@@ -163,9 +163,10 @@ def verify_certificate(cert, trusted_ca_certs,\
         results["SIGNING_ALG_OK"] = True
     else:
         msg = "Unknown certificate signature algorithm: %s" % sig_alg
-        logger.error(msg)
-        #return False
+        logger.error(msg)       
         results["SIGNING_ALG_OK"] = False
+        # we dont have to continue, if we do not know signing algorithm
+        return results
 
     # look for signing certificate among certificates
     issuer = str(tbs.getComponentByName("issuer"))  
@@ -174,9 +175,11 @@ def verify_certificate(cert, trusted_ca_certs,\
     if not signing_cert:
         msg = "No certificate found for %s, needed to verify certificate of %s" %\
                (issuer,subject)
-        logger.error(msg)
-        #return False
+        logger.error(msg)        
         results["TRUSTED_PARENT_FOUND"] = False
+        # we do not have to continue - there is no signing certificate,
+        # therefore we have no key to verify this certificate        
+        return results
     else:
         results["TRUSTED_PARENT_FOUND"] = True
     
@@ -196,8 +199,7 @@ def verify_certificate(cert, trusted_ca_certs,\
         csn = tbs.getComponentByName("serialNumber")._value
         if not is_ok:
           msg = "Certificate %d issued by %s is revoked" % (csn,issuer)
-          logger.error(msg)
-          #return False
+          logger.error(msg)          
           results["CERT_NOT_REVOKED"] = False
         else:
           logger.info("Certificate %d of %s is not on CRL" % (csn,issuer))
