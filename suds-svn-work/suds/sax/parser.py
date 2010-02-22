@@ -48,8 +48,10 @@ class Handler(ContentHandler):
     
     def __init__(self):
         self.nodes = [Document()]
+        self._text = []
  
     def startElement(self, name, attrs):
+        self._flush_text()
         top = self.top()
         node = Element(unicode(name), parent=top)
         for a in attrs.getNames():
@@ -75,6 +77,7 @@ class Handler(ContentHandler):
         return skip
  
     def endElement(self, name):
+        self._flush_text()
         name = unicode(name)
         current = self.top()
         current.trim()
@@ -86,11 +89,13 @@ class Handler(ContentHandler):
  
     def characters(self, content):
         text = unicode(content)
+        self._text.append(text)
+        
+    def _flush_text(self):
         node = self.top()
-        if node.text is None:
-            node.text = Text(text)
-        else:
-            node.text += text
+        if self._text:
+          node.text = Text("".join(self._text))
+        self._text = []
 
     def push(self, node):
         self.nodes.append(node)

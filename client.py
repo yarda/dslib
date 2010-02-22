@@ -267,7 +267,6 @@ class Dispatcher(object):
     str_msg = pkcs_data.message
     # parse string xml to create xml document
     xml_document = self._xml_parse_msg(str_msg, method)
-    
     # verify certificates    
     if props.VERIFY_CERTIFICATE:
       # verify certificates
@@ -319,7 +318,6 @@ class Dispatcher(object):
       message = models.Message(xml_document.dmReturnedMessage)
     else:
       raise Exception("Unsupported signed method '%s'" % method.method.name) 
-      
     message.pkcs7_data = pkcs_data
     if (verified):
         message.is_verified = True
