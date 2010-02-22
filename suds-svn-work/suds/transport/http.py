@@ -26,6 +26,8 @@ from suds.properties import Unskin
 from urlparse import urlparse
 from cookielib import CookieJar
 from logging import getLogger
+import httplib
+import ssl
 
 log = getLogger(__name__)
 
@@ -58,13 +60,44 @@ class SUDSHTTPRedirectHandler(u2.HTTPRedirectHandler):
             raise u2.HTTPError(req.get_full_url(), code, msg, headers, fp)
 
 
+class CheckingHTTPSConnection(httplib.HTTPSConnection):
+  """based on httplib.HTTPSConnection code - extended to support 
+  server certificate verification"""
+  
+  def __init__(self, host, ca_certs=None, **kw):
+    httplib.HTTPSConnection.__init__(self, host, **kw)
+    self.ca_certs = ca_certs
+    
+  def connect(self):
+    sock = socket.create_connection((self.host, self.port), self.timeout)
+    if self._tunnel_host:
+        self.sock = sock
+        self._tunnel()
+    self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
+                                ca_certs=self.ca_certs,
+                                cert_reqs=ssl.CERT_REQUIRED)
+
+class CheckingHTTPSHandler(u2.HTTPSHandler):
+  
+  def __init__(self, ca_certs=None, *args, **kw):
+    u2.HTTPSHandler.__init__(self, *args, **kw)
+    self.ca_certs = ca_certs
+  
+  def https_open(self, req):
+    def open(*args, **kw):
+      return CheckingHTTPSConnection(*args, ca_certs=self.ca_certs, **kw)
+    return self.do_open(open, req)
+
+  https_request = u2.AbstractHTTPHandler.do_request_
+
+
 class HttpTransport(Transport):
     """
     HTTP transport using urllib2.  Provided basic http transport
     that provides for cookies, proxies but no authentication.
     """
     
-    def __init__(self, **kwargs):
+    def __init__(self, ca_certs=None, **kwargs):
         """
         @param kwargs: Keyword arguments.
             - B{proxy} - An http proxy to be specified on requests.
@@ -83,11 +116,15 @@ class HttpTransport(Transport):
         self.cookiejar = CookieJar()
         log.debug("Proxy: %s", self.options.proxy)
         proxy_handler = u2.ProxyHandler(self.options.proxy)
+        if ca_certs:
+          https_handler = CheckingHTTPSHandler(ca_certs=ca_certs)
+        else:
+          https_handler = u2.HTTPSHandler()
         self.urlopener = u2.build_opener(proxy_handler,
                                          SUDSHTTPRedirectHandler(),
-                                         u2.HTTPCookieProcessor(self.cookiejar))
-
-
+                                         u2.HTTPCookieProcessor(self.cookiejar),
+                                         https_handler)
+                                                              
     def open(self, request):
         try:
             url = request.url

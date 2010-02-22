@@ -93,6 +93,6 @@ class Options(Skin):
             Definition('doctor', Doctor, None),
             Definition('xstq', bool, True),
             Definition('prefixes', bool, True),
-            Definition('retxml', bool, False)
+            Definition('retxml', bool, False),
         ]
         Skin.__init__(self, definitions, kwargs)
