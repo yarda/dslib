@@ -43,6 +43,7 @@ import pkcs7
 import pkcs7.pkcs7_decoder
 import pkcs7.verifier
 import logging
+import re
 
 from suds.client import Client as SudsClient
 from suds.transport.http import HttpAuthenticated
@@ -577,7 +578,7 @@ class Client(object):
       # somehow 1-member tuples are used so we cycle again...
       for name, value in parts:
         if name == "organizationName" and \
-           value.startswith(u"Ministerstvo vnitra ČR"):
+           re.search(u"Ministerstv[oa] vnitra ČR", value, re.IGNORECASE):
           ok = True
           break
     return ok 
