@@ -81,7 +81,8 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
                                 cert_reqs=ssl.CERT_REQUIRED)
     if self.cert_verifier:
       if not self.cert_verifier(self.sock.getpeercert()):
-        raise Exception("Server certificate did not pass security check.")
+        raise Exception("Server certificate did not pass security check.",
+                        self.sock.getpeercert())
 
 
 class CheckingHTTPSHandler(u2.HTTPSHandler):

@@ -321,8 +321,10 @@ class Dispatcher(object):
     if (method is None):
         raise Exception("Unknown method: %s" % ws_name)
     reply = method.__call__(msg_id)
+    status = self._extract_status(reply)
+    if not reply.dmSignature:
+      return Reply(status, None)
     der_encoded = base64.b64decode(reply.dmSignature)  
-   
     xml_document, pkcs_data, verified  = self._generic_get_signed(der_encoded, method)
     if method.method.name in ("SignedSentMessageDownload","SignedMessageDownload"):
       message = models.Message(xml_document.dmReturnedMessage)
@@ -339,7 +341,7 @@ class Dispatcher(object):
       if len(bad_certs) > 0:
         self._mark_invalid_certificates(message, bad_certs)        
     '''
-    return Reply(self._extract_status(reply), message)
+    return Reply(status, message)
   
 
   def _check_timestamp(self, message):
