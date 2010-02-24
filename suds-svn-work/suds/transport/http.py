@@ -64,9 +64,12 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
   """based on httplib.HTTPSConnection code - extended to support 
   server certificate verification"""
   
-  def __init__(self, host, ca_certs=None, **kw):
+  def __init__(self, host, ca_certs=None, cert_verifier=None, **kw):
+    """cert_verifier is a function returning either True or False
+    based on whether the certificate was found to be OK"""
     httplib.HTTPSConnection.__init__(self, host, **kw)
     self.ca_certs = ca_certs
+    self.cert_verifier = cert_verifier
     
   def connect(self):
     sock = socket.create_connection((self.host, self.port), self.timeout)
@@ -76,16 +79,26 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
     self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
                                 ca_certs=self.ca_certs,
                                 cert_reqs=ssl.CERT_REQUIRED)
+    if self.cert_verifier:
+      if not self.cert_verifier(self.sock.getpeercert()):
+        raise Exception("Server certificate did not pass security check.")
+
 
 class CheckingHTTPSHandler(u2.HTTPSHandler):
   
-  def __init__(self, ca_certs=None, *args, **kw):
+  def __init__(self, ca_certs=None, cert_verifier=None, *args, **kw):
+    """cert_verifier is a function returning either True or False
+    based on whether the certificate was found to be OK"""
     u2.HTTPSHandler.__init__(self, *args, **kw)
     self.ca_certs = ca_certs
+    self.cert_verifier = cert_verifier
   
   def https_open(self, req):
     def open(*args, **kw):
-      return CheckingHTTPSConnection(*args, ca_certs=self.ca_certs, **kw)
+      return CheckingHTTPSConnection(*args, 
+                                     ca_certs=self.ca_certs,
+                                     cert_verifier=self.cert_verifier,
+                                     **kw)
     return self.do_open(open, req)
 
   https_request = u2.AbstractHTTPHandler.do_request_
@@ -97,7 +110,7 @@ class HttpTransport(Transport):
     that provides for cookies, proxies but no authentication.
     """
     
-    def __init__(self, ca_certs=None, **kwargs):
+    def __init__(self, ca_certs=None, cert_verifier=None, **kwargs):
         """
         @param kwargs: Keyword arguments.
             - B{proxy} - An http proxy to be specified on requests.
@@ -110,6 +123,9 @@ class HttpTransport(Transport):
             - B{cache} - The http I{transport} cache.  May be set (None) for no caching.
                     - type: L{Cache}
                     - default: L{NoCache}
+                    
+        cert_verifier is a function returning either True or False
+        based on whether the certificate was found to be OK
         """
         Transport.__init__(self)
         Unskin(self.options).update(kwargs)
@@ -117,7 +133,8 @@ class HttpTransport(Transport):
         log.debug("Proxy: %s", self.options.proxy)
         proxy_handler = u2.ProxyHandler(self.options.proxy)
         if ca_certs:
-          https_handler = CheckingHTTPSHandler(ca_certs=ca_certs)
+          https_handler = CheckingHTTPSHandler(ca_certs=ca_certs,
+                                               cert_verifier=cert_verifier)
         else:
           https_handler = u2.HTTPSHandler()
         self.urlopener = u2.build_opener(proxy_handler,

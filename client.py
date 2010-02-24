@@ -1,3 +1,4 @@
+# encoding: utf-8
 
 #*    dslib - Python library for Datove schranky
 #*    Copyright (C) 2009-2010  CZ.NIC, z.s.p.o. (http://www.nic.cz)
@@ -80,10 +81,13 @@ class Dispatcher(object):
       transport = HttpAuthenticated(username=self.ds_client.login, password=self.ds_client.password,
                                     proxy={'https':self.proxy},
                                     ca_certs=server_certs,
+                                    cert_verifier=Client.verify_server_certificate
                                     )
     else:
       transport = HttpAuthenticated(username=self.ds_client.login, password=self.ds_client.password,
-                                    ca_certs=server_certs)
+                                    ca_certs=server_certs,
+                                    cert_verifier=Client.verify_server_certificate
+                                    )
     if not self.soap_url:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport)
     else:
@@ -559,7 +563,24 @@ class Client(object):
       import urllib2
       return urllib2.getproxies().get('https',None) 
     else:
-      return proxy    
+      return proxy
+    
+  @classmethod
+  def verify_server_certificate(cls, cert):
+    """
+    this is given to suds HTTPTransport augmented to checking certificates
+    it should return True when certificate passes and False when not
+    - we check mainly the name for which the certificate was issued
+    """
+    ok = False
+    for parts in cert['subject']:
+      # somehow 1-member tuples are used so we cycle again...
+      for name, value in parts:
+        if name == "organizationName" and \
+           value == u"Ministerstvo vnitra ČR - Sekce rozvoje a projektového řízení ICT v oblasti vnitřní bezpečnosti [IČ 00007064]":
+          ok = True
+          break
+    return ok 
 
 class Reply(object):
   """represent a reply from the SOAP server"""
