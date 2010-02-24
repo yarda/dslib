@@ -577,7 +577,7 @@ class Client(object):
       # somehow 1-member tuples are used so we cycle again...
       for name, value in parts:
         if name == "organizationName" and \
-           value == u"Ministerstvo vnitra ČR - Sekce rozvoje a projektového řízení ICT v oblasti vnitřní bezpečnosti [IČ 00007064]":
+           value.startswith(u"Ministerstvo vnitra ČR"):
           ok = True
           break
     return ok 
