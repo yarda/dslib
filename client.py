@@ -81,12 +81,12 @@ class Dispatcher(object):
       transport = HttpAuthenticated(username=self.ds_client.login, password=self.ds_client.password,
                                     proxy={'https':self.proxy},
                                     ca_certs=server_certs,
-                                    cert_verifier=Client.verify_server_certificate
+                                    cert_verifier=Client.CERT_VERIFIER
                                     )
     else:
       transport = HttpAuthenticated(username=self.ds_client.login, password=self.ds_client.password,
                                     ca_certs=server_certs,
-                                    cert_verifier=Client.verify_server_certificate
+                                    cert_verifier=Client.CERT_VERIFIER
                                     )
     if not self.soap_url:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport)
@@ -447,7 +447,7 @@ class Client(object):
     WSDL_URL_BASE = 'file://%s/wsdl/' % cur_path
   else:
     WSDL_URL_BASE = 'file:///%s/wsdl/' % cur_path
-
+    
   attr2dispatcher_name = {"GetListOfSentMessages": "info",
                           "GetListOfReceivedMessages": "info",
                           "MessageDownload": "operations",
@@ -581,6 +581,10 @@ class Client(object):
           ok = True
           break
     return ok 
+
+  # set this to None to omit checks or to custom function to allow custom checks
+  CERT_VERIFIER = verify_server_certificate
+   
 
 class Reply(object):
   """represent a reply from the SOAP server"""
