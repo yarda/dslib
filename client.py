@@ -324,7 +324,11 @@ class Dispatcher(object):
     status = self._extract_status(reply)
     if not reply.dmSignature:
       return Reply(status, None)
-    der_encoded = base64.b64decode(reply.dmSignature)  
+    message = self._signature_to_message(reply.dmSignature, method)
+    return Reply(status, message, raw_data=reply.dmSignature)
+  
+  def _signature_to_message(self, signature, method):
+    der_encoded = base64.b64decode(signature) 
     xml_document, pkcs_data, verified  = self._generic_get_signed(der_encoded, method)
     if method.method.name in ("SignedSentMessageDownload","SignedMessageDownload"):
       message = models.Message(xml_document.dmReturnedMessage)
@@ -333,16 +337,7 @@ class Dispatcher(object):
     message.pkcs7_data = pkcs_data
     if (verified):
         message.is_verified = True
-    '''
-    if props.VERIFY_CERTIFICATE:
-      # set verified attribute of certificates
-      for c in message.pkcs7_data.certificates:
-        c.is_verified = True
-      if len(bad_certs) > 0:
-        self._mark_invalid_certificates(message, bad_certs)        
-    '''
-    return Reply(status, message)
-  
+    return message
 
   def _check_timestamp(self, message):
     '''
@@ -592,10 +587,14 @@ class Client(object):
 class Reply(object):
   """represent a reply from the SOAP server"""
 
-  def __init__(self, status, data):
+  def __init__(self, status, data, **kw):
     self.status = status
     self.data = data
+    self.additional_data = {}
+    self.additional_data.update(kw)
 
   def __unicode__(self):
     return "Reply: StatusCode: %s; DataType: %s" % (self.status.dmStatusCode, data.__class__.__name__)
 
+  def add_addtional_data(self, **kw):
+    self.add_addtional_data.update(kw)

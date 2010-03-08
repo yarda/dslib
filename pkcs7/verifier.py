@@ -26,7 +26,6 @@ import string
 from pyasn1.codec.der import encoder
 from pyasn1 import error
 
-import pkcs7.asn1_models
 from asn1_models.tools import *
 from asn1_models.oid import *
 from asn1_models.X509_certificate import *
