@@ -28,6 +28,7 @@ from pkcs7.asn1_models.tools import *
 from pkcs7.asn1_models.X509_certificate import *
 from pkcs7.asn1_models.certificate_extensions import *
 from pkcs7.debug import *
+from certs.cert_manager import CertificateManager
 import datetime, time
 
 
@@ -407,11 +408,12 @@ class X509Certificate():
     - tbsCertificate (the certificate)
     '''
     def __init__(self, certificate):
-        self.sighnature_algorithm = str(certificate.getComponentByName("signatureAlgorithm"))
+        self.signature_algorithm = str(certificate.getComponentByName("signatureAlgorithm"))
         self.signature = certificate.getComponentByName("signatureValue").toOctets()     
         tbsCert = certificate.getComponentByName("tbsCertificate")
         self.tbsCertificate = Certificate(tbsCert)   
         self.verification_results = None
+        self.raw_der_data = "" # raw der data for storage are kept here by cert_manager
     
     def is_verified(self):
       '''
@@ -475,15 +477,24 @@ class PKCS7_data():
     '''
     Holder for PKCS7 data - version, digest algorithms, signed message, certificate, signer information.
     signed_data, certificate, signer_info = instances from pyasn1, will be 
-    mapped into plain python objets
+    mapped into plain python objects
     '''
-    def __init__(self, asn1_message):
+    def __init__(self, asn1_message=None):
+        self.version = None
+        self.digest_algorithms = None
+        self.message = None
+        self.certificates = None
+        self.signer_infos = None
+        if asn1_message:
+          self.parse_asn1_message(asn1_message)
+      
+    def parse_asn1_message(self, asn1_message):
         msg_content = asn1_message.getComponentByName("content")
         
         self.version = msg_content.getComponentByName("version")
         self.digest_algorithms = self._extract_used_digest_algs(msg_content)
         self.message = msg_content.getComponentByName("content").getComponentByName("signed_content").getContentValue()                 
-        self.certificates = [X509Certificate(cert) for cert in msg_content.getComponentByName("certificates")] 
+        self.certificates = [CertificateManager.get_certificate(cert) for cert in msg_content.getComponentByName("certificates")] 
         self.signer_infos = [SignerInfo(si) for si in msg_content.getComponentByName("signerInfos")]
     
     def _extract_used_digest_algs(self, signed_data):

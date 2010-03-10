@@ -227,7 +227,7 @@ class Dispatcher(object):
     import suds.sax.parser as p
     parser = p.Parser()
     soapbody = parser.parse(string = string_msg)
-    meth_name = method.method.name
+    meth_name = method.name
     decoding_method = Dispatcher.SIGNED_TO_DECODING_METHOD.get(meth_name, None)
     if not decoding_method:
       raise Exception("Decoding of XML result of '%s' is not supported." % meth_name)
@@ -262,8 +262,11 @@ class Dispatcher(object):
     '''
     "Base" of methods downloading signed versions of messages and
     delivery information.
-    Returns tuple xml_document, pkcs7_data, verified flag    
+    Returns tuple xml_document, pkcs7_data, verified flag 
+    method is either a SOAP method or its name as string   
     '''
+    if type(method) in (str, unicode):
+      method = getattr(self.soap_client.service, method)
     # decode DER encoding
     decoded_msg = pkcs7.pkcs7_decoder.decode_msg(der_encoded)    
     if props.VERIFY_MESSAGE:
@@ -276,7 +279,7 @@ class Dispatcher(object):
     # extract sent message from pkcs7 document
     str_msg = pkcs_data.message
     # parse string xml to create xml document
-    xml_document = self._xml_parse_msg(str_msg, method)
+    xml_document = self._xml_parse_msg(str_msg, method.method)
     # verify certificates    
     if props.VERIFY_CERTIFICATE:
       # verify certificates
@@ -324,10 +327,15 @@ class Dispatcher(object):
     status = self._extract_status(reply)
     if not reply.dmSignature:
       return Reply(status, None)
-    message = self._signature_to_message(reply.dmSignature, method)
+    message = self.signature_to_message(reply.dmSignature, method)
     return Reply(status, message, raw_data=reply.dmSignature)
   
-  def _signature_to_message(self, signature, method):
+  def signature_to_message(self, signature, method):
+    """
+    method is either a SOAP method or its name as string
+    """
+    if type(method) in (str, unicode):
+      method = getattr(self.soap_client.service, method)
     der_encoded = base64.b64decode(signature) 
     xml_document, pkcs_data, verified  = self._generic_get_signed(der_encoded, method)
     if method.method.name in ("SignedSentMessageDownload","SignedMessageDownload"):
@@ -453,13 +461,15 @@ class Client(object):
                           "DummyOperation": "operations",
                           "GetDeliveryInfo": "info",
                           "FindDataBox": "search",
-                          "CreateMessage": "operations",                          "SignedMessageDownload" : "operations",
+                          "CreateMessage": "operations",
+                          "SignedMessageDownload" : "operations",
                           "SignedSentMessageDownload" : "operations",
                           "GetSignedDeliveryInfo" : "info",
                           "GetPasswordInfo" : "access",
                           "GetOwnerInfoFromLogin": "access",
                           "GetUserInfoFromLogin": "access",
-                          "ChangeISDSPassword" : "access"
+                          "ChangeISDSPassword" : "access",
+                          "signature_to_message": "operations",
                           }
 
   dispatcher_name2config = {"info": {"wsdl_name": "dm_info.wsdl",
