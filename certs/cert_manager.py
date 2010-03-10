@@ -22,6 +22,9 @@ Cache and management of certificate data
 
 from pyasn1.codec.der import encoder
 from hashlib import sha256
+import cert_verifier
+import cert_loader
+from properties.properties import Properties as props
 
 
 class CertificateManager(object):
@@ -30,12 +33,9 @@ class CertificateManager(object):
   """
   
   _cert_store = {}
+  trusted_certificates = []
 
-  @classmethod
-  def _hash_certificate_der_data(cls, data):
-    h = sha256(data).hexdigest()
-    return h
-  
+
   @classmethod
   def get_certificate_from_der(cls, der):
     h = cls._hash_certificate_der_data(der)
@@ -61,10 +61,38 @@ class CertificateManager(object):
       return cert
     
   @classmethod
+  def add_trusted_certificate(cls, cert):
+    cls.trusted_certificates.append(cert)
+  
+  @classmethod
+  def read_trusted_certificates_from_dir(cls, dirname):
+    for cert in cert_loader.load_certificates_from_dir(dirname):
+      cls.add_trusted_certificate(cert)
+    
+  @classmethod
+  def verify_asn1_certificate(cls, certificate):
+    '''
+    Verfies certificate by calling method from cert_verifier
+    '''
+    res = cert_verifier.verify_certificate(
+                            certificate,
+                            cls.trusted_certificates,
+                            check_crl = props.CHECK_CRL,
+                            force_crl_download=props.FORCE_CRL_DOWNLOAD
+                            )
+    return res
+  
+  @classmethod
   def _create_certificate(cls, data, der):
     from pkcs7_models import X509Certificate
     cert = X509Certificate(data)
     cert.raw_der_data = der
+    if props.VERIFY_CERTIFICATE:
+      cert.verification_results = cls.verify_asn1_certificate(data)
     return cert
     
+  @classmethod
+  def _hash_certificate_der_data(cls, data):
+    h = sha256(data).hexdigest()
+    return h
   

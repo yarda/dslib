@@ -72,7 +72,7 @@ class Dispatcher(object):
                                "GetSignedDeliveryInfo":"GetDeliveryInfo",}
 
   def __init__(self, ds_client, wsdl_url, soap_url=None, proxy=None,
-                trusted_certs_dir=None, server_certs=None):
+               server_certs=None):
     """proxy can be a string 'hostname:port' or None"""
     self.ds_client = ds_client # this is a Client instance; username, password, etc. will be take from it
     self.wsdl_url = wsdl_url
@@ -93,10 +93,6 @@ class Dispatcher(object):
       self.soap_client = SudsClient(self.wsdl_url, transport=transport)
     else:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport, location=self.soap_url)
-    self.trusted_certs = []
-    if trusted_certs_dir is not None:
-        self.trusted_certs = certs.cert_loader.load_certificates_from_dir(trusted_certs_dir)
-
     
   def __getattr__(self, name):
     def _simple_wrapper(method):
@@ -280,24 +276,6 @@ class Dispatcher(object):
     str_msg = pkcs_data.message
     # parse string xml to create xml document
     xml_document = self._xml_parse_msg(str_msg, method.method)
-    # verify certificates    
-    if props.VERIFY_CERTIFICATE:
-      # verify certificates
-      certs = decoded_msg.getComponentByName("content").getComponentByName("certificates")    
-      cert_idx = 0
-      for cert in certs:
-          ver_res = self._verify_certificate(cert)
-          pkcs_data.certificates[cert_idx].verification_results = ver_res
-          cert_idx += 1
-          '''
-          if self._verify_certificate(cert):
-              continue
-          else:
-              tbs = cert.getComponentByName("tbsCertificate")
-              sn = tbs.getComponentByName("serialNumber")._value
-              issuer = str(tbs.getComponentByName("issuer"))
-              wrong_certificates_ids.append((issuer, sn))
-          '''
     return xml_document, pkcs_data, verified
   
 
@@ -363,9 +341,7 @@ class Dispatcher(object):
         # certificate verification (if properties say so)
         if props.VERIFY_CERTIFICATE:
           for cert in tstamp.asn1_certificates:
-            ver_res = self._verify_certificate(cert)
-            c = models.X509Certificate(cert)
-            c.verification_results = ver_res
+            c = CertificateManager.get_certificate(cert)
             if not tstamp.certificates_contain(c.tbsCertificate.serial_number):
               tstamp.certificates.append(c)            
         
@@ -385,19 +361,6 @@ class Dispatcher(object):
             return False
 
         
-  def _verify_certificate(self, certificate):
-    '''
-    Verfies certificate by calling method from cert_verifier
-    '''
-    import certs.cert_verifier          
-    res = certs.cert_verifier.verify_certificate(\
-                                                 certificate,\
-                                                 self.trusted_certs,\
-                                                 check_crl = props.CHECK_CRL,\
-                                                 force_crl_download=props.FORCE_CRL_DOWNLOAD
-                                                 )
-    return res
-     
   def SignedMessageDownload(self, msgId):
     return self._signed_msg_download("SignedMessageDownload", msgId)
     
@@ -489,8 +452,7 @@ class Client(object):
                            }
 
   def __init__(self, login=None, password=None, soap_url=None, test_environment=None,
-               login_method="username", proxy=None, trusted_certs_dir=None,
-               server_certs=None):
+               login_method="username", proxy=None, server_certs=None):
     """
     if soap_url is not given and test_environment is given, soap_url will be
     infered from the value of test_environment based on what is set in test2soap_url;
@@ -514,7 +476,6 @@ class Client(object):
     self.login_method = login_method
     self._dispatchers = {}
     self.proxy = proxy
-    self.trusted_certs_dir = trusted_certs_dir
     self.server_certs = server_certs
 
 
@@ -554,8 +515,7 @@ class Client(object):
         this_soap_url = self.soap_url + "/"
       this_soap_url += Client.login_method2url_part[self.login_method] + "/" + config['soap_url_end']
     dis = Dispatcher(self, Client.WSDL_URL_BASE+config['wsdl_name'], soap_url=this_soap_url,\
-                      proxy=self.get_real_proxy(), trusted_certs_dir=self.trusted_certs_dir,
-                      server_certs=self.server_certs)
+                      proxy=self.get_real_proxy(), server_certs=self.server_certs)
     self._dispatchers[name] = dis
     return dis
 

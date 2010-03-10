@@ -20,6 +20,7 @@
 
 
 from client import Client
+from certs.cert_manager import CertificateManager
 import models
 import sys
 
@@ -298,9 +299,10 @@ if __name__ == "__main__":
         else:
           sys.stderr.write("Test '%s' does not exist!\n" % test_name)
   # run the tests
-  if to_run:      
+  if to_run:
+    CertificateManager.read_trusted_certificates_from_dir("trusted_certificates")      
     ds_client = Client(username, password, test_environment=options.test_account,\
-                       proxy=proxy, trusted_certs_dir="trusted_certificates",
+                       proxy=proxy,
                        server_certs="trusted_certificates/postsignum_qca_root.pem")
     for test in to_run:
       print "==================== %s ====================" % test.__name__
