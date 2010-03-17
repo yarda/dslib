@@ -40,7 +40,7 @@ def parse_qts(dmQTimestamp, verify=False):
     Returns result of verification and TimeStampTOken instance.
     '''    
     ts = base64.b64decode(dmQTimestamp)
-
+    
     qts = pkcs7.pkcs7_decoder.decode_qts(ts)
     verif_result = None
     #if we want to verify the timestamp
@@ -70,5 +70,5 @@ def parse_qts(dmQTimestamp, verify=False):
         continue           
       
       t.asn1_certificates.append(cert)
-    
+
     return verif_result, t

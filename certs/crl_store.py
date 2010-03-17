@@ -78,7 +78,7 @@ class CRL_dist_point():
         for revoked in revoked_sn_list:            
             sn = revoked[0]
             if not self.revoked_certs.has_key(sn): 
-                # write the revocation time of this key (cert serial number)               
+                # write the revocation time of this key (cert serial number) 
                 self.revoked_certs[sn] = revoked[1]
                 self.changed = True
                 added_certs += 1

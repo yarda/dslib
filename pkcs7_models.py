@@ -97,12 +97,13 @@ class ValidityInterval():
         self.valid_to = validity.getComponentByName("notAfter").getComponent()._value
         
     def get_valid_from_as_datetime(self):
-      return self._parse_date(self.valid_from)
+      return self.parse_date(self.valid_from)
     
     def get_valid_to_as_datetime(self):
-      return self._parse_date(self.valid_to)
+      return self.parse_date(self.valid_to)
        
-    def _parse_date(self, date):
+    @classmethod
+    def parse_date(cls, date):
       """
       parses date string and returns a datetime object;
       it also adjusts the time according to local timezone, so that it is
@@ -428,6 +429,54 @@ class X509Certificate():
         else:
           return False
       return True
+    
+    def valid_at_date(self, date):
+      """check validity of all parts of the certificate with regard
+      to a specific date"""
+      verification_results = self.verification_results_at_date(date)
+      if verification_results is None:
+        return False
+      for key, value in verification_results.iteritems():
+        if not value:
+          return False
+      return True
+    
+    def verification_results_at_date(self, date):
+      if self.verification_results is None:
+        return None
+      results = dict(self.verification_results) # make a copy
+      results["CERT_TIME_VALIDITY_OK"] = self.time_validity_at_date(date)
+      results["CERT_NOT_REVOKED"] = self.crl_validity_at_date(date)
+      return results
+
+    def time_validity_at_date(self, date):
+      """check if the time interval of validity of the certificate contains
+      'date' provided as argument"""
+      from_date = self.tbsCertificate.validity.get_valid_from_as_datetime()
+      to_date = self.tbsCertificate.validity.get_valid_to_as_datetime()
+      time_ok = to_date >= date >= from_date
+      return time_ok
+    
+    def crl_validity_at_date(self, date):
+      """check if the certificate was not on the CRL list at a particular date"""
+      rev_date = self.get_revocation_date()
+      if not rev_date:
+        return True
+      if date >= rev_date:
+        return False
+      else:
+        return True
+      
+    def get_revocation_date(self):
+      from certs.crl_store import CRL_cache_manager
+      cache = CRL_cache_manager.get_cache()
+      issuer = str(self.tbsCertificate.issuer)
+      rev_date = cache.certificate_rev_date(issuer, self.tbsCertificate.serial_number)
+      if not rev_date:
+        return None
+      rev_date = ValidityInterval.parse_date(rev_date)
+      return rev_date
+    
         
 class Attribute():
     """

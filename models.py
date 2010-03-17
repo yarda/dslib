@@ -30,6 +30,7 @@ import os
 import constants
 import pkcs7
 import base64
+import datetime
 from properties.properties import Properties as props
 
 from pkcs7_models import *
@@ -257,7 +258,8 @@ class Message(Model):
           if type(self.pkcs7_data.certificates[0].is_verified) == bool:
             return self.pkcs7_data.certificates[0].is_verified
           else:
-            return self.pkcs7_data.certificates[0].is_verified()
+            date = self.get_verification_date()
+            return self.pkcs7_data.certificates[0].valid_at_date(date)
     return False
 
   def check_timestamp(self):
@@ -269,22 +271,39 @@ class Message(Model):
     '''
     # if message had dmQtimestamp, parse and verify it
     if self.dmQTimestamp is not None:
+      if not self.tstamp_token:
+        self._add_tstamp_token()
+      if self.tstamp_token:
+        imprint = self.tstamp_token.msgImprint.imprint
+        imprint = base64.b64encode(imprint)
+        hashFromMsg = self.dmHash.value
+        if hashFromMsg == imprint:
+          logging.info("Message imprint in timestamp and dmHash value are the same")
+          return True
+        else:
+          logging.error("Message imprint in timestamp and dmHash value differ!")
+          return False
+    return None
+
+  def _add_tstamp_token(self):
+    if self.dmQTimestamp is not None:
       tstamp_verified, tstamp = pkcs7.tstamp_helper\
                                       .parse_qts(self.dmQTimestamp,\
                                                  verify=props.VERIFY_TIMESTAMP)
       self.tstamp_token = tstamp
-      imprint = tstamp.msgImprint.imprint
-      imprint = base64.b64encode(imprint)
-      hashFromMsg = self.dmHash.value
-      if hashFromMsg == imprint:
-        logging.info("Message imprint in timestamp and dmHash value are the same")
-        return True
-      else:
-        logging.error("Message imprint in timestamp and dmHash value differ!")
-        return False
-    else:
-      return None
 
+  def get_verification_date(self):
+    """returns the timestamp date or current date, depending on the
+    availability of the timestamp"""
+    if not self.tstamp_token:
+      # we approximate because the parsing of timestamp is expensive
+      return self.dmDeliveryTime 
+    else:
+      return self.tstamp_token.get_genTime_as_datetime()
+
+  def still_on_server(self):
+    now = datetime.datetime.now()
+    return (now - self.dmDeliveryTime).days < 90
 
   # ---------- private methods ----------
 
