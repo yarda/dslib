@@ -295,9 +295,11 @@ class Message(Model):
   def get_verification_date(self):
     """returns the timestamp date or current date, depending on the
     availability of the timestamp"""
+    return datetime.datetime.now()
+    # we do not use the timestamp yet - it is unclear if it can be used
     if not self.tstamp_token:
       # we approximate because the parsing of timestamp is expensive
-      return self.dmDeliveryTime 
+      return datetime.datetime.now()
     else:
       return self.tstamp_token.get_genTime_as_datetime()
 
