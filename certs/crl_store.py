@@ -228,6 +228,7 @@ class CRL_issuer():
             if rev_date is not None:
                 logger.debug("Certificate %s revoked on %s" % (cert_sn, rev_date))
                 return rev_date
+        #return "100303140210T"
         return None
     
     def refresh_issuer(self, verification=None, force_crl_download=False):

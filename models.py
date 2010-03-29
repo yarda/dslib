@@ -258,8 +258,14 @@ class Message(Model):
           if type(self.pkcs7_data.certificates[0].is_verified) == bool:
             return self.pkcs7_data.certificates[0].is_verified
           else:
-            date = self.get_verification_date()
-            return self.pkcs7_data.certificates[0].valid_at_date(date)
+            return self.pkcs7_data.certificates[0].is_verified()
+    return False
+
+  def was_signature_valid_at_date(self, date):
+    if hasattr(self, "pkcs7_data") and hasattr(self.pkcs7_data, "certificates"):
+      if self.pkcs7_data.certificates:
+        if hasattr(self.pkcs7_data.certificates[0], "valid_at_date"):
+          return self.pkcs7_data.certificates[0].valid_at_date(date)
     return False
 
   def check_timestamp(self):
