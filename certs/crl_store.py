@@ -228,7 +228,7 @@ class CRL_issuer():
             if rev_date is not None:
                 logger.debug("Certificate %s revoked on %s" % (cert_sn, rev_date))
                 return rev_date
-        #return "100303140210T"
+        #return "100330140210T"
         return None
     
     def refresh_issuer(self, verification=None, force_crl_download=False):
@@ -361,7 +361,7 @@ class CRL_cache():
         '''
         iss = self.get_issuer(issuer_name)
         if iss is None:
-            raise "Issuer %s not found" % issuer_name
+            raise Exception("Issuer %s not found" % issuer_name)
         rev_date = iss.certificate_revoked(cert_sn)
         return rev_date
         

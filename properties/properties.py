@@ -19,7 +19,7 @@
 from ConfigParser import ConfigParser
 
 
-class Properties:
+class Properties(object):
   
   #default values
   VERIFY_MESSAGE = True

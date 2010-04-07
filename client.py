@@ -31,7 +31,7 @@ import sys, os
 if not sys.platform.startswith("freebsd") and not sys.platform.startswith("darwin"):
   try:
     import _ssl
-    _ssl.PROTOCOL_SSLv23 = _ssl.PROTOCOL_SSLv3
+    #_ssl.PROTOCOL_SSLv23 = _ssl.PROTOCOL_SSLv3
   except:
     pass
 # / end of work-around
@@ -42,6 +42,7 @@ import base64
 import pkcs7
 import pkcs7.pkcs7_decoder
 import pkcs7.verifier
+from properties.properties import Properties as props
 import logging
 import re
 
@@ -54,8 +55,6 @@ import pkcs7.tstamp_helper
 
 import certs.cert_loader
 
-# properties
-from properties.properties import Properties as props
 
 class Dispatcher(object):
   """

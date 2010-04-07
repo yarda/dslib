@@ -30,6 +30,7 @@ from pkcs7.asn1_models.certificate_extensions import *
 from pkcs7.debug import *
 from certs.cert_manager import CertificateManager
 import datetime, time
+from dslib.properties.properties import Properties
 
 
 #class SignedData():    
@@ -446,7 +447,10 @@ class X509Certificate():
         return None
       results = dict(self.verification_results) # make a copy
       results["CERT_TIME_VALIDITY_OK"] = self.time_validity_at_date(date)
-      results["CERT_NOT_REVOKED"] = self.crl_validity_at_date(date)
+      if Properties.CHECK_CRL:
+        results["CERT_NOT_REVOKED"] = self.crl_validity_at_date(date)
+      else:
+        results["CERT_NOT_REVOKED"] = None
       return results
 
     def time_validity_at_date(self, date):
