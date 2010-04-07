@@ -64,6 +64,8 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
   """based on httplib.HTTPSConnection code - extended to support 
   server certificate verification"""
   
+  FORCE_SSL_VERSION = None
+  
   def __init__(self, host, ca_certs=None, cert_verifier=None, **kw):
     """cert_verifier is a function returning either True or False
     based on whether the certificate was found to be OK"""
@@ -73,12 +75,17 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
     
   def connect(self):
     sock = socket.create_connection((self.host, self.port), self.timeout)
-    if self._tunnel_host:
+    if hasattr(self, '_tunel_host') and self._tunnel_host:
         self.sock = sock
         self._tunnel()
+    if self.FORCE_SSL_VERSION:
+      add = {'ssl_version': self.FORCE_SSL_VERSION}
+    else:
+      add = {}
     self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
                                 ca_certs=self.ca_certs,
-                                cert_reqs=ssl.CERT_REQUIRED)
+                                cert_reqs=ssl.CERT_REQUIRED,
+                                **add)
     if self.cert_verifier:
       if not self.cert_verifier(self.sock.getpeercert()):
         raise Exception("Server certificate did not pass security check.",

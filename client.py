@@ -22,22 +22,30 @@
 This is the main part of the dslib library - a client object resides here
 which is responsible for all communication with the DS server..
 """
+
+# suds does not work properly without this
+import os, sys
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
         
 # this is a work-around for an incompatibility of openssl-1.0.0beta
 # with the login.czebox.cz sites HTTPS interface
 # more info here: https://bugzilla.redhat.com/show_bug.cgi?id=537822
 # the workaround breaks things on FreeBSD
-import sys, os
-if not sys.platform.startswith("freebsd") and not sys.platform.startswith("darwin"):
-  try:
-    import _ssl
-    #_ssl.PROTOCOL_SSLv23 = _ssl.PROTOCOL_SSLv3
-  except:
-    pass
+import ssl, socket
+soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+ssl_sock = ssl.wrap_socket(soc)
+try:
+  ssl_sock.connect(("login.czebox.cz", 443))
+except ssl.SSLError:
+  print >> sys.stderr, "Activating SSL workaround"
+  from suds.transport.http import CheckingHTTPSConnection
+  import ssl
+  CheckingHTTPSConnection.FORCE_SSL_VERSION = ssl.PROTOCOL_SSLv3
+finally:
+  ssl_sock.close()
+  soc.close()
 # / end of work-around
 
-# suds does not work properly without this
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 import base64
 import pkcs7
 import pkcs7.pkcs7_decoder
