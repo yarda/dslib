@@ -417,30 +417,37 @@ class X509Certificate():
         self.verification_results = None
         self.raw_der_data = "" # raw der data for storage are kept here by cert_manager
     
-    def is_verified(self):
+    def is_verified(self, ignore_missing_crl_check=False):
       '''
       Checks if all values of verification_results dictionary are True,
       which means that the certificate is valid
       '''
-      if self.verification_results is None:
+      return self._evaluate_verification_results(
+                        self.verification_results,
+                        ignore_missing_crl_check=ignore_missing_crl_check)
+    
+    def valid_at_date(self, date, ignore_missing_crl_check=False):
+      """check validity of all parts of the certificate with regard
+      to a specific date"""
+      verification_results = self.verification_results_at_date(date)
+      return self._evaluate_verification_results(
+                        verification_results,
+                        ignore_missing_crl_check=ignore_missing_crl_check)
+    
+    def _evaluate_verification_results(self, verification_results,
+                                       ignore_missing_crl_check=False):
+      if verification_results is None:
         return False
-      for key in self.verification_results.keys():
-        if self.verification_results[key]:
+      for key, value in verification_results.iteritems():
+        if value:
+          pass
+        elif ignore_missing_crl_check and key=="CERT_NOT_REVOKED" and \
+             value is None:
           continue
         else:
           return False
       return True
-    
-    def valid_at_date(self, date):
-      """check validity of all parts of the certificate with regard
-      to a specific date"""
-      verification_results = self.verification_results_at_date(date)
-      if verification_results is None:
-        return False
-      for key, value in verification_results.iteritems():
-        if not value:
-          return False
-      return True
+      
     
     def verification_results_at_date(self, date):
       if self.verification_results is None:

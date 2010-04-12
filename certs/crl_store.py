@@ -361,7 +361,8 @@ class CRL_cache():
         '''
         iss = self.get_issuer(issuer_name)
         if iss is None:
-            raise Exception("Issuer %s not found" % issuer_name)
+            iss = self.add_issuer(issuer_name)
+            #raise Exception("Issuer %s not found" % issuer_name)
         rev_date = iss.certificate_revoked(cert_sn)
         return rev_date
         

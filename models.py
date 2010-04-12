@@ -250,7 +250,7 @@ class Message(Model):
   def is_message_verified(self):
     return self.is_verified
   
-  def is_signature_verified(self):
+  def is_signature_verified(self, ignore_missing_crl_check=False):
     """was the certificate used for signing the message verified"""
     if hasattr(self, "pkcs7_data") and hasattr(self.pkcs7_data, "certificates"):
       if self.pkcs7_data.certificates:
@@ -258,14 +258,17 @@ class Message(Model):
           if type(self.pkcs7_data.certificates[0].is_verified) == bool:
             return self.pkcs7_data.certificates[0].is_verified
           else:
-            return self.pkcs7_data.certificates[0].is_verified()
+            return self.pkcs7_data.certificates[0].\
+                      is_verified(ignore_missing_crl_check=ignore_missing_crl_check)
     return False
 
-  def was_signature_valid_at_date(self, date):
+  def was_signature_valid_at_date(self, date, ignore_missing_crl_check=False):
     if hasattr(self, "pkcs7_data") and hasattr(self.pkcs7_data, "certificates"):
       if self.pkcs7_data.certificates:
         if hasattr(self.pkcs7_data.certificates[0], "valid_at_date"):
-          return self.pkcs7_data.certificates[0].valid_at_date(date)
+          return self.pkcs7_data.certificates[0].\
+                    valid_at_date(date,
+                                  ignore_missing_crl_check=ignore_missing_crl_check)
     return False
 
   def check_timestamp(self):
