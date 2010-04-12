@@ -20,14 +20,16 @@
 Cache and management of certificate data
 """
 
-from pyasn1.codec.der import encoder
+# standard library imports
 from hashlib import sha256
+
+# dslib imports
+from dslib.pyasn1.codec.der import encoder
+from dslib.properties.properties import Properties as props
+
+# local imports
 import cert_verifier
 import cert_loader
-try:
-  from dslib.properties.properties import Properties as props
-except ImportError:
-  from .properties.properties import Properties as props
 
 
 class CertificateManager(object):

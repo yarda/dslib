@@ -20,6 +20,8 @@
 This module contains methods which can look for a certificate among other 
 certificates.
 '''
+
+# standard library imports
 import logging
 
 def find_cert_by_subject(subject, certs):

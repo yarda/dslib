@@ -21,19 +21,22 @@ Verification of CRL.
 CRL is downloaded from distribution point specified in
 the certificate extension => CRL is signed with this certificate.
 '''
+
+# standard library imports
 import logging
 logger = logging.getLogger("certs.crl_verifier")
 
+# dslib imports
+from dslib.pyasn1.codec.der import encoder
+from dslib.pyasn1 import error
+from dslib.pkcs7.asn1_models.oid import *
+from dslib.pkcs7.digest import *
+from dslib.pkcs7 import verifier
+from dslib.pkcs7 import rsa_verifier
 
-from pyasn1.codec.der import encoder
-from pyasn1 import error
-
-from pkcs7.asn1_models.oid import *
-from pkcs7.digest import *
-import pkcs7.verifier
-import pkcs7.rsa_verifier
-
+# local imports
 from constants import *
+
 
 def verify_crl(crl, certificate):
     '''
@@ -55,13 +58,13 @@ def verify_crl(crl, certificate):
         logger.error("Unknown certificate signature algorithm: %s" % sig_alg)
         raise Exception("Unknown certificate signature algorithm: %s" % sig_alg)
     
-    alg, key_material = pkcs7.verifier._get_key_material(certificate)
+    alg, key_material = verifier._get_key_material(certificate)
     
     signature = crl.getComponentByName("signatureValue").toOctets()
         
     # compare calculated hash and decrypted signature
     try:
-        res = pkcs7.rsa_verifier.rsa_verify(calculated_digest, signature, key_material)
+        res = rsa_verifier.rsa_verify(calculated_digest, signature, key_material)
     except:
         logger.error("RSA verification of CRL failed")
         return False

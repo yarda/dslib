@@ -16,11 +16,15 @@
 #*    License along with this library; if not, write to the Free
 #*    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #*
+
+# standard library imports
 import string
-from pyasn1.type import tag,namedtype,univ
 
-from pyasn1 import error
+# dslib imports
+from dslib.pyasn1.type import tag,namedtype,univ
+from dslib.pyasn1 import error
 
+# local imports
 from X509_certificate import *
 from general_types import *
 from oid import oid_map as oid_map

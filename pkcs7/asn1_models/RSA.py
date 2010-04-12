@@ -20,8 +20,10 @@
 Created on Dec 9, 2009
 
 '''
-from pyasn1.type import tag,namedtype,univ
-from pyasn1 import error
+
+# dslib imports
+from dslib.pyasn1.type import tag,namedtype,univ
+from dslib.pyasn1 import error
 
 class Modulus(univ.OctetString):
     tagSet = univ.OctetString.tagSet.tagImplicitly(

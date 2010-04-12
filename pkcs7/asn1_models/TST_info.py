@@ -41,14 +41,18 @@ TSTInfo ::= SEQUENCE  {
    tsa                          [0] GeneralName          OPTIONAL,
    extensions                   [1] IMPLICIT Extensions   OPTIONAL  }
 '''
-import string
-from pyasn1.type import tag,namedtype,univ,char,useful
-from pyasn1 import error
 
+# standard library imports
+import string
+
+# dslib imports
+from dslib.pyasn1.type import tag,namedtype,univ,char,useful
+from dslib.pyasn1 import error
+
+# local imports
 from X509_certificate import *
 from general_types import *
 from oid import oid_map as oid_map
-
 from certificate_extensions import *
 
 

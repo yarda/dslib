@@ -19,13 +19,17 @@
 '''
 Certificate extensions specifications
 '''
-import string
-from pyasn1.type import tag,namedtype,univ
-from pyasn1 import error
 
+# standard library imports
+import string
+
+# dslib imports
+from dslib.pyasn1.type import tag,namedtype,univ
+from dslib.pyasn1 import error
+
+# local imports
 from tools import *
 from oid import oid_map as oid_map
-
 from general_types import  *
          
 

@@ -22,19 +22,21 @@ Created on Dec 9, 2009
 Verifying RSA signatures.
 Uses parts ofcode from  http://stuvel.eu/rsa
 '''
+
+# standard library imports
 import logging
 logger = logging.getLogger('pkcs7.rsa_verifier')
-#logger.setLevel(logging.DEBUG)
+import types
+import base64
 
-import types, base64
-import asn1_models
+# dslib imports
+from dslib.pyasn1.codec.der import decoder
+from dslib.pyasn1 import error
+from dslib.converters.bytes_converter import *
 
+# local imports
 from asn1_models.digest_info import *
 
-from pyasn1.codec.der import decoder
-from pyasn1 import error
-
-from converters.bytes_converter import *
 
 def _fast_exponentiation(a, p, n):
     """

@@ -20,9 +20,12 @@
 Some usefull tools for working with ASN1 components.
 '''
 
+# dslib imports
+from dslib.pyasn1.codec.der import decoder
+from dslib.pyasn1 import error
+
+# local imports
 from RSA import *
-from pyasn1.codec.der import decoder
-from pyasn1 import error
 
 
 def tuple_to_OID(tuple):

@@ -19,10 +19,15 @@
 '''
 Model for pkcs#7 v1.5 signedData content
 '''
-import string
-from pyasn1.type import tag,namedtype,univ,useful
-from pyasn1 import error
 
+# standard library imports
+import string
+
+# dslib imports
+from dslib.pyasn1.type import tag,namedtype,univ,useful
+from dslib.pyasn1 import error
+
+# local imports
 from X509_certificate import Certificates
 from att_certificate_v2 import CertificateSet
 from general_types import *

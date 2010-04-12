@@ -23,16 +23,20 @@ signedData component, so it is the same format as the format
 of signed data message. Version of content is '3', so there are small
 differences.
 '''
+
+# standard library imports
 import logging
 logger = logging.getLogger("pkcs7.tstamp_helper")
-
-
 import base64
-import pkcs7
-import pkcs7.pkcs7_decoder
-import pkcs7.verifier
-import models
-from certs.cert_finder import *
+
+# dslib imports
+from dslib.certs.cert_finder import *
+from dslib import models
+
+# local imports
+import pkcs7_decoder
+import verifier
+
 
 def parse_qts(dmQTimestamp, verify=False):
     '''
@@ -41,11 +45,11 @@ def parse_qts(dmQTimestamp, verify=False):
     '''    
     ts = base64.b64decode(dmQTimestamp)
     
-    qts = pkcs7.pkcs7_decoder.decode_qts(ts)
+    qts = pkcs7_decoder.decode_qts(ts)
     verif_result = None
     #if we want to verify the timestamp
     if (verify):
-        verif_result = pkcs7.verifier.verify_qts(qts)        
+        verif_result = verifier.verify_qts(qts)        
         if verif_result:
             logger.info("QTimeStamp verified")
         else:
@@ -54,7 +58,7 @@ def parse_qts(dmQTimestamp, verify=False):
         logger.info("Verification of timestamp skipped")
         
     tstData = qts.getComponentByName("content").getComponentByName("encapsulatedContentInfo").getComponentByName("eContent")._value    
-    tstinfo = pkcs7.pkcs7_decoder.decode_tst(tstData)
+    tstinfo = pkcs7_decoder.decode_tst(tstData)
     
     t = models.TimeStampToken(tstinfo)
     

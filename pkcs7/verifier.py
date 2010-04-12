@@ -19,24 +19,28 @@
 '''
 Verifying of PKCS7 messages
 '''
+
+# standard library imports
 import logging
 logger = logging.getLogger('pkcs7.verifier')
-
 import string
-from pyasn1.codec.der import encoder
-from pyasn1 import error
 
+# dslib imports
+from dslib.pyasn1.codec.der import encoder
+from dslib.pyasn1 import error
+from dslib.certs.cert_finder import *
+
+# local imports
 from asn1_models.tools import *
 from asn1_models.oid import *
 from asn1_models.X509_certificate import *
 from asn1_models.pkcs_signed_data import *
 from asn1_models.RSA import *
 from asn1_models.digest_info import *
-
 from rsa_verifier import *
 from debug import *
 from digest import *
-from certs.cert_finder import *
+
 
 MESSAGE_DIGEST_KEY = "1.2.840.113549.1.9.4"
 

@@ -19,13 +19,16 @@
 '''
 Decoder for PEM files
 '''
-import sys, string, base64
-from pyasn1.codec.der import decoder
-from pyasn1 import error
 
-import pkcs7.asn1_models
-import pkcs7.asn1_models.X509_certificate
-from pkcs7.asn1_models.X509_certificate import *
+# standard library imports
+import sys
+import string
+import base64
+
+# dslib imports
+from dslib.pyasn1.codec.der import decoder
+from dslib.pyasn1 import error
+from dslib.pkcs7.asn1_models.X509_certificate import *
 
 PEM_SUFFIX = ".pem"
 CER_SUFFIX = ".cer"

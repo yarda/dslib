@@ -19,9 +19,12 @@
 '''
 Decoding of PKCS7 messages
 '''
-from pyasn1.codec.der import decoder
-from pyasn1 import error
 
+# dslib imports
+from dslib.pyasn1.codec.der import decoder
+from dslib.pyasn1 import error
+
+# local imports
 from asn1_models.pkcs_signed_data import *
 from asn1_models.digest_info import *
 from asn1_models.TST_info import *

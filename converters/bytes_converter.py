@@ -19,6 +19,8 @@
 '''
 Routines to convert between byte strings and integers.
 '''
+
+# standard library imports
 import types
 
 def bytes_to_int(bytes):

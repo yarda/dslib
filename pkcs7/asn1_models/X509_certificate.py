@@ -20,13 +20,17 @@
 Created on Dec 3, 2009
 
 '''
-import string
-from pyasn1.type import tag,namedtype,univ,useful
-from pyasn1 import error
 
+# standard library imports
+import string
+
+# dslib imports
+from dslib.pyasn1.type import tag,namedtype,univ,useful
+from dslib.pyasn1 import error
+
+# local imports
 from tools import *
 from oid import oid_map as oid_map
-
 from general_types import  *
 
 

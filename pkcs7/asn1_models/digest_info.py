@@ -20,9 +20,12 @@
 Created on Dec 9, 2009
 
 '''
-from pyasn1.type import tag,namedtype,univ
-from pyasn1 import error
 
+# dslib imports
+from dslib.pyasn1.type import tag,namedtype,univ
+from dslib.pyasn1 import error
+
+# local imports
 from general_types import AlgorithmIdentifier
 
 class DigestInfo(univ.Sequence):
