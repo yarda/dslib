@@ -35,8 +35,8 @@ from properties.properties import Properties as props
 import logging
 import re
 
-from suds.client import Client as SudsClient
-from suds.transport.http import HttpAuthenticated
+from sudsds.client import Client as SudsClient
+from sudsds.transport.http import HttpAuthenticated
 import exceptions
 from ds_exceptions import DSException
 import models
@@ -208,7 +208,7 @@ class Dispatcher(object):
     '''
     Parses content of pkcs7 message. Outputs xml document.
     '''
-    import suds.sax.parser as p
+    import sudsds.sax.parser as p
     parser = p.Parser()
     soapbody = parser.parse(string = string_msg)
     meth_name = method.name
