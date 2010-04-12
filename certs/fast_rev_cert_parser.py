@@ -22,9 +22,13 @@ Fast revoked certificates numbers list parser.
 Parses only the revoked certificates numbers, revocation
 dates and crl entry extensions are ignored
 '''
+
+# standard library imports
 import logging
 logger = logging.getLogger('certs.fast_rev_cer_parser')
-from converters.bytes_converter import bytes_to_int
+
+# dslib imports
+from dslib.converters.bytes_converter import bytes_to_int
 
 
 def _decode_len(substrate):

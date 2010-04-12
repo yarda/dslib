@@ -19,26 +19,25 @@
 '''
 Module for certificate verification.
 '''
+
+# standard library imports
 import logging
 logger = logging.getLogger("certs.cert_verifier")
-#logger.setLevel(logging.DEBUG)
 import types
 
-from pyasn1.codec.der import encoder
-from pyasn1 import error
+# dslib imports
+from dslib.pyasn1.codec.der import encoder
+from dslib.pyasn1 import error
+from dslib.pkcs7.asn1_models.oid import *
+from dslib.pkcs7.digest import *
+from dslib.pkcs7 import verifier
+from dslib.pkcs7 import rsa_verifier
 
-from pkcs7.asn1_models.oid import *
-from pkcs7.digest import *
-import pkcs7.verifier
-import pkcs7.rsa_verifier
-
+# local imports
+import crl_store
 from cert_finder import *
-
 import timeutil
-
 from constants import *
-
-import certs.crl_store as crl_store
 
 
 def _verify_date(certificate): 
@@ -206,11 +205,11 @@ def verify_certificate(cert, trusted_ca_certs=[],\
           results["CERT_NOT_REVOKED"] = True
     
     # extract public key from matching certificate
-    alg, key_material = pkcs7.verifier._get_key_material(signing_cert)
+    alg, key_material = verifier._get_key_material(signing_cert)
     # decrypt signature in explored certificate
     signature = cert.getComponentByName("signatureValue").toOctets()    
     # compare calculated hash and decrypted signature
-    res = pkcs7.rsa_verifier.rsa_verify(calculated_digest, signature, key_material)
+    res = rsa_verifier.rsa_verify(calculated_digest, signature, key_material)
     
     results["CERT_SIGNATURE_OK"] = res
     

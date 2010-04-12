@@ -20,6 +20,8 @@
 Utility for converting timestring used in 
 databoxes into time structures.
 '''
+
+# standard library imports
 import time
 
 TIME_FORMAT = '%y%m%d%H%M%SZ'

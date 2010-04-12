@@ -20,9 +20,12 @@
 Created on Dec 9, 2009
 
 '''
-from pyasn1.type import tag,namedtype,namedval,univ,char,useful
-from pyasn1 import error
 
+# dslib imports
+from dslib.pyasn1.type import tag,namedtype,namedval,univ,char,useful
+from dslib.pyasn1 import error
+
+# local imports
 from tools import *
 from oid import *
 

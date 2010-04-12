@@ -19,24 +19,24 @@
 '''
 Implementing CRL cache
 '''
+
+# standard library imports
 import httplib
 import logging
 import sys
-#logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('certs.crl_store')
-#logger.setLevel(logging.DEBUG)
-
-import crl_verifier
 import os
+import pickle 
 
+# dslib imports
+from dslib.pyasn1.codec.der import decoder
+from dslib.pyasn1 import error
+from dslib.pkcs7.asn1_models.crl import *
+
+# local imports
+import crl_verifier
 import timeutil
 
-from pyasn1.codec.der import decoder
-from pyasn1 import error
-
-from pkcs7.asn1_models.crl import *
-
-import pickle 
 CRL_DUMP_DIR = ".crl_dumps"
 CRL_DUMP_FILE = ".crl_dump"
 

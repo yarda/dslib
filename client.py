@@ -23,25 +23,25 @@ This is the main part of the dslib library - a client object resides here
 which is responsible for all communication with the DS server..
 """
 
+# standard library imports
 # suds does not work properly without this
-import os, sys
+import os
+import sys
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-        
 import base64
-import pkcs7
-import pkcs7.pkcs7_decoder
-import pkcs7.verifier
-from properties.properties import Properties as props
 import logging
 import re
 
+# local imports
+import pkcs7.pkcs7_decoder
+import pkcs7.verifier
+import pkcs7.tstamp_helper
 from suds.client import Client as SudsClient
 from suds.transport.http import HttpAuthenticated
 import exceptions
 from ds_exceptions import DSException
 import models
-import pkcs7.tstamp_helper
-
+from properties.properties import Properties as props
 import certs.cert_loader
 
 

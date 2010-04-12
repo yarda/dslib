@@ -18,11 +18,12 @@
 #*    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #*
 
-
-from client import Client
-from certs.cert_manager import CertificateManager
-import models
 import sys
+sys.path.insert(0, "../")
+from dslib.client import Client
+from dslib.certs.cert_manager import CertificateManager
+from dslib import models
+
 
 def active(f):
   """decorator to activate a test"""
