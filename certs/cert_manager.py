@@ -24,7 +24,10 @@ from pyasn1.codec.der import encoder
 from hashlib import sha256
 import cert_verifier
 import cert_loader
-from dslib.properties.properties import Properties as props
+try:
+  from dslib.properties.properties import Properties as props
+except ImportError:
+  from .properties.properties import Properties as props
 
 
 class CertificateManager(object):

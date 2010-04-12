@@ -30,7 +30,10 @@ from pkcs7.asn1_models.certificate_extensions import *
 from pkcs7.debug import *
 from certs.cert_manager import CertificateManager
 import datetime, time
-from dslib.properties.properties import Properties
+try:
+  from dslib.properties.properties import Properties
+except ImportError:
+  from properties.properties import Properties
 
 
 #class SignedData():    

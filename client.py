@@ -27,25 +27,6 @@ which is responsible for all communication with the DS server..
 import os, sys
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
         
-# this is a work-around for an incompatibility of openssl-1.0.0beta
-# with the login.czebox.cz sites HTTPS interface
-# more info here: https://bugzilla.redhat.com/show_bug.cgi?id=537822
-# the workaround breaks things on FreeBSD
-import ssl, socket
-soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-ssl_sock = ssl.wrap_socket(soc)
-try:
-  ssl_sock.connect(("login.czebox.cz", 443))
-except ssl.SSLError:
-  print >> sys.stderr, "Activating SSL workaround"
-  from suds.transport.http import CheckingHTTPSConnection
-  import ssl
-  CheckingHTTPSConnection.FORCE_SSL_VERSION = ssl.PROTOCOL_SSLv3
-finally:
-  ssl_sock.close()
-  soc.close()
-# / end of work-around
-
 import base64
 import pkcs7
 import pkcs7.pkcs7_decoder
@@ -415,6 +396,7 @@ class Dispatcher(object):
     reply = self.soap_client.service.ChangeISDSPassword(old_pass, new_pass) 
     status = models.dbStatus(reply)   
     return Reply(status, None)
+
     
 class Client(object):
 

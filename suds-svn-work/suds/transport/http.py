@@ -202,11 +202,27 @@ class HttpTransport(Transport):
         self.cookiejar.extract_cookies(fp, u2request)
         
     def __open(self, u2request):
+        def do():
+          if self.urlopener is None:
+              return u2.urlopen(u2request)
+          else:
+              return self.urlopener.open(u2request)
+
         socket.setdefaulttimeout(self.options.timeout)
-        if self.urlopener is None:
-            return u2.urlopen(u2request)
-        else:
-            return self.urlopener.open(u2request)
+        try:
+            return do()
+        except u2.URLError, e:
+            # this is a work-around for an incompatibility of openssl-1.0.0beta
+            # with the login.czebox.cz sites HTTPS interface
+            # more info here: https://bugzilla.redhat.com/show_bug.cgi?id=537822
+            # the workaround breaks things on other systems, so it is applied
+            # on an on-demand basis
+            if "SSL23_GET_SERVER_HELLO" in str(e):
+              log.info("Activating SSL workaround")
+              CheckingHTTPSConnection.FORCE_SSL_VERSION = ssl.PROTOCOL_SSLv3
+              return do()
+            else:
+              raise e
         
     def __setproxy(self, url, u2request):
         protocol = urlparse(url)[0]
