@@ -14,6 +14,8 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # written by: Jeff Ortel ( jortel@redhat.com )
 
+# modifications by: Beda Kosata (bedrich.kosata@nic.cz)
+
 """
 Contains classes for basic HTTP transport implementations.
 """

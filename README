@@ -11,9 +11,17 @@ V současné verzi jsou implementovány následující funkce:
  * GetListOfReceivedMessages
  * MessageEnvelopeDownload
  * MessageDownload
- * DummyOperation
+ * SignedMessageDownload
+ * SignedSentMessageDownload
+ * GetDeliveryInfo
+ * GetSignedDeliveryInfo
+ * GetOwnerInfoFromLogin
+ * GetUserInfoFromLogin
+ * GetPasswordInfo
+ * ChangeISDSPassword
  * FindDataBox
  * CreateMessage
+ * DummyOperation
  
 Autentizace je v současné verzi omezená na jméno a heslo,
 autentizace pomocí klientského certifikátu není implementovaná.
@@ -26,7 +34,7 @@ SOAP knihovna
 Knihovna používá knihovnu "suds" (https://fedorahosted.org/suds) pro SOAP
 komunikaci. Protože bylo třeba tuto knihovnu upravit pro potřeby našeho
 projektu, distribuujeme upravenou verzi jako součást našeho balíčku 
-(suds i dslib jsou vydávány pod licencí LGPL).
-V okamžiku, kdy bude možné použít oficiální verzi "suds", bude naše upravená
-verze z balíčku odstraněna
+(suds i dslib jsou vydávány pod licencí LGPL) pod názvem sudsds. Pokud bude 
+v budoucnosti možné použít oficiální verzi "suds", bude naše upravená
+verze z balíčku odstraněna.
 
