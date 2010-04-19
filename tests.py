@@ -304,7 +304,7 @@ if __name__ == "__main__":
     CertificateManager.read_trusted_certificates_from_dir("trusted_certificates")      
     ds_client = Client(username, password, test_environment=options.test_account,\
                        proxy=proxy,
-                       server_certs="trusted_certificates/postsignum_qca_root.pem")
+                       server_certs="trusted_certificates/all_trusted.pem")
     for test in to_run:
       print "==================== %s ====================" % test.__name__
       # if testing password change, pass current password      
