@@ -105,10 +105,10 @@ class CheckingHTTPSHandler(u2.HTTPSHandler):
   
   def https_open(self, req):
     def open(*args, **kw):
-      return CheckingHTTPSConnection(*args, 
-                                     ca_certs=self.ca_certs,
-                                     cert_verifier=self.cert_verifier,
-                                     **kw)
+      new_kw = dict(ca_certs=self.ca_certs,
+                    cert_verifier=self.cert_verifier)
+      new_kw.update(kw)
+      return CheckingHTTPSConnection(*args, **new_kw)
     return self.do_open(open, req)
 
   https_request = u2.AbstractHTTPHandler.do_request_
