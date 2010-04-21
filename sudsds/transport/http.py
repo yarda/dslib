@@ -67,6 +67,7 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
   server certificate verification"""
   
   FORCE_SSL_VERSION = None
+  SERVER_CERT_CHECK = True # might be turned off when a workaround is needed
   
   def __init__(self, host, ca_certs=None, cert_verifier=None, **kw):
     """cert_verifier is a function returning either True or False
@@ -84,11 +85,15 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
       add = {'ssl_version': self.FORCE_SSL_VERSION}
     else:
       add = {}
+    if self.SERVER_CERT_CHECK:
+      add['cert_reqs'] = ssl.CERT_REQUIRED
+    else:
+      add['cert_reqs'] = ssl.CERT_NONE
+    
     self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
                                 ca_certs=self.ca_certs,
-                                cert_reqs=ssl.CERT_REQUIRED,
                                 **add)
-    if self.cert_verifier:
+    if self.cert_verifier and self.SERVER_CERT_CHECK:
       if not self.cert_verifier(self.sock.getpeercert()):
         raise Exception("Server certificate did not pass security check.",
                         self.sock.getpeercert())
@@ -211,20 +216,27 @@ class HttpTransport(Transport):
               return self.urlopener.open(u2request)
 
         socket.setdefaulttimeout(self.options.timeout)
-        try:
-            return do()
-        except u2.URLError, e:
-            # this is a work-around for an incompatibility of openssl-1.0.0beta
-            # with the login.czebox.cz sites HTTPS interface
-            # more info here: https://bugzilla.redhat.com/show_bug.cgi?id=537822
-            # the workaround breaks things on other systems, so it is applied
-            # on an on-demand basis
-            if "SSL23_GET_SERVER_HELLO" in str(e):
-              log.info("Activating SSL workaround")
-              CheckingHTTPSConnection.FORCE_SSL_VERSION = ssl.PROTOCOL_SSLv3
+        for i in range(3):
+          # try this 3 times to allow for all workarounds to be applied
+          try:
               return do()
-            else:
-              raise e
+          except u2.URLError, e:
+              if "SSL23_GET_SERVER_HELLO" in str(e):
+                # this is a work-around for an incompatibility of openssl-1.0.0beta
+                # with the login.czebox.cz sites HTTPS interface
+                # more info here: https://bugzilla.redhat.com/show_bug.cgi?id=537822
+                # the workaround breaks things on other systems, so it is applied
+                # on an on-demand basis
+                log.warning("Activating SSL workaround")
+                CheckingHTTPSConnection.FORCE_SSL_VERSION = ssl.PROTOCOL_SSLv3
+              elif "ASN1_item_verify:unknown message digest algorithm" in str(e):
+                # this bug was reported but is present for now
+                # see: http://bugs.python.org/issue8484
+                log.warning("Turning off server certificate check to work \
+around a bug in Python")
+                CheckingHTTPSConnection.SERVER_CERT_CHECK = False
+              else:
+                raise e
         
     def __setproxy(self, url, u2request):
         protocol = urlparse(url)[0]
