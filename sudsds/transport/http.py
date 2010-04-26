@@ -78,7 +78,7 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
     
   def connect(self):
     sock = socket.create_connection((self.host, self.port), self.timeout)
-    if hasattr(self, '_tunel_host') and self._tunnel_host:
+    if hasattr(self, '_tunnel_host') and self._tunnel_host:
         self.sock = sock
         self._tunnel()
     if self.FORCE_SSL_VERSION:
