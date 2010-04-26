@@ -237,6 +237,9 @@ around a bug in Python")
                 CheckingHTTPSConnection.SERVER_CERT_CHECK = False
               else:
                 raise e
+        # if we get here, we passed three rounds and did not return
+        # - something went wrong
+        raise
         
     def __setproxy(self, url, u2request):
         protocol = urlparse(url)[0]
