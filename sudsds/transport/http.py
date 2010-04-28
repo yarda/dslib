@@ -85,7 +85,7 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
       add = {'ssl_version': self.FORCE_SSL_VERSION}
     else:
       add = {}
-    if self.SERVER_CERT_CHECK:
+    if self.SERVER_CERT_CHECK and self.ca_certs:
       add['cert_reqs'] = ssl.CERT_REQUIRED
     else:
       add['cert_reqs'] = ssl.CERT_NONE
