@@ -21,8 +21,23 @@ from socket import socket, _fileobject
 from socket import getnameinfo as _getnameinfo
 import base64        # for DER-to-PEM translation
 
+# the OpenSSL stuff
+
 import OpenSSL
 
+_ssl_to_openssl_cert_op_remap = {
+  CERT_NONE: OpenSSL.SSL.VERIFY_NONE,
+  CERT_OPTIONAL: OpenSSL.SSL.VERIFY_PEER,
+  CERT_REQUIRED: OpenSSL.SSL.VERIFY_FAIL_IF_NO_PEER_CERT
+  }
+  
+_ssl_to_openssl_cert_version_remap = {
+  PROTOCOL_SSLv2: OpenSSL.SSL.SSLv2_METHOD, 
+  PROTOCOL_SSLv3: OpenSSL.SSL.SSLv3_METHOD, 
+  PROTOCOL_SSLv23: OpenSSL.SSL.SSLv23_METHOD, 
+  PROTOCOL_TLSv1: OpenSSL.SSL.TLSv1_METHOD,                                   
+  }
+  
 class PyOpenSSLSocket (socket):
 
     """This class implements a subtype of socket.socket that wraps
@@ -65,8 +80,8 @@ class PyOpenSSLSocket (socket):
                     self.settimeout(timeout)
         self.keyfile = keyfile
         self.certfile = certfile
-        self.cert_reqs = cert_reqs
-        self.ssl_version = ssl_version
+        self.cert_reqs = _ssl_to_openssl_cert_op_remap[cert_reqs]
+        self.ssl_version = _ssl_to_openssl_cert_version_remap[ssl_version]
         self.ca_certs = ca_certs
         self.do_handshake_on_connect = do_handshake_on_connect
         self.suppress_ragged_eofs = suppress_ragged_eofs
