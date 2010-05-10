@@ -87,22 +87,25 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
     self.cert_verifier = cert_verifier
     
   def connect(self):
-    if True: #self.key_file and self.cert_file:
-      sock = socket.create_connection((self.host, self.port), self.timeout)
-      if hasattr(self, '_tunnel_host') and self._tunnel_host:
-          self.sock = sock
-          self._tunnel()
-      if self.FORCE_SSL_VERSION:
-        add = {'ssl_version': self.FORCE_SSL_VERSION}
-      else:
-        add = {}
-      if self.SERVER_CERT_CHECK and self.ca_certs:
-        add['cert_reqs'] = ssl.CERT_REQUIRED
-      else:
-        add['cert_reqs'] = ssl.CERT_NONE
-      self.sock = PyOpenSSLSocket(sock, keyfile=self.key_file,
-                                  certfile=self.cert_file,
-                                  ca_certs=self.ca_certs, **add)
+    sock = socket.create_connection((self.host, self.port), self.timeout)
+    if hasattr(self, '_tunnel_host') and self._tunnel_host:
+        self.sock = sock
+        self._tunnel()
+    if self.FORCE_SSL_VERSION:
+      add = {'ssl_version': self.FORCE_SSL_VERSION}
+    else:
+      add = {}
+    if self.SERVER_CERT_CHECK and self.ca_certs:
+      add['cert_reqs'] = ssl.CERT_REQUIRED
+    else:
+      add['cert_reqs'] = ssl.CERT_NONE
+    wrap_class = ssl.SSLSocket
+    if self.key_file and self.cert_file:
+      add['keyfile'] = self.key_file
+      add['certfile'] = self.cert_file
+      wrap_class = PyOpenSSLSocket
+
+    self.sock = wrap_class(sock, ca_certs=self.ca_certs, **add)
       #if self.cert_verifier and self.SERVER_CERT_CHECK:
       #  if not self.cert_verifier(self.sock.getpeercert()):
       #    raise Exception("Server certificate did not pass security check.",

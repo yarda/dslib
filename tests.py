@@ -256,8 +256,8 @@ if __name__ == "__main__":
   # parse options
   from optparse import OptionParser
   import os
-  op = OptionParser(usage="""python %prog [options] username test+\n
-username - the login name do DS
+  op = OptionParser(usage="""python %prog [options] [username] test+\n
+username - the login name do DS - not given when certificate login is used
 test - either a number or name of a test or 'ALL'""")
   op.add_option( "-t", action="store_true",
                  dest="test_account", default=False,
@@ -273,27 +273,25 @@ test - either a number or name of a test or 'ALL'""")
                  help="address of HTTP proxy to be used (use 'SYSTEM' for default system setting).")
   
   (options, args) = op.parse_args()
-  if len(args) <= 1:
-    list_tests(tests)
-    op.error("Too few arguments")
-  username = args[0]
-  # try to find a stored password
-  passfile = "./.isds_password"
-  if os.path.exists(passfile):
-    print "Using password from '%s'" % passfile
-    password = file(passfile,'r').read().strip()
+  if options.keyfile and options.certfile:
+    username = None
+    args = args[:]
   else:
-    import getpass
-    password = getpass.getpass()
+    if len(args) < 1:
+      list_tests(tests)
+      op.error("Too few arguments - when certificates are not given, username must be present.")
+    else:
+      username = args[0]
+      args = args[1:]
   proxy = options.proxy
   if proxy == "SYSTEM":
     proxy = -1
   # read the tests
   to_run = []
-  if 'ALL' in args[1:]:
+  if 'ALL' in args:
     to_run = tests
   else:
-    for test_name in args[1:]:
+    for test_name in args:
       if test_name.isdigit():
         test_id = int(test_name)
         if test_id < len(tests):
@@ -309,6 +307,7 @@ test - either a number or name of a test or 'ALL'""")
           sys.stderr.write("Test '%s' does not exist!\n" % test_name)
   # run the tests
   if to_run:
+    # setup the client argument and attributes
     args = dict(test_environment=options.test_account,
                 proxy=proxy,
                 server_certs="trusted_certificates/all_trusted.pem")
@@ -316,8 +315,20 @@ test - either a number or name of a test or 'ALL'""")
       args.update(login_method="certificate",
                   client_certfile=options.certfile,
                   client_keyfile=options.keyfile)
-    CertificateManager.read_trusted_certificates_from_dir("trusted_certificates")      
-    ds_client = Client(username, password, **args)
+    else:
+      # try to find a stored password
+      passfile = "./.isds_password"
+      if os.path.exists(passfile):
+        print "Using password from '%s'" % passfile
+        password = file(passfile,'r').read().strip()
+      else:
+        import getpass
+        password = getpass.getpass()
+      args.update(login=username, password=password)
+    CertificateManager.read_trusted_certificates_from_dir("trusted_certificates")
+    # create the client      
+    ds_client = Client(**args)
+    # run the tests
     for test in to_run:
       print "==================== %s ====================" % test.__name__
       # if testing password change, pass current password      
@@ -327,4 +338,5 @@ test - either a number or name of a test or 'ALL'""")
       print
   else:
     list_tests(tests)
+    print op.get_usage()
 
