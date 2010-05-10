@@ -462,6 +462,22 @@ class Client(object):
     self.password = password
     self.client_keyfile = client_keyfile
     self.client_certfile = client_certfile
+    self.login_method = login_method  
+    # check authentication data
+    if self.login_method == "certificate":
+      if not self.client_certfile:
+        raise ValueError("You must supply client_certfile when using\
+ 'certificate' login method")
+      if not self.client_keyfile:
+        raise ValueError("You must supply client_keyfile when using\
+ 'certificate' login method")
+    elif self.login_method == "username":
+      if not self.login:
+        raise ValueError("You must supply a username when using\
+ 'username' login method")
+      if not self.password:
+        raise ValueError("You must supply a password when using\
+ 'username' login method")
     if soap_url:
       self.soap_url = soap_url
     elif test_environment != None:
@@ -469,7 +485,6 @@ class Client(object):
     else:
       self.soap_url = None
     self.test_environment = test_environment
-    self.login_method = login_method
     self._dispatchers = {}
     self.proxy = proxy
     self.server_certs = server_certs
