@@ -256,10 +256,18 @@ if __name__ == "__main__":
   # parse options
   from optparse import OptionParser
   import os
-  op = OptionParser(usage="python %prog [options] username test+\n\nusername - the login name do DS\ntest - either a number or name of a test or 'ALL'")
+  op = OptionParser(usage="""python %prog [options] username test+\n
+username - the login name do DS
+test - either a number or name of a test or 'ALL'""")
   op.add_option( "-t", action="store_true",
                  dest="test_account", default=False,
                  help="the account is a test account, not a standard one.")
+  op.add_option( "-k", action="store",
+                 dest="keyfile", default=None,
+                 help="Client private key file to use for 'certificate' login method.")
+  op.add_option( "-c", action="store",
+                 dest="certfile", default=None,
+                 help="Client certificate file to use for 'certificate' login method.")
   op.add_option( "-p", action="store",
                  dest="proxy", default="",
                  help="address of HTTP proxy to be used (use 'SYSTEM' for default system setting).")
@@ -301,10 +309,15 @@ if __name__ == "__main__":
           sys.stderr.write("Test '%s' does not exist!\n" % test_name)
   # run the tests
   if to_run:
+    args = dict(test_environment=options.test_account,
+                proxy=proxy,
+                server_certs="trusted_certificates/all_trusted.pem")
+    if options.keyfile and options.certfile:
+      args.update(login_method="certificate",
+                  client_certfile=options.certfile,
+                  client_keyfile=options.keyfile)
     CertificateManager.read_trusted_certificates_from_dir("trusted_certificates")      
-    ds_client = Client(username, password, test_environment=options.test_account,\
-                       proxy=proxy,
-                       server_certs="trusted_certificates/all_trusted.pem")
+    ds_client = Client(username, password, **args)
     for test in to_run:
       print "==================== %s ====================" % test.__name__
       # if testing password change, pass current password      

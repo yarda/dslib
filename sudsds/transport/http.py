@@ -30,6 +30,7 @@ from cookielib import CookieJar
 from logging import getLogger
 import httplib
 import ssl
+from pyopenssl_wrapper import PyOpenSSLSocket
 
 log = getLogger(__name__)
 
@@ -62,9 +63,18 @@ class SUDSHTTPRedirectHandler(u2.HTTPRedirectHandler):
             raise u2.HTTPError(req.get_full_url(), code, msg, headers, fp)
 
 
+class MyHTTPResponse(httplib.HTTPResponse):
+  
+  def __init__(self, sock, debuglevel=0, strict=0, method=None):
+    
+    httplib.HTTPResponse.__init__(self, sock, debuglevel, strict, method)
+
+
 class CheckingHTTPSConnection(httplib.HTTPSConnection):
   """based on httplib.HTTPSConnection code - extended to support 
-  server certificate verification"""
+  server certificate verification and client certificate authorization"""
+  
+  response_class = MyHTTPResponse
   
   FORCE_SSL_VERSION = None
   SERVER_CERT_CHECK = True # might be turned off when a workaround is needed
@@ -77,41 +87,47 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
     self.cert_verifier = cert_verifier
     
   def connect(self):
-    sock = socket.create_connection((self.host, self.port), self.timeout)
-    if hasattr(self, '_tunnel_host') and self._tunnel_host:
-        self.sock = sock
-        self._tunnel()
-    if self.FORCE_SSL_VERSION:
-      add = {'ssl_version': self.FORCE_SSL_VERSION}
-    else:
-      add = {}
-    if self.SERVER_CERT_CHECK and self.ca_certs:
-      add['cert_reqs'] = ssl.CERT_REQUIRED
-    else:
-      add['cert_reqs'] = ssl.CERT_NONE
-    
-    self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
-                                ca_certs=self.ca_certs,
-                                **add)
-    if self.cert_verifier and self.SERVER_CERT_CHECK:
-      if not self.cert_verifier(self.sock.getpeercert()):
-        raise Exception("Server certificate did not pass security check.",
-                        self.sock.getpeercert())
+    if True: #self.key_file and self.cert_file:
+      sock = socket.create_connection((self.host, self.port), self.timeout)
+      if hasattr(self, '_tunnel_host') and self._tunnel_host:
+          self.sock = sock
+          self._tunnel()
+      if self.FORCE_SSL_VERSION:
+        add = {'ssl_version': self.FORCE_SSL_VERSION}
+      else:
+        add = {}
+      if self.SERVER_CERT_CHECK and self.ca_certs:
+        add['cert_reqs'] = ssl.CERT_REQUIRED
+      else:
+        add['cert_reqs'] = ssl.CERT_NONE
+      self.sock = PyOpenSSLSocket(sock, keyfile=self.key_file,
+                                  certfile=self.cert_file,
+                                  ca_certs=self.ca_certs, **add)
+      #if self.cert_verifier and self.SERVER_CERT_CHECK:
+      #  if not self.cert_verifier(self.sock.getpeercert()):
+      #    raise Exception("Server certificate did not pass security check.",
+      #                    self.sock.getpeercert())
 
 
 class CheckingHTTPSHandler(u2.HTTPSHandler):
   
-  def __init__(self, ca_certs=None, cert_verifier=None, *args, **kw):
+  def __init__(self, ca_certs=None, cert_verifier=None,
+               client_certfile=None, client_keyfile=None, *args, **kw):
     """cert_verifier is a function returning either True or False
     based on whether the certificate was found to be OK"""
     u2.HTTPSHandler.__init__(self, *args, **kw)
     self.ca_certs = ca_certs
     self.cert_verifier = cert_verifier
-  
+    self.client_keyfile = client_keyfile # filename
+    self.client_certfile = client_certfile # filename
+    #self.set_http_debuglevel(100)
+
   def https_open(self, req):
     def open(*args, **kw):
       new_kw = dict(ca_certs=self.ca_certs,
-                    cert_verifier=self.cert_verifier)
+                    cert_verifier=self.cert_verifier,
+                    cert_file=self.client_certfile,
+                    key_file=self.client_keyfile)
       new_kw.update(kw)
       return CheckingHTTPSConnection(*args, **new_kw)
     return self.do_open(open, req)
@@ -125,7 +141,8 @@ class HttpTransport(Transport):
     that provides for cookies, proxies but no authentication.
     """
     
-    def __init__(self, ca_certs=None, cert_verifier=None, **kwargs):
+    def __init__(self, ca_certs=None, cert_verifier=None, client_keyfile=None,
+                 client_certfile=None, **kwargs):
         """
         @param kwargs: Keyword arguments.
             - B{proxy} - An http proxy to be specified on requests.
@@ -147,9 +164,11 @@ class HttpTransport(Transport):
         self.cookiejar = CookieJar()
         log.debug("Proxy: %s", self.options.proxy)
         proxy_handler = u2.ProxyHandler(self.options.proxy)
-        if ca_certs:
+        if ca_certs or (client_keyfile and client_certfile):
           https_handler = CheckingHTTPSHandler(ca_certs=ca_certs,
-                                               cert_verifier=cert_verifier)
+                                               cert_verifier=cert_verifier,
+                                               client_certfile=client_certfile,
+                                               client_keyfile=client_keyfile)
         else:
           https_handler = u2.HTTPSHandler()
         self.urlopener = u2.build_opener(proxy_handler,

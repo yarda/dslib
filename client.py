@@ -37,7 +37,7 @@ import pkcs7.pkcs7_decoder
 import pkcs7.verifier
 import pkcs7.tstamp_helper
 from sudsds.client import Client as SudsClient
-from sudsds.transport.http import HttpAuthenticated
+from sudsds.transport.http import HttpAuthenticated, HttpTransport
 import exceptions
 from ds_exceptions import DSException
 import models
@@ -66,17 +66,20 @@ class Dispatcher(object):
     self.wsdl_url = wsdl_url
     self.soap_url = soap_url # if None, default from WSDL will be used
     self.proxy = proxy
+    transport_args = dict(ca_certs=server_certs,
+                          cert_verifier=Client.CERT_VERIFIER,
+                          username=self.ds_client.login,
+                          password=self.ds_client.password
+                          )
+    transport_class = HttpAuthenticated # for Basic HTTP authentication
+    if self.ds_client.login_method == "certificate":
+      transport_args.update(client_certfile = self.ds_client.client_certfile,
+                            client_keyfile = self.ds_client.client_keyfile)
+      transport_class = HttpTransport # we do not need Basic authentication
+                                      # - we use certs
     if self.proxy:
-      transport = HttpAuthenticated(username=self.ds_client.login, password=self.ds_client.password,
-                                    proxy={'https':self.proxy},
-                                    ca_certs=server_certs,
-                                    cert_verifier=Client.CERT_VERIFIER
-                                    )
-    else:
-      transport = HttpAuthenticated(username=self.ds_client.login, password=self.ds_client.password,
-                                    ca_certs=server_certs,
-                                    cert_verifier=Client.CERT_VERIFIER
-                                    )
+      transport_args.update(proxy={'https':self.proxy})
+    transport = transport_class(**transport_args)
     if not self.soap_url:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport)
     else:
@@ -441,7 +444,8 @@ class Client(object):
                            }
 
   def __init__(self, login=None, password=None, soap_url=None, test_environment=None,
-               login_method="username", proxy=None, server_certs=None):
+               login_method="username", proxy=None, server_certs=None,
+               client_certfile=None, client_keyfile=None):
     """
     if soap_url is not given and test_environment is given, soap_url will be
     infered from the value of test_environment based on what is set in test2soap_url;
@@ -452,9 +456,12 @@ class Client(object):
     detection using the urllib2 library
     server_certs - path to a certificate chain used for verification of server
     certificate, if None, no check on server certificate is performed
+    client_keyfile, client_certfile - are used with login_method 'certificate'
     """
     self.login = login
     self.password = password
+    self.client_keyfile = client_keyfile
+    self.client_certfile = client_certfile
     if soap_url:
       self.soap_url = soap_url
     elif test_environment != None:
