@@ -30,7 +30,6 @@ from cookielib import CookieJar
 from logging import getLogger
 import httplib
 import ssl
-from pyopenssl_wrapper import PyOpenSSLSocket
 
 log = getLogger(__name__)
 
@@ -101,9 +100,10 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
       add['cert_reqs'] = ssl.CERT_NONE
     wrap_class = ssl.SSLSocket
     if self.key_file and self.cert_file:
+      from pyopenssl_wrapper import PyOpenSSLSocket
+      wrap_class = PyOpenSSLSocket
       add['keyfile'] = self.key_file
       add['certfile'] = self.cert_file
-      wrap_class = PyOpenSSLSocket
 
     self.sock = wrap_class(sock, ca_certs=self.ca_certs, **add)
       #if self.cert_verifier and self.SERVER_CERT_CHECK:
