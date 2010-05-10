@@ -155,7 +155,7 @@ class Dispatcher(object):
     soap_info = self.soap_client.factory.create("dbOwnerInfo")
     info.copy_to_soap_object(soap_info)
     reply = self.soap_client.service.FindDataBox(soap_info)
-    if reply.dbResults:
+    if hasattr(reply, 'dbResults') and reply.dbResults:
       ret_infos = reply.dbResults.dbOwnerInfo
       if type(ret_infos) != list:
         ret_infos = [ret_infos]
