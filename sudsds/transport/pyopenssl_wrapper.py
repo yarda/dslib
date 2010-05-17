@@ -35,7 +35,7 @@ import OpenSSL
 _ssl_to_openssl_cert_op_remap = {
   CERT_NONE: OpenSSL.SSL.VERIFY_NONE,
   CERT_OPTIONAL: OpenSSL.SSL.VERIFY_PEER,
-  CERT_REQUIRED: OpenSSL.SSL.VERIFY_FAIL_IF_NO_PEER_CERT
+  CERT_REQUIRED: OpenSSL.SSL.VERIFY_PEER|OpenSSL.SSL.VERIFY_FAIL_IF_NO_PEER_CERT
   }
   
 _ssl_to_openssl_cert_version_remap = {
@@ -77,7 +77,8 @@ class PyOpenSSLSocket (socket):
             # yes, create the SSL object
             self._sslobj = sslwrap(self._sock, server_side,
                                    keyfile, certfile,
-                                   cert_reqs, ssl_version, ca_certs)
+                                   _ssl_to_openssl_cert_op_remap[cert_reqs],
+                                   ssl_version, ca_certs)
             if do_handshake_on_connect:
                 timeout = self.gettimeout()
                 try:
@@ -317,10 +318,18 @@ def wrap_socket(sock, keyfile=None, certfile=None,
                      suppress_ragged_eofs=suppress_ragged_eofs)
 
 
+def verify_connection(conn, x509, error_code, depth, ret_code):
+    # no extra validation - just return whatever OpenSSL already
+    # decided during its check
+    return bool(ret_code)
+
 def sslwrap(sock, server_side=False, keyfile=None, certfile=None,
-            cert_reqs=CERT_NONE, ssl_version=PROTOCOL_SSLv23, ca_certs=None):
+            cert_reqs=OpenSSL.SSL.VERIFY_NONE, ssl_version=PROTOCOL_SSLv23, ca_certs=None):
     """this is modification of _ssl.sslwrap that uses PyOpenSSL"""
     ctx = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
+    if ca_certs:
+      ctx.load_verify_locations(ca_certs)
+    ctx.set_verify(cert_reqs, verify_connection)
     if keyfile:
       ctx.use_privatekey_file(keyfile)
     if certfile:
