@@ -78,6 +78,8 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
   FORCE_SSL_VERSION = None
   SERVER_CERT_CHECK = True # might be turned off when a workaround is needed
   
+  PYOPENSSL_AVAILABLE = None
+  
   def __init__(self, host, ca_certs=None, cert_verifier=None, **kw):
     """cert_verifier is a function returning either True or False
     based on whether the certificate was found to be OK"""
@@ -98,13 +100,20 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
       add['cert_reqs'] = ssl.CERT_REQUIRED
     else:
       add['cert_reqs'] = ssl.CERT_NONE
-    wrap_class = ssl.SSLSocket
-    if self.key_file and self.cert_file:
+    # try to use PyOpenSSL by default
+    try:
       from pyopenssl_wrapper import PyOpenSSLSocket
+    except ImportError:
+      self.__class__.PYOPENSSL_AVAILABLE = False
+    else:
+      self.__class__.PYOPENSSL_AVAILABLE = True
+    if self.PYOPENSSL_AVAILABLE:
       wrap_class = PyOpenSSLSocket
-      add['keyfile'] = self.key_file
-      add['certfile'] = self.cert_file
-
+      if self.key_file and self.cert_file:
+        add['keyfile'] = self.key_file
+        add['certfile'] = self.cert_file
+    else:
+      wrap_class = ssl.SSLSocket
     self.sock = wrap_class(sock, ca_certs=self.ca_certs, **add)
       #if self.cert_verifier and self.SERVER_CERT_CHECK:
       #  if not self.cert_verifier(self.sock.getpeercert()):
