@@ -1,3 +1,10 @@
+"""
+This is just a simple copy of the ssl.py module contained in the Python
+standard library. It was modified to work with PyOpenSSL and only to the
+extent that it works with the DS server. It might not work for any other
+purpose.
+"""
+
 import textwrap
 
 import _ssl             # if we can't import it, let the error propagate

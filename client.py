@@ -403,6 +403,13 @@ class Dispatcher(object):
     
 class Client(object):
 
+  try:
+    import sudsds.transport.pyopenssl_wrapper
+  except ImportError:
+    CERT_LOGIN_AVAILABLE = False
+  else:
+    CERT_LOGIN_AVAILABLE = True
+
   cur_path = os.path.dirname(os.path.abspath(__file__))
   if cur_path.startswith("/"):
     WSDL_URL_BASE = 'file://%s/wsdl/' % cur_path
@@ -465,6 +472,9 @@ class Client(object):
     self.login_method = login_method  
     # check authentication data
     if self.login_method == "certificate":
+      if not self.CERT_LOGIN_AVAILABLE:
+        raise ValueError("The certificate login_method is not available\
+ - it was not possible to import the pyopenssl_wrapper module.")
       if not self.client_certfile:
         raise ValueError("You must supply client_certfile when using\
  'certificate' login method")
