@@ -38,7 +38,7 @@ _ssl_to_openssl_cert_op_remap = {
   CERT_REQUIRED: OpenSSL.SSL.VERIFY_PEER|OpenSSL.SSL.VERIFY_FAIL_IF_NO_PEER_CERT
   }
   
-_ssl_to_openssl_cert_version_remap = {
+_ssl_to_openssl_version_remap = {
   PROTOCOL_SSLv2: OpenSSL.SSL.SSLv2_METHOD, 
   PROTOCOL_SSLv3: OpenSSL.SSL.SSLv3_METHOD, 
   PROTOCOL_SSLv23: OpenSSL.SSL.SSLv23_METHOD, 
@@ -77,8 +77,7 @@ class PyOpenSSLSocket (socket):
             # yes, create the SSL object
             self._sslobj = sslwrap(self._sock, server_side,
                                    keyfile, certfile,
-                                   _ssl_to_openssl_cert_op_remap[cert_reqs],
-                                   ssl_version, ca_certs)
+                                   cert_reqs, ssl_version, ca_certs)
             if do_handshake_on_connect:
                 timeout = self.gettimeout()
                 try:
@@ -88,8 +87,8 @@ class PyOpenSSLSocket (socket):
                     self.settimeout(timeout)
         self.keyfile = keyfile
         self.certfile = certfile
-        self.cert_reqs = _ssl_to_openssl_cert_op_remap[cert_reqs]
-        self.ssl_version = _ssl_to_openssl_cert_version_remap[ssl_version]
+        self.cert_reqs = cert_reqs
+        self.ssl_version = ssl_version
         self.ca_certs = ca_certs
         self.do_handshake_on_connect = do_handshake_on_connect
         self.suppress_ragged_eofs = suppress_ragged_eofs
@@ -324,12 +323,13 @@ def verify_connection(conn, x509, error_code, depth, ret_code):
     return bool(ret_code)
 
 def sslwrap(sock, server_side=False, keyfile=None, certfile=None,
-            cert_reqs=OpenSSL.SSL.VERIFY_NONE, ssl_version=PROTOCOL_SSLv23, ca_certs=None):
+            cert_reqs=CERT_NONE, ssl_version=PROTOCOL_SSLv23,
+            ca_certs=None):
     """this is modification of _ssl.sslwrap that uses PyOpenSSL"""
-    ctx = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
+    ctx = OpenSSL.SSL.Context(_ssl_to_openssl_version_remap[ssl_version])
     if ca_certs:
       ctx.load_verify_locations(ca_certs)
-    ctx.set_verify(cert_reqs, verify_connection)
+    ctx.set_verify(_ssl_to_openssl_cert_op_remap[cert_reqs], verify_connection)
     if keyfile:
       ctx.use_privatekey_file(keyfile)
     if certfile:
