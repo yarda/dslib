@@ -55,7 +55,8 @@ class PyOpenSSLSocket (socket):
                  server_side=False, cert_reqs=CERT_NONE,
                  ssl_version=PROTOCOL_SSLv23, ca_certs=None,
                  do_handshake_on_connect=True,
-                 suppress_ragged_eofs=True):
+                 suppress_ragged_eofs=True,
+                 keyobj=None, certobj=None):
         socket.__init__(self, _sock=sock._sock)
         # the initializer for socket trashes the methods (tsk, tsk), so...
         self.send = lambda data, flags=0: PyOpenSSLSocket.send(self, data, flags)
@@ -77,7 +78,8 @@ class PyOpenSSLSocket (socket):
             # yes, create the SSL object
             self._sslobj = sslwrap(self._sock, server_side,
                                    keyfile, certfile,
-                                   cert_reqs, ssl_version, ca_certs)
+                                   cert_reqs, ssl_version, ca_certs,
+                                   keyobj=keyobj, certobj=certobj)
             if do_handshake_on_connect:
                 timeout = self.gettimeout()
                 try:
@@ -93,6 +95,8 @@ class PyOpenSSLSocket (socket):
         self.do_handshake_on_connect = do_handshake_on_connect
         self.suppress_ragged_eofs = suppress_ragged_eofs
         self._makefile_refs = 0
+        self.keyobj = keyobj
+        self.certobj = certobj
 
     def read(self, len=1024):
 
@@ -271,7 +275,8 @@ class PyOpenSSLSocket (socket):
         socket.connect(self, addr)
         self._sslobj = sslwrap(self._sock, False, self.keyfile, self.certfile,
                                self.cert_reqs, self.ssl_version,
-                               self.ca_certs)
+                               self.ca_certs,
+                               keyobj=self.keyobj, certobj=self.certobj)
         if self.do_handshake_on_connect:
             self.do_handshake()
 
@@ -324,15 +329,23 @@ def verify_connection(conn, x509, error_code, depth, ret_code):
 
 def sslwrap(sock, server_side=False, keyfile=None, certfile=None,
             cert_reqs=CERT_NONE, ssl_version=PROTOCOL_SSLv23,
-            ca_certs=None):
-    """this is modification of _ssl.sslwrap that uses PyOpenSSL"""
+            ca_certs=None, keyobj=None, certobj=None):
+    """this is modification of _ssl.sslwrap that uses PyOpenSSL,
+    keyobj and certobj are new parameters allowing setting the 
+    key and cert not by filenam, but from internal PyOpenSSL
+    structures.
+    """
     ctx = OpenSSL.SSL.Context(_ssl_to_openssl_version_remap[ssl_version])
     if ca_certs:
       ctx.load_verify_locations(ca_certs)
     ctx.set_verify(_ssl_to_openssl_cert_op_remap[cert_reqs], verify_connection)
-    if keyfile:
+    if keyobj:
+      ctx.use_privatekey(keyobj)
+    elif keyfile:
       ctx.use_privatekey_file(keyfile)
-    if certfile:
+    if certobj:
+      ctx.use_certificate(certobj)
+    elif certfile:
       ctx.use_certificate_file(certfile)
     ctx.set_options(0x4000) # THIS IS THE KEY TO SUCCESS OF DS
     ssl_sock = OpenSSL.SSL.Connection(ctx, sock)

@@ -74,7 +74,10 @@ class Dispatcher(object):
     transport_class = HttpAuthenticated # for Basic HTTP authentication
     if self.ds_client.login_method == "certificate":
       transport_args.update(client_certfile = self.ds_client.client_certfile,
-                            client_keyfile = self.ds_client.client_keyfile)
+                            client_keyfile = self.ds_client.client_keyfile,
+                            client_certobj = self.ds_client.client_certobj,
+                            client_keyobj = self.ds_client.client_keyobj
+                            )
       transport_class = HttpTransport # we do not need Basic authentication
                                       # - we use certs
     if self.proxy:
@@ -83,7 +86,8 @@ class Dispatcher(object):
     if not self.soap_url:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport)
     else:
-      self.soap_client = SudsClient(self.wsdl_url, transport=transport, location=self.soap_url)
+      self.soap_client = SudsClient(self.wsdl_url, transport=transport,
+                                    location=self.soap_url)
     
   def __getattr__(self, name):
     def _simple_wrapper(method):
@@ -452,7 +456,8 @@ class Client(object):
 
   def __init__(self, login=None, password=None, soap_url=None, test_environment=None,
                login_method="username", proxy=None, server_certs=None,
-               client_certfile=None, client_keyfile=None):
+               client_certfile=None, client_keyfile=None,
+               client_keyobj=None, client_certobj=None):
     """
     if soap_url is not given and test_environment is given, soap_url will be
     infered from the value of test_environment based on what is set in test2soap_url;
@@ -464,23 +469,27 @@ class Client(object):
     server_certs - path to a certificate chain used for verification of server
     certificate, if None, no check on server certificate is performed
     client_keyfile, client_certfile - are used with login_method 'certificate'
+    client_keyobj, client_certobj - internal OpenSSL objects for key and certificate
+    - an alternative way of providing data for login_method 'certificate'
     """
     self.login = login
     self.password = password
     self.client_keyfile = client_keyfile
     self.client_certfile = client_certfile
+    self.client_keyobj = client_keyobj
+    self.client_certobj = client_certobj
     self.login_method = login_method  
     # check authentication data
     if self.login_method == "certificate":
       if not self.CERT_LOGIN_AVAILABLE:
         raise ValueError("The certificate login_method is not available\
  - it was not possible to import the pyopenssl_wrapper module.")
-      if not self.client_certfile:
-        raise ValueError("You must supply client_certfile when using\
- 'certificate' login method")
-      if not self.client_keyfile:
-        raise ValueError("You must supply client_keyfile when using\
- 'certificate' login method")
+      if not (self.client_certobj or self.client_certfile):
+        raise ValueError("You must supply client_certfile or client_certobj\
+ when using 'certificate' login method")
+      if not (self.client_keyobj or self.client_keyfile):
+        raise ValueError("You must supply client_keyfile or client_keyobj\
+ when using 'certificate' login method")
     elif self.login_method == "username":
       if not self.login:
         raise ValueError("You must supply a username when using\

@@ -86,12 +86,18 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
   SERVER_CERT_CHECK = True # might be turned off when a workaround is needed
 
   
-  def __init__(self, host, ca_certs=None, cert_verifier=None, **kw):
+  def __init__(self, host, ca_certs=None, cert_verifier=None,
+               keyobj=None, certobj=None, **kw):
     """cert_verifier is a function returning either True or False
-    based on whether the certificate was found to be OK"""
+    based on whether the certificate was found to be OK,
+    keyobj and certobj represent internal PyOpenSSL structures holding
+    the key and certificate respectively.
+    """
     httplib.HTTPSConnection.__init__(self, host, **kw)
     self.ca_certs = ca_certs
     self.cert_verifier = cert_verifier
+    self.keyobj = keyobj
+    self.certobj = certobj
     
   def connect(self):
     sock = socket.create_connection((self.host, self.port), self.timeout)
@@ -109,9 +115,10 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
     # try to use PyOpenSSL by default
     if PYOPENSSL_AVAILABLE:
       wrap_class = PyOpenSSLSocket
-      if self.key_file and self.cert_file:
-        add['keyfile'] = self.key_file
-        add['certfile'] = self.cert_file
+      add['keyobj'] = self.keyobj
+      add['certobj'] = self.certobj
+      add['keyfile'] = self.key_file
+      add['certfile'] = self.cert_file
     else:
       wrap_class = ssl.SSLSocket
     self.sock = wrap_class(sock, ca_certs=self.ca_certs, **add)
@@ -124,7 +131,9 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
 class CheckingHTTPSHandler(u2.HTTPSHandler):
   
   def __init__(self, ca_certs=None, cert_verifier=None,
-               client_certfile=None, client_keyfile=None, *args, **kw):
+               client_certfile=None, client_keyfile=None,
+               client_keyobj=None, client_certobj=None,
+              *args, **kw):
     """cert_verifier is a function returning either True or False
     based on whether the certificate was found to be OK"""
     u2.HTTPSHandler.__init__(self, *args, **kw)
@@ -132,6 +141,8 @@ class CheckingHTTPSHandler(u2.HTTPSHandler):
     self.cert_verifier = cert_verifier
     self.client_keyfile = client_keyfile # filename
     self.client_certfile = client_certfile # filename
+    self.keyobj = client_keyobj
+    self.certobj = client_certobj
     #self.set_http_debuglevel(100)
 
   def https_open(self, req):
@@ -139,7 +150,9 @@ class CheckingHTTPSHandler(u2.HTTPSHandler):
       new_kw = dict(ca_certs=self.ca_certs,
                     cert_verifier=self.cert_verifier,
                     cert_file=self.client_certfile,
-                    key_file=self.client_keyfile)
+                    key_file=self.client_keyfile,
+                    keyobj=self.keyobj,
+                    certobj=self.certobj)
       new_kw.update(kw)
       return CheckingHTTPSConnection(*args, **new_kw)
     return self.do_open(open, req)
@@ -153,8 +166,10 @@ class HttpTransport(Transport):
     that provides for cookies, proxies but no authentication.
     """
     
-    def __init__(self, ca_certs=None, cert_verifier=None, client_keyfile=None,
-                 client_certfile=None, **kwargs):
+    def __init__(self, ca_certs=None, cert_verifier=None,
+                 client_keyfile=None, client_certfile=None,
+                 client_keyobj=None, client_certobj=None,
+                 **kwargs):
         """
         @param kwargs: Keyword arguments.
             - B{proxy} - An http proxy to be specified on requests.
@@ -179,8 +194,10 @@ class HttpTransport(Transport):
         if ca_certs or (client_keyfile and client_certfile):
           https_handler = CheckingHTTPSHandler(ca_certs=ca_certs,
                                                cert_verifier=cert_verifier,
+                                               client_keyfile=client_keyfile,
                                                client_certfile=client_certfile,
-                                               client_keyfile=client_keyfile)
+                                               client_keyobj=client_keyobj,
+                                               client_certobj=client_certobj)
         else:
           https_handler = u2.HTTPSHandler()
         self.urlopener = u2.build_opener(proxy_handler,

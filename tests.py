@@ -268,18 +268,24 @@ test - either a number or name of a test or 'ALL'""")
   op.add_option( "-c", action="store",
                  dest="certfile", default=None,
                  help="Client certificate file to use for 'certificate' login method.")
+  op.add_option( "-P", action="store",
+                 dest="p12file", default=None,
+                 help="Client certificate and key in a PKCS12 file\
+ to use for 'certificate' login method.")
   op.add_option( "-p", action="store",
                  dest="proxy", default="",
-                 help="address of HTTP proxy to be used (use 'SYSTEM' for default system setting).")
+                 help="address of HTTP proxy to be used\
+ (use 'SYSTEM' for default system setting).")
   
   (options, args) = op.parse_args()
-  if options.keyfile and options.certfile:
+  if (options.keyfile and options.certfile) or options.p12file:
     username = None
     args = args[:]
   else:
     if len(args) < 1:
       list_tests(tests)
-      op.error("Too few arguments - when certificates are not given, username must be present.")
+      op.error("Too few arguments - when certificates are not given,\
+ username must be present.")
     else:
       username = args[0]
       args = args[1:]
@@ -311,11 +317,35 @@ test - either a number or name of a test or 'ALL'""")
     args = dict(test_environment=options.test_account,
                 proxy=proxy,
                 server_certs="trusted_certificates/all_trusted.pem")
-    if options.keyfile and options.certfile:
+    if options.p12file:
+      # PKCS12 file certificate and key storage
+      import OpenSSL
+      f = file(options.p12file, 'r')
+      p12text = f.read()
+      f.close()
+      import getpass
+      password = getpass.getpass("Enter PKSC12 file password:")
+      try:
+        p12obj = OpenSSL.crypto.load_pkcs12(p12text, password)
+      except OpenSSL.crypto.Error, e:
+        a = e.args
+        if type(a) in (list,tuple) and type(a[0]) in (list,tuple) and \
+          type(a[0][0]) in (list,tuple) and e.args[0][0][2] == 'mac verify failure':
+          print "Wrong password! Exiting."
+          sys.exit()
+      except Exception, e:
+        print "Error:", e
+        sys.exit()
+      args.update(login_method="certificate",
+                  client_certobj=p12obj.get_certificate(),
+                  client_keyobj=p12obj.get_privatekey())
+    elif options.keyfile and options.certfile:
+      # PEM file certificate and key storage
       args.update(login_method="certificate",
                   client_certfile=options.certfile,
                   client_keyfile=options.keyfile)
     else:
+      # username and password login
       # try to find a stored password
       passfile = "./.isds_password"
       if os.path.exists(passfile):
