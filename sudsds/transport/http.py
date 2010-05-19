@@ -31,6 +31,13 @@ from logging import getLogger
 import httplib
 import ssl
 
+try:
+    from pyopenssl_wrapper import PyOpenSSLSocket
+except ImportError:
+    PYOPENSSL_AVAILABLE = False
+else:
+    PYOPENSSL_AVAILABLE = True
+
 log = getLogger(__name__)
 
 
@@ -77,8 +84,7 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
   
   FORCE_SSL_VERSION = None
   SERVER_CERT_CHECK = True # might be turned off when a workaround is needed
-  
-  PYOPENSSL_AVAILABLE = None
+
   
   def __init__(self, host, ca_certs=None, cert_verifier=None, **kw):
     """cert_verifier is a function returning either True or False
@@ -101,13 +107,7 @@ class CheckingHTTPSConnection(httplib.HTTPSConnection):
     else:
       add['cert_reqs'] = ssl.CERT_NONE
     # try to use PyOpenSSL by default
-    try:
-      from pyopenssl_wrapper import PyOpenSSLSocket
-    except ImportError:
-      self.__class__.PYOPENSSL_AVAILABLE = False
-    else:
-      self.__class__.PYOPENSSL_AVAILABLE = True
-    if self.PYOPENSSL_AVAILABLE:
+    if PYOPENSSL_AVAILABLE:
       wrap_class = PyOpenSSLSocket
       if self.key_file and self.cert_file:
         add['keyfile'] = self.key_file
