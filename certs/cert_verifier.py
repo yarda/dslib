@@ -55,7 +55,7 @@ def _verify_date(certificate):
     
     if (start_time < now) and (end_time > now):    
         return True
-    log.warning("Out of boundaries of validity:  %s - %s." %\
+    logger.warning("Out of boundaries of validity:  %s - %s." %\
                 (start, end))
     return False
 
