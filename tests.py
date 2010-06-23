@@ -236,7 +236,7 @@ def ChangeISDSPassword():
 
 
 if __name__ == "__main__":
-  #import logging
+  import logging
   #logging.basicConfig(level=logging.DEBUG)
   #logging.getLogger('suds').setLevel(logging.DEBUG)
   
@@ -320,7 +320,7 @@ test - either a number or name of a test or 'ALL'""")
     if options.p12file:
       # PKCS12 file certificate and key storage
       import OpenSSL
-      f = file(options.p12file, 'r')
+      f = file(options.p12file, 'rb')
       p12text = f.read()
       f.close()
       import getpass

@@ -332,7 +332,7 @@ def sslwrap(sock, server_side=False, keyfile=None, certfile=None,
             ca_certs=None, keyobj=None, certobj=None):
     """this is modification of _ssl.sslwrap that uses PyOpenSSL,
     keyobj and certobj are new parameters allowing setting the 
-    key and cert not by filenam, but from internal PyOpenSSL
+    key and cert not by filename, but from internal PyOpenSSL
     structures.
     """
     ctx = OpenSSL.SSL.Context(_ssl_to_openssl_version_remap[ssl_version])
