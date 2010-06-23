@@ -1,0 +1,56 @@
+#! /usr/bin/python
+# encoding: utf-8
+
+#*    dslib - Python library for Datove schranky
+#*    Copyright (C) 2009-2010  CZ.NIC, z.s.p.o. (http://www.nic.cz)
+#*
+#*    This library is free software; you can redistribute it and/or
+#*    modify it under the terms of the GNU Library General Public
+#*    License as published by the Free Software Foundation; either
+#*    version 2 of the License, or (at your option) any later version.
+#*
+#*    This library is distributed in the hope that it will be useful,
+#*    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#*    Library General Public License for more details.
+#*
+#*    You should have received a copy of the GNU Library General Public
+#*    License along with this library; if not, write to the Free
+#*    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+
+import sys
+import glob
+import os
+from distutils.core import setup
+
+# dslib subpackages
+dslib_dir = "./"
+dslib_subpackages = []
+for name,dirs,files in os.walk(dslib_dir, followlinks=True):
+  if os.path.exists(os.path.join(name,"__init__.py")):
+    if not "suds-svn-work" in name:
+      dslib_subpackages.append(name.replace("./","dslib/").replace("/","."))
+#print dslib_subpackages
+
+data = dict(
+  name = 'dslib',
+  version = '1.0-beta1',
+  description = "dslib is a free Python library for accessing 'Datove schranky'",
+  author = "CZ.NIC Labs",
+  author_email = "datove-schranky@labs.nic.cz",
+  url = "http://labs.nic.cz/datove-schranky/",
+  license = "GNU LGPL",
+  platforms = ["Unix", "Windows","MacOS X"],
+  long_description = "dslib is a free Python library for accessing 'Datove schranky'",
+  
+  packages=["dslib"]+dslib_subpackages,
+  package_dir = {'dslib': './'},
+  data_files = [('dslib', ['README', 'LICENSE']),
+                ('pyasn1', ['pyasn1/LICENSE']),
+                ('trusted_certificates', glob.glob('trusted_certificates/*.pem')),
+                ],
+  )
+
+set = setup(**data)
+

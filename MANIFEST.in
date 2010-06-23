@@ -1,0 +1,5 @@
+include README LICENSE
+include pyasn1/LICENSE
+include wsdl/*.wsdl wsdl/*.xsd
+include trusted_certificates/*.pem
+
