@@ -1,4 +1,4 @@
-include README LICENSE
+include README.txt LICENSE.txt
 include pyasn1/LICENSE
 include wsdl/*.wsdl wsdl/*.xsd
 include trusted_certificates/*.pem

@@ -22,16 +22,18 @@
 import sys
 import glob
 import os
-from distutils.core import setup
+from setuptools import setup
 
 # dslib subpackages
 dslib_dir = "./"
+pkgdirs = ["dsdb","converters","sudsds","pkcs7","pyasn1","properties","certs"]
 dslib_subpackages = []
-for name,dirs,files in os.walk(dslib_dir, followlinks=True):
-  if os.path.exists(os.path.join(name,"__init__.py")):
-    if not "suds-svn-work" in name:
-      dslib_subpackages.append(name.replace("./","dslib/").replace("/","."))
-#print dslib_subpackages
+for pkgdir in pkgdirs:
+  for name,dirs,files in os.walk(pkgdir): #, followlinks=True):
+    if os.path.exists(os.path.join(name,"__init__.py")):
+      if not "suds-svn-work" in name:
+        dslib_subpackages.append("dslib."+name.replace("/","."))
+print >> sys.stderr, dslib_subpackages
 
 data = dict(
   name = 'dslib',
@@ -42,14 +44,18 @@ data = dict(
   url = "http://labs.nic.cz/datove-schranky/",
   license = "GNU LGPL",
   platforms = ["Unix", "Windows","MacOS X"],
-  long_description = "dslib is a free Python library for accessing 'Datove schranky'",
+  long_description = open("README.txt").read(), #.decode('utf-8'),
   
   packages=["dslib"]+dslib_subpackages,
   package_dir = {'dslib': './'},
-  data_files = [('dslib', ['README', 'LICENSE']),
-                ('pyasn1', ['pyasn1/LICENSE']),
-                ('trusted_certificates', glob.glob('trusted_certificates/*.pem')),
+  data_files = [('share/dslib', ['README.txt', 'LICENSE.txt']),
+                ('share/dslib/pyasn1', ['pyasn1/LICENSE']),
+                ('share/dslib/wsdl', glob.glob('wsdl/*')),
+                ('share/dslib/trusted_certificates', glob.glob('trusted_certificates/*.pem')),
                 ],
+  requires = ['pyOpenSSL (>=0.9)'],
+  install_requires = ['pyOpenSSL>=0.9'],
+  provides="dslib",
   )
 
 set = setup(**data)

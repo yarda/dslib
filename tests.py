@@ -314,9 +314,11 @@ test - either a number or name of a test or 'ALL'""")
   # run the tests
   if to_run:
     # setup the client argument and attributes
+    import local
+    cert_dir = local.find_data_directory("trusted_certificates")
     args = dict(test_environment=options.test_account,
                 proxy=proxy,
-                server_certs="trusted_certificates/all_trusted.pem")
+                server_certs=os.path.join(cert_dir, "all_trusted.pem"))
     if options.p12file:
       # PKCS12 file certificate and key storage
       import OpenSSL

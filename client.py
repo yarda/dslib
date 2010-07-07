@@ -43,6 +43,7 @@ from ds_exceptions import DSException
 import models
 from properties.properties import Properties as props
 import certs.cert_loader
+import local
 
 
 class Dispatcher(object):
@@ -414,11 +415,11 @@ class Client(object):
   else:
     CERT_LOGIN_AVAILABLE = True
 
-  cur_path = os.path.dirname(os.path.abspath(__file__))
-  if cur_path.startswith("/"):
-    WSDL_URL_BASE = 'file://%s/wsdl/' % cur_path
+  wsdl_path = local.find_data_directory("wsdl")
+  if wsdl_path.startswith("/"):
+    WSDL_URL_BASE = 'file://%s/' % wsdl_path
   else:
-    WSDL_URL_BASE = 'file:///%s/wsdl/' % cur_path
+    WSDL_URL_BASE = 'file:///%s/' % wsdl_path
     
   attr2dispatcher_name = {"GetListOfSentMessages": "info",
                           "GetListOfReceivedMessages": "info",
