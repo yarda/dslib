@@ -199,7 +199,9 @@ class Message(Model):
                    "dmAttachmentSize","dmHash","dmQTimestamp","dmEvents")
 
   # origins in which some info (described above in OUTSIDE_ATTRS) is placed outside
-  SPLIT_ORIGINS = ("dmReturnedMessageEnvelope","dmReturnedMessage","dmDelivery","tDelivery")
+  SPLIT_ORIGINS = ("dmReturnedMessageEnvelope","dmReturnedMessage",
+                   "tReturnedMessageEnvelope","tReturnedMessage",
+                   "dmDelivery","tDelivery")
   
   SIG_DELIVERY_CONTENT_PATH = "GetDeliveryInfoResponse/dmDelivery"
   

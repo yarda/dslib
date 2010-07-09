@@ -2,7 +2,7 @@
 <!--  *********************************************************************
      WSDL pro služby související s vyhledáváním DS 
      
-                          3.6.2009   verze 2.0 novela 
+                          verze 2.6 
       *********************************************************************                    
 Seznam služeb: 
 ==============
@@ -12,7 +12,8 @@ Seznam služeb:
  změny:
   25.4.2009  verze 0.9
   28.4.2009  verze 1.0    
-   3.6.2009  verze 2.0  - novela                         
+   3.6.2009  verze 2.0 - novela   
+  1.11.2009  verze 2.6 - komerční provoz                     
  ************************************************************************ -->
 
 <definitions name="ISDS_db" targetNamespace="http://isds.czechpoint.cz/v20" 
@@ -87,7 +88,7 @@ Seznam služeb:
   <!-- ******************************************************************* -->
   <service name="DataBoxSearch">
     <port name="DataBoxSearchPortType" binding="tns:DataBoxSearchBinding">
-      <soap:address location="https://www.czebox.cz/DS/df"/>
+      <soap:address location="https://www.mojedatovaschranka.cz/DS/df"/>
     </port>
   </service>
 
