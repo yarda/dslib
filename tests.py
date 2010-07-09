@@ -233,7 +233,22 @@ def ChangeISDSPassword():
   reply = ds_client.ChangeISDSPassword(old_pass, new_pass)
   print "%s : %s"% (reply.status.dbStatusCode, reply.status.dbStatusMessage)
   
-
+@active
+def AuthenticateMessage():
+  import base64
+  print "This should return None"
+  reply = ds_client.AuthenticateMessage(base64.b64encode("Hello DS"))
+  print "Actually is", reply.data
+  print "-----------------------------------------------"
+  print "This should complete successfully"
+  import local
+  test_dir = local.find_data_directory("test_msgs")
+  f = file(os.path.join(test_dir,"AuthenticateMessage-test.txt"),"r")
+  text = f.read()
+  f.close()
+  reply = ds_client.AuthenticateMessage(text)
+  print "Actually is", reply.status
+  print "Message verified successfully:", reply.data
 
 if __name__ == "__main__":
   import logging

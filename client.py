@@ -405,6 +405,14 @@ class Dispatcher(object):
     status = models.dbStatus(reply)   
     return Reply(status, None)
 
+  def AuthenticateMessage(self, message_data):
+    reply = self.soap_client.service.AuthenticateMessage(message_data) 
+    status = models.dmStatus(reply.dmStatus)
+    if hasattr(reply, "dmAuthResult"):
+      result = reply.dmAuthResult
+    else:
+      result = None
+    return Reply(status, result)
 
     
 class Client(object):
@@ -436,6 +444,7 @@ class Client(object):
                           "GetUserInfoFromLogin": "access",
                           "ChangeISDSPassword" : "access",
                           "signature_to_message": "operations",
+                          "AuthenticateMessage": "operations",
                           }
 
   dispatcher_name2config = {"info": {"wsdl_name": "dm_info.wsdl",
