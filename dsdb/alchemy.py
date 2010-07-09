@@ -361,15 +361,20 @@ class DSDatabase(AbstractDSDatabase):
 
   @thread_safe_session
   def get_message_from_raw_data(self, id, client):
-    rd = self.session.query(RawMessageData).get(id)
-    if not rd:
-      raise ValueError("RawMessageData with id '%d' does not exist."%id)
+    rd = self.get_raw_data(id)
     if rd.message_type == MESSAGE_TYPE_RECEIVED:
       method = "SignedMessageDownload"
     else:
       method = "SignedSentMessageDownload"
     message = client.signature_to_message(rd.data, method)
     return message
+   
+  @thread_safe_session
+  def get_raw_data(self, id):
+    rd = self.session.query(RawMessageData).get(id)
+    if not rd:
+      raise ValueError("RawMessageData with id '%d' does not exist."%id)
+    return rd
    
   @thread_safe_session
   def store_supplementary_data(self, sd):
