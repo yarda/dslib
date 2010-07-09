@@ -405,6 +405,7 @@ class Dispatcher(object):
     status = models.dbStatus(reply)   
     return Reply(status, None)
 
+
     
 class Client(object):
 
@@ -416,10 +417,8 @@ class Client(object):
     CERT_LOGIN_AVAILABLE = True
 
   wsdl_path = local.find_data_directory("wsdl")
-  if wsdl_path.startswith("/"):
-    WSDL_URL_BASE = 'file://%s/' % wsdl_path
-  else:
-    WSDL_URL_BASE = 'file:///%s/' % wsdl_path
+  wsdl_path = os.path.abspath(wsdl_path)
+  WSDL_URL_BASE = 'file://%s/' % wsdl_path
     
   attr2dispatcher_name = {"GetListOfSentMessages": "info",
                           "GetListOfReceivedMessages": "info",
