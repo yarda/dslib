@@ -322,7 +322,7 @@ class Timezone:
     @type patten: L{re.RegexObject}
     """
 
-    local = ( 0-time.timezone/60/60 )
+    local = time.daylight and (0-time.altzone/60/60) or (0-time.timezone/60/60)
     pattern = re.compile('([zZ])|([\-\+][0-9]{2}:[0-9]{2})')
     
     @classmethod

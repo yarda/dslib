@@ -71,6 +71,7 @@ def MessageDownload():
     print "dmID:", message.dmID
     print "dmSender:", message.dmSender.encode('utf-8')
     print "dmAnnotation:", message.dmAnnotation.encode('utf-8')
+    print "dmDeliveryTime:", type(message.dmDeliveryTime), message.dmDeliveryTime
     print "Attachments:"
     for f in message.dmFiles:
       print "  '%s' saved" % f.save_file("./")
@@ -252,8 +253,8 @@ def AuthenticateMessage():
 
 if __name__ == "__main__":
   import logging
-  #logging.basicConfig(level=logging.DEBUG)
-  #logging.getLogger('suds').setLevel(logging.DEBUG)
+  logging.basicConfig(level=logging.DEBUG)
+  logging.getLogger('suds').setLevel(logging.DEBUG)
   
   def list_tests(tests):
     print "Available tests:"

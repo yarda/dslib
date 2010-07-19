@@ -119,7 +119,8 @@ class ValidityInterval():
       hour = int(date[6:8])
       minute = int(date[8:10])
       second = int(date[10:12])
-      tz_delta = datetime.timedelta(seconds=time.timezone)
+      tz_delta = datetime.timedelta(seconds=time.daylight and time.altzone
+                                    or time.timezone)
       return datetime.datetime(year, month, day, hour, minute, second) - tz_delta
 
 class PublicKeyInfo():
@@ -630,5 +631,6 @@ class TimeStampToken():
       minute = int(self.genTime[10:12])
       second = int(self.genTime[12:14])
       micro = int(float(self.genTime[14:].strip("Z"))*1e6)
-      tz_delta = datetime.timedelta(seconds=time.timezone)
+      tz_delta = datetime.timedelta(seconds=time.daylight and time.altzone
+                                    or time.timezone)
       return datetime.datetime(year, month, day, hour, minute, second, micro) - tz_delta

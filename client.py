@@ -144,6 +144,7 @@ class Dispatcher(object):
 
   def MessageDownload(self, msgid):
     reply = self.soap_client.service.MessageDownload(msgid)
+    print reply
     if hasattr(reply, 'dmReturnedMessage'):
       message = models.Message(reply.dmReturnedMessage)
     else:
