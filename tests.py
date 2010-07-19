@@ -206,7 +206,10 @@ def SignedSentMessageDownload():
     print "ID matches:", reply.data.dmID, reply.data.dmID == envelope.dmID
     print "Verified message: %s" % reply.data.is_message_verified()
     print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified()
-    break
+    print "Attachments:"
+    for f in reply.data.dmFiles:
+      print "  '%s' saved" % f.save_file("./")
+    break # just the first one
   
 @active
 def GetSignedDeliveryInfo():  
