@@ -203,6 +203,9 @@ class Message(Model):
                    "tReturnedMessageEnvelope","tReturnedMessage",
                    "dmDelivery","tDelivery")
   
+  # origins which provide a complete message
+  COMPLETE_ORIGINS = ('dmReturnedMessage','tReturnedMessage')
+  
   SIG_DELIVERY_CONTENT_PATH = "GetDeliveryInfoResponse/dmDelivery"
   
   SIG_MESSAGE_CONTENT_PATH =  "MessageDownloadResponse/dmReturnedMessage" 
@@ -317,6 +320,11 @@ class Message(Model):
   def still_on_server(self):
     now = datetime.datetime.now()
     return (now - self.dmDeliveryTime).days < 90
+  
+  def is_complete(self):
+    """returns True if the message origin is amongst origins considered
+     complete, False otherwise"""
+    return self.get_origin() in self.COMPLETE_ORIGINS
 
   # ---------- private methods ----------
 
