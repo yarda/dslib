@@ -144,7 +144,6 @@ class Dispatcher(object):
 
   def MessageDownload(self, msgid):
     reply = self.soap_client.service.MessageDownload(msgid)
-    print reply
     if hasattr(reply, 'dmReturnedMessage'):
       message = models.Message(reply.dmReturnedMessage)
     else:
@@ -426,7 +425,13 @@ class Client(object):
     CERT_LOGIN_AVAILABLE = True
 
   wsdl_path = local.find_data_directory("wsdl")
+  # urllib does not handle unicode strings properly 
   wsdl_path = os.path.abspath(wsdl_path)
+  if os.sep == "\\":
+    wsdl_path = wsdl_path.replace("\\","/")
+  if not wsdl_path.startswith("/"):
+    # on windows abspath does start with drive letter, not /
+    wsdl_path = "/" + wsdl_path
   WSDL_URL_BASE = 'file://%s/' % wsdl_path
     
   attr2dispatcher_name = {"GetListOfSentMessages": "info",
