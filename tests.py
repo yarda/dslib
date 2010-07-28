@@ -208,12 +208,13 @@ def SignedSentMessageDownload():
     print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified()
     print "Attachments:"
     for f in reply.data.dmFiles:
-      print "  '%s' saved" % f.save_file("./")
+      print "  Attachment '%s'" % f._dmFileDescr
     break # just the first one
   
 @active
 def GetSignedDeliveryInfo():  
   for envelope in ds_client.GetListOfSentMessages().data:
+    print type(envelope)
     print "ID:", envelope.dmID
     reply = ds_client.GetSignedDeliveryInfo(envelope.dmID)    
     print reply.status
@@ -222,6 +223,12 @@ def GetSignedDeliveryInfo():
     print "Verified message: %s" % reply.data.is_verified
     print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified()
     print "Timestamp verified: %s" % reply.data.check_timestamp()
+    for event in reply.data.dmEvents:
+      print "  Event", event
+    f = file("dodejka.zfo","w")
+    import base64
+    f.write(base64.b64decode(reply.additional_data['raw_data']))
+    f.close()
     break
 
 @active
@@ -256,8 +263,8 @@ def AuthenticateMessage():
 
 if __name__ == "__main__":
   import logging
-  logging.basicConfig(level=logging.DEBUG)
-  logging.getLogger('suds').setLevel(logging.DEBUG)
+  #logging.basicConfig(level=logging.DEBUG)
+  #logging.getLogger('suds').setLevel(logging.DEBUG)
   
   def list_tests(tests):
     print "Available tests:"

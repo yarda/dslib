@@ -382,7 +382,8 @@ class Dispatcher(object):
       if len(bad_certs) > 0:
         self._mark_invalid_certificates(message, bad_certs) 
     '''
-    return Reply(self._extract_status(reply), message)
+    return Reply(self._extract_status(reply), message,
+                 raw_data=reply.dmSignature)
 
   def GetDeliveryInfo(self, msgId):
     reply = self.soap_client.service.GetDeliveryInfo(msgId)
