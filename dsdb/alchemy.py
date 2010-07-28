@@ -134,6 +134,24 @@ class RawMessageDataBinding(Binding):
             sal.Column('message_type', sal.Integer),
             sal.Column('data', sal.Text)]
 
+# delivery info data
+
+class RawDeliveryInfoData(object):
+  
+  def __init__(self, dmID, data):
+    self.message_id = dmID
+    self.data = data
+
+class RawDeliveryInfoDataBinding(Binding):
+
+  model = RawDeliveryInfoData
+  table_name = 'raw_delivery_info_data'
+  @classmethod
+  def get_columns(cls):
+    return [sal.Column('message_id', sal.Integer,
+                       sal.ForeignKey("messages.dmID"), primary_key=True),
+            sal.Column('data', sal.Text)]
+
 
 class SupplementaryMessageData(object):
   
@@ -211,6 +229,7 @@ class DSDatabase(AbstractDSDatabase):
   
   binding_cls = [MessageBinding, dmFileBinding, dmHashBinding,
                  dmEventBinding, RawMessageDataBinding,
+                 RawDeliveryInfoDataBinding,
                  SupplementaryMessageDataBinding, CertificateDataBinding,
                  ]
   
@@ -336,6 +355,21 @@ class DSDatabase(AbstractDSDatabase):
     message.pkcs7_data = p
 
   @thread_safe_session
+  def add_delivery_info_data(self, mid, delivery_info, raw_data=None):
+    """merges additional data from delivery info into the message
+    and stores raw data into the database if given"""
+    if raw_data:
+      rd = RawDeliveryInfoData(mid, data=raw_data)
+      self.session.add(rd)
+      self.session.commit()
+    for old_event in self.session.query(dmEvent).filter_by(message_id=mid):
+      self.session.delete(old_event)
+    for event in delivery_info.dmEvents:
+      event.message_id = mid
+      self.session.add(event)
+    self.session.commit()
+
+  @thread_safe_session
   def has_message(self, id):
     assert self.session
     return bool(self.session.query(Message).get(int(id)))
@@ -344,12 +378,17 @@ class DSDatabase(AbstractDSDatabase):
   def has_raw_data(self, id):
     assert self.session
     return bool(self.session.query(RawMessageData).get(int(id)))
+  
+  @thread_safe_session
+  def has_raw_delivery_info_data(self, id):
+    assert self.session
+    return bool(self.session.query(RawDeliveryInfoData).get(int(id)))
 
   @thread_safe_session
   def remove_message(self, id):
     for m in self.session.query(Message).filter_by(dmID=int(id)):
       self.session.delete(m)
-    for cls in dmFile, dmHash, dmEvent, RawMessageData:
+    for cls in dmFile, dmHash, dmEvent, RawMessageData, RawDeliveryInfoData:
       for m in self.session.query(cls).filter_by(message_id=int(id)):
         self.session.delete(m)
     self.session.commit()
@@ -374,6 +413,13 @@ class DSDatabase(AbstractDSDatabase):
     rd = self.session.query(RawMessageData).get(id)
     if not rd:
       raise ValueError("RawMessageData with id '%d' does not exist."%id)
+    return rd
+   
+  @thread_safe_session
+  def get_raw_delivery_info_data(self, id):
+    rd = self.session.query(RawDeliveryInfoData).get(id)
+    if not rd:
+      raise ValueError("RawDeliveryInfoData with id '%d' does not exist."%id)
     return rd
    
   @thread_safe_session
