@@ -260,6 +260,16 @@ def AuthenticateMessage():
   reply = ds_client.AuthenticateMessage(text)
   print "Actually is", reply.status
   print "Message verified successfully:", reply.data
+  
+@active
+def MarkMessageAsDownloaded():  
+  for envelope in ds_client.GetListOfReceivedMessages().data:
+    print "ID:", envelope.dmID
+    reply = ds_client.MarkMessageAsDownloaded(envelope.dmID)    
+    print reply.status
+    print reply.data
+    break
+  
 
 if __name__ == "__main__":
   import logging

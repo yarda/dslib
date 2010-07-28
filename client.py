@@ -107,7 +107,8 @@ class Dispatcher(object):
     elif hasattr(reply, "dbStatus"):
       status = models.dbStatus(reply.dbStatus)
     else:
-      raise ValueError("Neither dmStatus, nor dbStatus found in reply:\n%s" % reply)
+      raise ValueError("Neither dmStatus, nor dbStatus found in reply:\n%s" %
+                       reply)
     return status
 
 
@@ -414,6 +415,15 @@ class Dispatcher(object):
     else:
       result = None
     return Reply(status, result)
+  
+  def MarkMessageAsDownloaded(self, msgid):
+    reply = self.soap_client.service.MarkMessageAsDownloaded(msgid)
+    status = models.dmStatus(reply)
+    if status.dmStatusCode == "0000":
+      ok = True
+    else:
+      ok = False 
+    return Reply(status, ok)
 
     
 class Client(object):
@@ -452,6 +462,7 @@ class Client(object):
                           "ChangeISDSPassword" : "access",
                           "signature_to_message": "operations",
                           "AuthenticateMessage": "operations",
+                          "MarkMessageAsDownloaded": "info",
                           }
 
   dispatcher_name2config = {"info": {"wsdl_name": "dm_info.wsdl",
