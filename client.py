@@ -367,7 +367,14 @@ class Dispatcher(object):
   def GetSignedDeliveryInfo(self, msgId):
     method = self.soap_client.service.GetSignedDeliveryInfo
     reply = method(msgId)
-    der_encoded = base64.b64decode(reply.dmSignature)  
+    message = self.signature_to_delivery_info(reply.dmSignature, method)
+    return Reply(self._extract_status(reply), message,
+                 raw_data=reply.dmSignature)
+    
+  def signature_to_delivery_info(self, signature, method):
+    if type(method) in (str, unicode):
+      method = getattr(self.soap_client.service, method)
+    der_encoded = base64.b64decode(signature)  
     xml_document, pkcs_data, verified  = self._generic_get_signed(der_encoded, method)
     # create Message instance to return 
     message = models.Message(xml_document.dmDelivery)        
@@ -383,8 +390,8 @@ class Dispatcher(object):
       if len(bad_certs) > 0:
         self._mark_invalid_certificates(message, bad_certs) 
     '''
-    return Reply(self._extract_status(reply), message,
-                 raw_data=reply.dmSignature)
+    return message
+
 
   def GetDeliveryInfo(self, msgId):
     reply = self.soap_client.service.GetDeliveryInfo(msgId)
@@ -461,6 +468,7 @@ class Client(object):
                           "GetUserInfoFromLogin": "access",
                           "ChangeISDSPassword" : "access",
                           "signature_to_message": "operations",
+                          "signature_to_delivery_info": "info",
                           "AuthenticateMessage": "operations",
                           "MarkMessageAsDownloaded": "info",
                           }

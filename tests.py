@@ -263,12 +263,15 @@ def AuthenticateMessage():
   
 @active
 def MarkMessageAsDownloaded():  
+  i = 0
   for envelope in ds_client.GetListOfReceivedMessages().data:
     print "ID:", envelope.dmID
     reply = ds_client.MarkMessageAsDownloaded(envelope.dmID)    
     print reply.status
     print reply.data
-    break
+    i += 1
+    if i > 2:
+      break
   
 
 if __name__ == "__main__":
