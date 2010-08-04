@@ -22,6 +22,7 @@ V současné verzi jsou implementovány následující funkce:
  * ChangeISDSPassword
  * FindDataBox
  * CreateMessage
+ * MarkMessageAsDownloaded
  * DummyOperation
  
 Autentizace je implementovaná v plném rozsahu a lze tedy využít kombinaci jména

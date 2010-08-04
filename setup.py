@@ -37,7 +37,7 @@ print >> sys.stderr, dslib_subpackages
 
 data = dict(
   name = 'dslib',
-  version = '1.0-beta1',
+  version = '1.0-beta2',
   description = "dslib is a free Python library for accessing 'Datove schranky'",
   author = "CZ.NIC Labs",
   author_email = "datove-schranky@labs.nic.cz",
