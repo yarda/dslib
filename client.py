@@ -482,8 +482,11 @@ class Client(object):
                             "access": {"wsdl_name": "db_access.wsdl",
                                        "soap_url_end": "DsManage"},
                             }
-  test2soap_url = {True: "https://www.czebox.cz/",
-                   False: "https://www.mojedatovaschranka.cz/"}
+  test2soap_url = {True: {"username": "https://ws1.czebox.cz/",
+                          "certificate": "https://ws1c.czebox.cz/"},
+                   False: {"username":"https://ws1.mojedatovaschranka.cz/",
+                           "certificate": "https://ws1c.mojedatovaschranka.cz/"}
+                   }
 
   login_method2url_part = {"username": "DS",
                            "certificate": "cert/DS",
@@ -535,7 +538,7 @@ class Client(object):
     if soap_url:
       self.soap_url = soap_url
     elif test_environment != None:
-      self.soap_url = Client.test2soap_url[test_environment]
+      self.soap_url = Client.test2soap_url[test_environment][self.login_method]
     else:
       self.soap_url = None
     self.test_environment = test_environment
