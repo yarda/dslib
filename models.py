@@ -318,6 +318,8 @@ class Message(Model):
       return self.tstamp_token.get_genTime_as_datetime()
 
   def still_on_server(self):
+    if not self.dmDeliveryTime:
+      return None
     now = datetime.datetime.now()
     return (now - self.dmDeliveryTime).days < 90
   
