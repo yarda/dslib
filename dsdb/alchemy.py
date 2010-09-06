@@ -299,7 +299,7 @@ class DSDatabase(AbstractDSDatabase):
     if self.has_message(message.dmID):
       self.remove_message(message.dmID)
     # store certificate data
-    if message.pkcs7_data:
+    if hasattr(message, 'pkcs7_data') and message.pkcs7_data:
       message.certificate_data = []
       for certificate in message.pkcs7_data.certificates:
         if hasattr(certificate, "raw_der_data") and certificate.raw_der_data:
