@@ -23,6 +23,7 @@ import sys
 import glob
 import os
 from setuptools import setup
+import release
 
 # dslib subpackages
 dslib_dir = "./"
@@ -37,7 +38,7 @@ print >> sys.stderr, dslib_subpackages
 
 data = dict(
   name = 'dslib',
-  version = '1.0-rc1',
+  version = release.DSLIB_VERSION,
   description = "dslib is a free Python library for accessing 'Datove schranky'",
   author = "CZ.NIC Labs",
   author_email = "datove-schranky@labs.nic.cz",
