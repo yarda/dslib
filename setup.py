@@ -45,8 +45,8 @@ data = dict(
   url = "http://labs.nic.cz/datove-schranky/",
   license = "GNU LGPL",
   platforms = ["Unix", "Windows","MacOS X"],
-  long_description = """dslib is a Python library for accessing a 'Databox' -
-an electronic communication interface endorsed by the Czech government.""",
+  long_description = "dslib is a Python library for accessing a 'Databox' - \
+an electronic communication interface endorsed by the Czech government.",
   
   packages=["dslib"]+dslib_subpackages,
   package_dir = {'dslib': './'},
