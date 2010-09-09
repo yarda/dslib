@@ -34,18 +34,19 @@ for pkgdir in pkgdirs:
     if os.path.exists(os.path.join(name,"__init__.py")):
       if not "suds-svn-work" in name:
         dslib_subpackages.append("dslib."+name.replace("/","."))
-print >> sys.stderr, dslib_subpackages
+#print >> sys.stderr, dslib_subpackages
 
 data = dict(
   name = 'dslib',
   version = release.DSLIB_VERSION,
-  description = "dslib is a free Python library for accessing 'Datove schranky'",
+  description = "dslib is a free Python library for accessing Datove schranky",
   author = "CZ.NIC Labs",
   author_email = "datove-schranky@labs.nic.cz",
   url = "http://labs.nic.cz/datove-schranky/",
   license = "GNU LGPL",
   platforms = ["Unix", "Windows","MacOS X"],
-  long_description = open("README.txt").read(), #.decode('utf-8'),
+  long_description = """dslib is a Python library for accessing a 'Databox' -
+an electronic communication interface endorsed by the Czech government.""",
   
   packages=["dslib"]+dslib_subpackages,
   package_dir = {'dslib': './'},
@@ -56,7 +57,7 @@ data = dict(
                 ],
   requires = ['pyOpenSSL (>=0.9)'],
   install_requires = ['pyOpenSSL>=0.9'],
-  provides="dslib",
+  provides=["dslib"],
   )
 
 set = setup(**data)
