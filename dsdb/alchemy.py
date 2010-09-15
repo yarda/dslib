@@ -24,6 +24,7 @@ import thread
 # third party imports
 import sqlalchemy as sal
 import sqlalchemy.orm as salorm
+from sqlalchemy.sql import between
 
 # dslib imports
 from dslib.client import Client
@@ -346,6 +347,14 @@ class DSDatabase(AbstractDSDatabase):
     if m:
       self.add_pkcs7_data(m)
     return m
+  
+  @thread_safe_session
+  def get_messages_between_dates(self, from_date, to_date,
+                                 message_type=None):
+    """return messages with dmDeliveryTime between certain dates"""
+    ms = self.session.query(Message).filter(
+                  between(Message.dmDeliveryTime, from_date, to_date))
+    return ms
 
   @thread_safe_session
   def add_pkcs7_data(self, message):
