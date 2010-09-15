@@ -43,11 +43,11 @@ class SignedContent(univ.SequenceOf):
                         tag.Tag(tag.tagClassUniversal, tag.tagFormatConstructed, 0x04)
                     )
     def getContentValue(self):
-        buffer = ''
+        values = []
         for idx in xrange(len(self)):
             comp = self.getComponentByPosition(idx)
-            buffer += comp
-        return buffer._value
+            values.append(comp._value)
+        return "".join(values)
 
 
 class Content(univ.Sequence):
