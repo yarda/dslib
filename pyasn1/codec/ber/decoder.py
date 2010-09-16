@@ -33,7 +33,7 @@ class IntegerDecoder(AbstractDecoder):
                      state, decodeFun):
         if not substrate:
             raise error.PyAsn1Error('Empty substrate')
-        octets = map(ord, substrate)
+        octets = map(ord, str(substrate))
         if octets[0] & 0x80:
             value = -1L
         else:
@@ -542,6 +542,7 @@ class Decoder:
                         stGetValueDecoder, decodeFun
                         )
                 else:
+                    
                     value, _substrate = concreteDecoder.valueDecoder(
                         substrate[:length], asn1Spec, tagSet,
                         length, stGetValueDecoder, decodeFun
