@@ -31,24 +31,10 @@ from asn1_models.pkcs_signed_data import *
 from asn1_models.digest_info import *
 from asn1_models.TST_info import *
 
-class StringObj(object):
-  
-  def __init__(self, string):
-    self._string = string
-    
-  def __str__(self):
-    return self._string
-  
-  def __getitem__(self, key):
-    return self._string[key]
-
-  def __len__(self):
-    return len(self._string)
-
 
 class StringView(object):
   
-  def __init__(self, string, start=0, end=None):
+  def __init__(self, string, start, end):
     self._string = string
     self._start = start
     if end == None:
@@ -62,11 +48,13 @@ class StringView(object):
   def __getitem__(self, key):
     if type(key) == int:
       if key < 0:
-        return self._string[self._end+key]
+        self._string.seek(self._end+key)
+        return self._string.read(1)
       else:
         if key >= (self._end - self._start):
           raise IndexError()
-        return self._string[self._start+key]
+        self._string.seek(self._start+key)
+        return self._string.read(1)
     elif type(key) == slice:
       if key.stop == None:
         end = self._end
@@ -80,10 +68,11 @@ class StringView(object):
       raise IndexError()
 
   def __str__(self):
-    return str(self._string[self._start:self._end])
+    self._string.seek(self._start)
+    return self._string.read(self._end-self._start)
 
   def __nonzero__(self):
-    return bool(str(self))
+    return len(self)
 
 
 def decode_msg(message):    
@@ -94,12 +83,9 @@ def decode_msg(message):
     # create template for decoder
     msg = Message()
     # decode pkcs signed message
-    #mess_obj = StringObj(message)
-    mess_view = StringView(message)
-    import time
-    t = time.time()
+    mess_obj = StringIO(message)
+    mess_view = StringView(mess_obj, 0, len(message))
     decoded = decoder.decode(mess_view,asn1Spec=msg)
-    print "DECODE:", time.time()-t
     message = decoded[0]
         
     return message
