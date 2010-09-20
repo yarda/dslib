@@ -303,21 +303,34 @@ test - either a number or name of a test or 'ALL'""")
                  help="the account is a test account, not a standard one.")
   op.add_option( "-k", action="store",
                  dest="keyfile", default=None,
-                 help="Client private key file to use for 'certificate' login method.")
+                 help="Client private key file to use for 'certificate' or \
+'user_certificate' login methods.")
   op.add_option( "-c", action="store",
                  dest="certfile", default=None,
-                 help="Client certificate file to use for 'certificate' login method.")
+                 help="Client certificate file to use for 'certificate' or \
+'user_certificate' login methods.")
   op.add_option( "-P", action="store",
                  dest="p12file", default=None,
                  help="Client certificate and key in a PKCS12 file\
- to use for 'certificate' login method.")
+ to use for 'certificate' or 'user_certificate' login methods.")
   op.add_option( "-p", action="store",
                  dest="proxy", default="",
                  help="address of HTTP proxy to be used\
  (use 'SYSTEM' for default system setting).")
+  op.add_option( "-m", action="store",
+                 dest="login_method", default="",
+                 help="login method to use - defaults to 'username' or to \
+'user_certificate' (when -P or -k and -c is given). \
+Possible values are 'username', 'certificate' and 'user_certificate'.")
+  
   
   (options, args) = op.parse_args()
-  if (options.keyfile and options.certfile) or options.p12file:
+  # select the login_method
+  if options.p12file or (options.keyfile and options.certfile):
+    login_method = options.login_method or 'user_certificate'
+  else:
+    login_method = options.login_method or 'username'
+  if login_method == "certificate":
     username = None
     args = args[:]
   else:
@@ -328,6 +341,7 @@ test - either a number or name of a test or 'ALL'""")
     else:
       username = args[0]
       args = args[1:]
+  # setup proxy
   proxy = options.proxy
   if proxy == "SYSTEM":
     proxy = -1
@@ -357,35 +371,43 @@ test - either a number or name of a test or 'ALL'""")
     cert_dir = local.find_data_directory("trusted_certificates")
     args = dict(test_environment=options.test_account,
                 proxy=proxy,
-                server_certs=os.path.join(cert_dir, "all_trusted.pem"))
-    if options.p12file:
-      # PKCS12 file certificate and key storage
-      import OpenSSL
-      f = file(options.p12file, 'rb')
-      p12text = f.read()
-      f.close()
-      import getpass
-      password = getpass.getpass("Enter PKSC12 file password:")
-      try:
-        p12obj = OpenSSL.crypto.load_pkcs12(p12text, password)
-      except OpenSSL.crypto.Error, e:
-        a = e.args
-        if type(a) in (list,tuple) and type(a[0]) in (list,tuple) and \
-          type(a[0][0]) in (list,tuple) and e.args[0][0][2] == 'mac verify failure':
-          print "Wrong password! Exiting."
+                server_certs=os.path.join(cert_dir, "all_trusted.pem"),
+                login_method=login_method
+                )
+    # process specific things
+    if login_method in ("certificate", "user_certificate"):
+      if options.p12file:
+        # PKCS12 file certificate and key storage
+        import OpenSSL
+        f = file(options.p12file, 'rb')
+        p12text = f.read()
+        f.close()
+        import getpass
+        password = getpass.getpass("Enter PKSC12 file password:")
+        try:
+          p12obj = OpenSSL.crypto.load_pkcs12(p12text, password)
+        except OpenSSL.crypto.Error, e:
+          a = e.args
+          if type(a) in (list,tuple) and type(a[0]) in (list,tuple) and \
+            type(a[0][0]) in (list,tuple) and e.args[0][0][2] == 'mac verify failure':
+            print "Wrong password! Exiting."
+            sys.exit()
+        except Exception, e:
+          print "Error:", e
           sys.exit()
-      except Exception, e:
-        print "Error:", e
-        sys.exit()
-      args.update(login_method="certificate",
-                  client_certobj=p12obj.get_certificate(),
-                  client_keyobj=p12obj.get_privatekey())
-    elif options.keyfile and options.certfile:
-      # PEM file certificate and key storage
-      args.update(login_method="certificate",
-                  client_certfile=options.certfile,
-                  client_keyfile=options.keyfile)
-    else:
+        login_method = options.login_method or 'user_certificate'
+        args.update(client_certobj=p12obj.get_certificate(),
+                    client_keyobj=p12obj.get_privatekey())
+      elif options.keyfile and options.certfile:
+        # PEM file certificate and key storage
+        args.update(client_certfile=options.certfile,
+                    client_keyfile=options.keyfile)
+      else:
+        # no certificates were given
+        sys.stderr.write("For login method '%s' certificate (either -P or -k \
+and -c) is needed!\n" % login_method)
+        sys.exit(101)
+    if login_method in ("username", "user_certificate"):
       # username and password login
       # try to find a stored password
       passfile = "./.isds_password"
@@ -394,7 +416,7 @@ test - either a number or name of a test or 'ALL'""")
         password = file(passfile,'r').read().strip()
       else:
         import getpass
-        password = getpass.getpass()
+        password = getpass.getpass("Enter login password:")
       args.update(login=username, password=password)
     CertificateManager.read_trusted_certificates_from_dir("trusted_certificates")
     # create the client      

@@ -73,14 +73,15 @@ class Dispatcher(object):
                           password=self.ds_client.password
                           )
     transport_class = HttpAuthenticated # for Basic HTTP authentication
-    if self.ds_client.login_method == "certificate":
+    if self.ds_client.login_method in ("certificate","user_certificate"):
       transport_args.update(client_certfile = self.ds_client.client_certfile,
                             client_keyfile = self.ds_client.client_keyfile,
                             client_certobj = self.ds_client.client_certobj,
                             client_keyobj = self.ds_client.client_keyobj
                             )
-      transport_class = HttpTransport # we do not need Basic authentication
-                                      # - we use certs
+      if self.ds_client.login_method == "certificate":
+        transport_class = HttpTransport # we do not need Basic authentication
+                                        # - we use only certs
     if self.proxy:
       transport_args.update(proxy={'https':self.proxy})
     transport = transport_class(**transport_args)
@@ -483,13 +484,17 @@ class Client(object):
                                        "soap_url_end": "DsManage"},
                             }
   test2soap_url = {True: {"username": "https://ws1.czebox.cz/",
-                          "certificate": "https://ws1c.czebox.cz/"},
+                          "certificate": "https://ws1c.czebox.cz/",
+                          "user_certificate": "https://ws1c.czebox.cz/",},
                    False: {"username":"https://ws1.mojedatovaschranka.cz/",
-                           "certificate": "https://ws1c.mojedatovaschranka.cz/"}
+                           "certificate": "https://ws1c.mojedatovaschranka.cz/",
+                           "user_certificate":
+                                    "https://ws1c.mojedatovaschranka.cz/",}
                    }
 
   login_method2url_part = {"username": "DS",
                            "certificate": "cert/DS",
+                           "user_certificate": "certds/DS",
                            }
 
   def __init__(self, login=None, password=None, soap_url=None, test_environment=None,
@@ -498,7 +503,7 @@ class Client(object):
                client_keyobj=None, client_certobj=None):
     """
     if soap_url is not given and test_environment is given, soap_url will be
-    infered from the value of test_environment based on what is set in test2soap_url;
+    inferred from the value of test_environment based on what is set in test2soap_url;
     if neither soap_url not test_environment is provided, it will be empty and
     the dispatcher will use the value from WSDL;
     if soap_url id used, it will be used without regard to test_environment value
@@ -506,9 +511,12 @@ class Client(object):
     detection using the urllib2 library
     server_certs - path to a certificate chain used for verification of server
     certificate, if None, no check on server certificate is performed
+    
     client_keyfile, client_certfile - are used with login_method 'certificate'
+    or 'user_certificate'
     client_keyobj, client_certobj - internal OpenSSL objects for key and certificate
-    - an alternative way of providing data for login_method 'certificate'
+    - an alternative way of providing data for login_methods 'certificate' and
+    'user_certificate' 
     """
     self.login = login
     self.password = password
@@ -516,25 +524,26 @@ class Client(object):
     self.client_certfile = client_certfile
     self.client_keyobj = client_keyobj
     self.client_certobj = client_certobj
-    self.login_method = login_method  
+    self.login_method = login_method 
     # check authentication data
-    if self.login_method == "certificate":
+    if self.login_method in ("certificate","user_certificate"):
       if not self.CERT_LOGIN_AVAILABLE:
-        raise ValueError("The certificate login_method is not available\
- - it was not possible to import the pyopenssl_wrapper module.")
+        raise ValueError("The %s login_method is not available\
+ - it was not possible to import the pyopenssl_wrapper module." % login_method)
       if not (self.client_certobj or self.client_certfile):
         raise ValueError("You must supply client_certfile or client_certobj\
- when using 'certificate' login method")
+ when using '%s' login method" % login_method)
       if not (self.client_keyobj or self.client_keyfile):
         raise ValueError("You must supply client_keyfile or client_keyobj\
- when using 'certificate' login method")
-    elif self.login_method == "username":
+ when using '%s' login method" % login_method)
+    if self.login_method in ("username","user_certificate"):
       if not self.login:
         raise ValueError("You must supply a username when using\
- 'username' login method")
+ '%s' login method" % login_method)
       if not self.password:
         raise ValueError("You must supply a password when using\
- 'username' login method")
+ '%s' login method" % login_method)
+    # all ok - continue creating the instance attrs
     if soap_url:
       self.soap_url = soap_url
     elif test_environment != None:
