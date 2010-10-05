@@ -210,7 +210,7 @@ class PyOpenSSLSocket (socket):
                     v = len(tmp_buffer)
                     buffer[:v] = tmp_buffer
                     return v
-                except SSLError as x:
+                except SSLError, x:
                     if x.args[0] == SSL_ERROR_WANT_READ:
                         continue
                     else:
