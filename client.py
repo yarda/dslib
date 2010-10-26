@@ -272,6 +272,7 @@ class Dispatcher(object):
     pkcs_data = self._prepare_PKCS7_data(decoded_msg)
     # extract sent message from pkcs7 document
     str_msg = pkcs_data.message
+
     # parse string xml to create xml document
     xml_document = self._xml_parse_msg(str_msg, method.method)
     return xml_document, pkcs_data, verified

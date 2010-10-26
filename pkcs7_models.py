@@ -630,7 +630,11 @@ class TimeStampToken():
       hour = int(self.genTime[8:10])
       minute = int(self.genTime[10:12])
       second = int(self.genTime[12:14])
-      micro = int(float(self.genTime[14:].strip("Z"))*1e6)
+      rest = self.genTime[14:].strip("Z")
+      if rest:
+        micro = int(float(rest)*1e6)
+      else:
+        micro = 0
       tz_delta = datetime.timedelta(seconds=time.daylight and time.altzone
                                     or time.timezone)
       return datetime.datetime(year, month, day, hour, minute, second, micro) - tz_delta
