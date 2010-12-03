@@ -295,6 +295,7 @@ class DateTime(Date,Time):
         """
         Adjust for TZ offset.
         """
+        return # do not adjust, expect the use of the result in local form
         if hasattr(self, 'offset'):
             tz = Timezone()
             delta = Timezone.adjustment(self.offset)
@@ -322,7 +323,8 @@ class Timezone:
     @type patten: L{re.RegexObject}
     """
 
-    local = time.daylight and (0-time.altzone/60/60) or (0-time.timezone/60/60)
+    local = 0-time.timezone/60/60
+    #local = time.daylight and (0-time.altzone/60/60) or (0-time.timezone/60/60)
     pattern = re.compile('([zZ])|([\-\+][0-9]{2}:[0-9]{2})')
     
     @classmethod
