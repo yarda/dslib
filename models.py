@@ -327,6 +327,12 @@ class Message(Model):
     """returns True if the message origin is amongst origins considered
      complete, False otherwise"""
     return self.get_origin() in self.COMPLETE_ORIGINS
+  
+  def get_sender_type(self):
+    if not self.dmSenderType:
+      return ""
+    return constants.ORG_TYPE_NUM_TO_TEXT.get(self.dmSenderType,
+                                              str(self.dmSenderType))
 
   # ---------- private methods ----------
 

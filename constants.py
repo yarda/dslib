@@ -31,3 +31,4 @@ MESSAGE_STATUS = dict( [(1, u"zpráva byla podána"),
 			]
 		       )
 
+ORG_TYPE_NUM_TO_TEXT = {10:"OVM",20:"PO",30:"PFO",40:"FO"}
