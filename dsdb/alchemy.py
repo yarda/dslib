@@ -285,6 +285,14 @@ class DSDatabase(AbstractDSDatabase):
     for m in self.session.query(Message).all():
       self.add_pkcs7_data(m)
       yield m
+      
+  @thread_safe_session
+  def messages_between_dates(self, from_date, to_date):
+    """return messages with dmDeliveryTime between certain dates"""
+    for m in self.session.query(Message).filter(
+                  between(Message.dmDeliveryTime, from_date, to_date)):
+      self.add_pkcs7_data(m)
+      yield m
 
   @thread_safe_session
   def store_message(self, message, raw_data=None,
@@ -352,7 +360,10 @@ class DSDatabase(AbstractDSDatabase):
   def get_messages_between_dates(self, from_date, to_date,
                                  message_type=None):
     """return messages with dmDeliveryTime between certain dates"""
-    ms = self.session.query(Message).filter(
+    if not from_date:
+      ms = self.session.query(Message).filter(Message.dmDeliveryTime < to_date)
+    else:
+      ms = self.session.query(Message).filter(
                   between(Message.dmDeliveryTime, from_date, to_date))
     return ms
 
