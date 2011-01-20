@@ -432,6 +432,13 @@ class DSDatabase(AbstractDSDatabase):
       method = "SignedSentMessageDownload"
     message = client.signature_to_message(rd.data, method)
     return message
+  
+  @thread_safe_session
+  def get_delivery_info_from_raw_data(self, id, client):
+    rd = self.get_raw_delivery_info_data(id)
+    method = "GetSignedDeliveryInfo"
+    di = client.signature_to_delivery_info(rd.data, method)
+    return di
    
   @thread_safe_session
   def get_raw_data(self, id):
