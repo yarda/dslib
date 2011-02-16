@@ -169,6 +169,7 @@
 			<xs:element name="adNumberInMunicipality" nillable="true" type="xs:string" />
 			<xs:element name="adZipCode" nillable="true" type="xs:string" />
 			<xs:element name="adState" nillable="true" type="xs:string" />
+			<xs:element name="adUnstruct" nillable="true" type="xs:string" />
 		</xs:sequence>
 	</xs:group>
 	<xs:complexType name="tDbOwnerInfo">
