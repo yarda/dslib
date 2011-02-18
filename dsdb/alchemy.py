@@ -274,6 +274,7 @@ class DSDatabase(AbstractDSDatabase):
   
   def close_database(self):
     sal.orm.clear_mappers()
+    self.engine.dispose()
     
   @thread_safe_session
   def list_message_ids(self):
