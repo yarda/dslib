@@ -374,6 +374,17 @@ class DSDatabase(AbstractDSDatabase):
     return ret
 
   @thread_safe_session
+  def get_messages_without_date(self, message_type=None, add_pkcs7_data=False):
+    """return messages with empty dmDeliveryTime"""
+    ms = self.session.query(Message).filter(Message.dmDeliveryTime == None)
+    ret = []
+    for m in ms:
+      if add_pkcs7_data:
+        self.add_pkcs7_data(m)
+      ret.append(m)
+    return ret
+
+  @thread_safe_session
   def add_pkcs7_data(self, message):
     p = PKCS7_data()
     p.certificates = [CertificateManager.get_certificate_from_der(c.get_der_data())\
