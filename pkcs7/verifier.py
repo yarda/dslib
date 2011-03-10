@@ -26,8 +26,8 @@ logger = logging.getLogger('pkcs7.verifier')
 import string
 
 # dslib imports
-from dslib.pyasn1.codec.der import encoder
-from dslib.pyasn1 import error
+from pyasn1.codec.der import encoder
+from pyasn1 import error
 from dslib.certs.cert_finder import *
 
 # local imports
@@ -64,7 +64,7 @@ def _prepare_auth_attributes_to_digest(auth_attributes_instance):
   
 def _get_key_material(certificate):
     """
-    Extracts public ket material and alg. name from certificate.
+    Extracts public key material and alg. name from certificate.
     Certificate is pyasn1 object Certificate
     """
     pubKey = certificate.getComponentByName("tbsCertificate").\

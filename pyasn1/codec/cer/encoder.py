@@ -4,7 +4,7 @@ from pyasn1.type import univ
 from pyasn1.codec.ber import encoder
 
 class BooleanEncoder(encoder.IntegerEncoder):
-    def _encodeValue(self, encodeFun, client, defMode, maxChunkSize):
+    def encodeValue(self, encodeFun, client, defMode, maxChunkSize):
         if client == 0:
             substrate = '\000'
         else:
@@ -12,14 +12,14 @@ class BooleanEncoder(encoder.IntegerEncoder):
         return substrate, 0
 
 class BitStringEncoder(encoder.BitStringEncoder):
-    def _encodeValue(self, encodeFun, client, defMode, maxChunkSize):
-        return encoder.BitStringEncoder._encodeValue(
+    def encodeValue(self, encodeFun, client, defMode, maxChunkSize):
+        return encoder.BitStringEncoder.encodeValue(
             self, encodeFun, client, defMode, 1000
             )
 
 class OctetStringEncoder(encoder.OctetStringEncoder):
-    def _encodeValue(self, encodeFun, client, defMode, maxChunkSize):
-        return encoder.OctetStringEncoder._encodeValue(
+    def encodeValue(self, encodeFun, client, defMode, maxChunkSize):
+        return encoder.OctetStringEncoder.encodeValue(
             self, encodeFun, client, defMode, 1000
             )
 
@@ -30,19 +30,20 @@ class OctetStringEncoder(encoder.OctetStringEncoder):
 
 class SetOfEncoder(encoder.SequenceOfEncoder):
     def _cmpSetComponents(self, c1, c2):
-        return cmp(
-            getattr(c1, 'getMinimalTagSet', c1.getTagSet)(),
-            getattr(c2, 'getMinimalTagSet', c2.getTagSet)()
-            )
+        tagSet1 = isinstance(c1, univ.Choice) and \
+                  c1.getMinTagSet() or c1.getTagSet()
+        tagSet2 = isinstance(c2, univ.Choice) and \
+                  c2.getMinTagSet() or c2.getTagSet()        
+        return cmp(tagSet1, tagSet2)
     
-    def _encodeValue(self, encodeFun, client, defMode, maxChunkSize):
-        if hasattr(client, 'setDefaultComponents'):
+    def encodeValue(self, encodeFun, client, defMode, maxChunkSize):
+        if isinstance(client, univ.SequenceAndSetBase):
             client.setDefaultComponents()
         client.verifySizeSpec()
         substrate = ''; idx = len(client)
         # This is certainly a hack but how else do I distinguish SetOf
         # from Set if they have the same tags&constraints?
-        if hasattr(client, 'getDefaultComponentByPosition'):
+        if isinstance(client, univ.SequenceAndSetBase):
             # Set
             comps = []
             while idx > 0:
@@ -67,19 +68,24 @@ class SetOfEncoder(encoder.SequenceOfEncoder):
             substrate = string.join(compSubs, '')
         return substrate, 1
 
-codecMap = encoder.codecMap.copy()
-codecMap.update({
+tagMap = encoder.tagMap.copy()
+tagMap.update({
     univ.Boolean.tagSet: BooleanEncoder(),
     univ.BitString.tagSet: BitStringEncoder(),
     univ.OctetString.tagSet: OctetStringEncoder(),
-    # Set & SetOf have same tags
-    univ.SetOf().tagSet: SetOfEncoder()
+    univ.SetOf().tagSet: SetOfEncoder()  # conflcts with Set
     })
-        
+
+typeMap = encoder.typeMap.copy()
+typeMap.update({
+    univ.Set.typeId: SetOfEncoder(),
+    univ.SetOf.typeId: SetOfEncoder()
+    })
+
 class Encoder(encoder.Encoder):
     def __call__(self, client, defMode=0, maxChunkSize=0):
         return encoder.Encoder.__call__(self, client, defMode, maxChunkSize)
-        
-encode = Encoder(codecMap)
+
+encode = Encoder(tagMap, typeMap)
 
 # EncoderFactory queries class instance and builds a map of tags -> encoders

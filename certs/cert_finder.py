@@ -24,13 +24,31 @@ certificates.
 # standard library imports
 import logging
 
+
+def _get_tbs_certificate(certificate):
+    '''
+    Finds the 'tbsCertificate' component. Its position may
+    vary in different forms of used certificates.
+    '''
+    try:
+      return certificate.getComponentByName('tbsCertificate')
+    except:
+      try:
+        return certificate.\
+              getComponentByPosition(0).getComponentByName("tbsCertificate")
+      except:
+        return None
+    return None
+            
+  
+
 def find_cert_by_subject(subject, certs):
     '''
     Looks for the certificate with specified subject.
     '''
     for cert in certs:
-        subj = str(cert.getComponentByName("tbsCertificate")\
-                    .getComponentByName("subject"))
+        tbs = _get_tbs_certificate(cert)
+        subj = str(tbs.getComponentByName("subject"))
         if subj == subject:
             return cert
     return None
@@ -43,8 +61,8 @@ def find_cert_by_serial(serial_number, certificates):
     '''
     for cert in certificates:
         try:
-            sn = cert.getComponentByName("tbsCertificate")\
-                                .getComponentByName("serialNumber")        
+            tbs = _get_tbs_certificate(cert)
+            sn = tbs.getComponentByName("serialNumber")                    
             if sn == serial_number:
                 return cert
         except Exception, ex:
@@ -74,7 +92,7 @@ def find_cert_in_crl(cert_sn, crl):
     revoked = crl.getComponentByName("tbsCertList").\
                 getComponentByName("revokedCertificates")
     for cert in revoked:
-        csn = cert.getComponentByName("userCertificate")._value
+        csn = int(cert.getComponentByName("userCertificate"))
         if csn == cert_sn:
             return csn
     

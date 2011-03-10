@@ -21,8 +21,8 @@
 import string
 
 # dslib imports
-from dslib.pyasn1.type import tag,namedtype,univ
-from dslib.pyasn1 import error
+from pyasn1.type import tag,namedtype,univ
+from pyasn1 import error
 
 # local imports
 from X509_certificate import *
@@ -52,7 +52,7 @@ class ObjectDigestInfo(univ.Sequence):
                         namedtype.OptionalNamedType("digestedObjectType", univ.Enumerated()),
                         namedtype.OptionalNamedType("otherObjectTypeID", univ.ObjectIdentifier()),
                         namedtype.OptionalNamedType("digestAlgorithm", AlgorithmIdentifier()),
-                        namedtype.OptionalNamedType("objectDigest", univ.BitString()),
+                        namedtype.OptionalNamedType("objectDigest", ConvertibleBitString()),
                         )
 '''
  IssuerSerial  ::=  SEQUENCE {
@@ -123,9 +123,8 @@ class AttCertIssuer(univ.Choice):
                                             .subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0x0))), 
                         )                                            
     
-    
-class AttrCertAttributes(univ.Sequence):
-    #componentType = AttributeTypeAndValue()
+
+class AttrCertAttributes(univ.SequenceOf):
     pass
 
 
@@ -161,7 +160,7 @@ class AttributeCertificateV2(univ.Sequence):
     componentType = namedtype.NamedTypes(
                         namedtype.NamedType("acInfo", ACInfo()),
                         namedtype.NamedType("sigAlg", AlgorithmIdentifier()),                                             
-                        namedtype.NamedType("signature", univ.BitString()) 
+                        namedtype.NamedType("signature", ConvertibleBitString()) 
                         )
 
 

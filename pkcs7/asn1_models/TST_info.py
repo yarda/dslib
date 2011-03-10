@@ -46,8 +46,8 @@ TSTInfo ::= SEQUENCE  {
 import string
 
 # dslib imports
-from dslib.pyasn1.type import tag,namedtype,univ,char,useful
-from dslib.pyasn1 import error
+from pyasn1.type import tag,namedtype,univ,char,useful
+from pyasn1 import error
 
 # local imports
 from X509_certificate import *

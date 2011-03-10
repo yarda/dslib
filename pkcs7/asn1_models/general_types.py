@@ -22,15 +22,37 @@ Created on Dec 9, 2009
 '''
 
 # dslib imports
-from dslib.pyasn1.type import tag,namedtype,namedval,univ,char,useful
-from dslib.pyasn1 import error
+from pyasn1.type import tag,namedtype,namedval,univ,char,useful
+from pyasn1 import error
 
 # local imports
 from tools import *
 from oid import *
 
 
-class DirectoryString(univ.Choice):
+class ConvertibleBitString(univ.BitString):
+    '''
+    Extends uni.BitString with method that converts value
+    to the octet string.
+    '''
+    
+    def toOctets(self):
+        '''
+        Converts bit string into octets string
+        '''
+        def _tuple_to_byte(tuple):          
+          return chr(int(''.join(map(str, tuple)),2))
+      
+        res = ''        
+        byte_len = len(self._value) / 8
+        for byte_idx in xrange(byte_len):
+            bit_idx = byte_idx * 8
+            byte_tuple = self._value[bit_idx:bit_idx + 8]
+            byte = _tuple_to_byte(byte_tuple)            
+            res += byte
+        return res
+
+class DirectoryString(univ.Choice):    
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('teletexString', char.TeletexString()),
         namedtype.NamedType('printableString', char.PrintableString()),
@@ -41,8 +63,11 @@ class DirectoryString(univ.Choice):
         namedtype.NamedType('gString', univ.OctetString())
         )
     def __repr__(self):
-        c = self.getComponent()
-        return c.__str__()
+        try:
+          c = self.getComponent()
+          return c.__str__()
+        except:
+          return "Choice type not chosen"
     def __str__(self):
         return repr(self)
 
@@ -70,7 +95,7 @@ class AttributeTypeAndValue(univ.Sequence):
 
 class RelativeDistinguishedName(univ.SetOf):
     componentType = AttributeTypeAndValue()
-    
+        
     def __str__(self):
         buf = ''
         for component in self._componentValues:
@@ -115,7 +140,7 @@ class AlgorithmIdentifier(univ.Sequence):
     def __str__(self):
         return repr(self)
 
-class UniqueIdentifier(univ.BitString):
+class UniqueIdentifier(ConvertibleBitString):
     pass
 
 '''

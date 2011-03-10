@@ -49,8 +49,8 @@ CertificateList  ::=  SEQUENCE  {
 import string
 
 # dslib imports
-from dslib.pyasn1.type import tag,namedtype,univ,useful
-from dslib.pyasn1 import error
+from pyasn1.type import tag,namedtype,univ,useful
+from pyasn1 import error
 
 # local imports
 from general_types import *
@@ -73,8 +73,8 @@ class TbsCertList(univ.Sequence):
         namedtype.NamedType('issuer', Name()),        
         namedtype.NamedType('thisUpdate', Time()),
         namedtype.OptionalNamedType('nextUpdate', Time()),
-        #namedtype.OptionalNamedType('revokedCertificates', univ.Sequence()),#RevokedCertList()), 
-        namedtype.OptionalNamedType('revokedCertificates', univ.RevCertsList()),#RevokedCertList()), 
+        namedtype.OptionalNamedType('revokedCertificates', RevokedCertList()), 
+        #namedtype.OptionalNamedType('revokedCertificates', univ.RevCertsList()),#RevokedCertList()), 
         namedtype.OptionalNamedType('crlExtensions', Extensions().\
                                     subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x0))),
         )
@@ -84,5 +84,5 @@ class RevCertificateList(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('tbsCertList', TbsCertList()),
         namedtype.NamedType('signatureAlgorithm', AlgorithmIdentifier()),
-        namedtype.NamedType('signatureValue', univ.BitString())        
+        namedtype.NamedType('signatureValue', ConvertibleBitString())        
         )

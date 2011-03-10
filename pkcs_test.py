@@ -22,8 +22,12 @@ Created on Dec 4, 2009
 Sandbox unstable module.
 '''
 import logging
+
+logging.basicConfig()
+
 logger = logging.getLogger('pkcs_test')
-logger.setLevel(logging.DEBUG)
+
+#logger.setLevel(logging.DEBUG)
 
 import pkcs7
 import pkcs7.pkcs7_decoder
@@ -130,8 +134,13 @@ t.j. odpoved na getSignedXXX obsahovala element dmSignature. Jeho obsah
 je base64 dekodovany a zapisany do danych suborov (podpisana prijata a odoslana 
 sprava, podpisana dorucenka).
 '''
-f = open(os.path.join("test_msgs","signedSentMessage"), "rb")
+
+from certs.cert_manager import CertificateManager
+
+CertificateManager.read_trusted_certificates_from_dir("trusted_certificates")
+#f = open(os.path.join("test_msgs","signedSentMessage"), "rb")
 #f = open("test_msgs/signedReceivedMessage", "r")
+f = open("test_msgs/srm2", "r")
 #f = open("test_msgs/sigDeliveryInfo", "r")
 coded = f.read()
 
@@ -149,7 +158,7 @@ pkcs_data = models.PKCS7_data(decoded_msg)
 
 msg = pkcs_data.message
      
-import suds.sax.parser as p
+import sudsds.sax.parser as p
 parser = p.Parser()
 document = parser.parse(string = msg)
 
@@ -183,12 +192,12 @@ trusted = load_certificates_from_dir("trusted_certificates")
 #v_crl(cert)
 
 
-certificate_verified = verify_certificate(cert, trusted, check_crl=True, force_crl_download= props.FORCE_CRL_DOWNLOAD)
+#certificate_verified = verify_certificate(cert, trusted, check_crl=True, force_crl_download= props.FORCE_CRL_DOWNLOAD)
 
-logger.info("Certificate verified?..... %s" % certificate_verified)
+#logger.info("Certificate verified?..... %s" % certificate_verified)
 
 # daju sa overit aj samotne doveryhodne certifikaty voci sebe
-is_ok = verify_certificate(trusted[0], trusted, check_crl=True)
+#is_ok = verify_certificate(trusted[0], trusted, check_crl=True)
 
 
 import pkcs7.tstamp_helper
@@ -228,10 +237,11 @@ cert = finder.find_cert_by_subject(issuer, trusted)
 
 crl_cache = crl_store.CRL_cache_manager.get_cache()
 # should return existing instance
-crl_cache = crl_store.CRL_cache_manager.get_cache()
+#crl_cache = None#crl_store.CRL_cache_manager.get_cache()
+#'''
 if crl_cache is None:
     logger.info("CRL cache not found locally, downloading...")
-    crl_cache = CRL_cache()
+    crl_cache = crl_store.CRL_cache()
     added = crl_cache.add_issuer(issuer)
     added.add_dist_point(url)
     added.init_dist_point(url, verification=cert)
@@ -244,7 +254,7 @@ else:
     logger.info("Refreshing distribution point...")
     i.refresh_dist_point(url, verification=cert, force_download=props.FORCE_CRL_DOWNLOAD)
     logger.info("Done")
-
+#'''
 revoked = 330011
 not_revoked = certificate.tbsCertificate.serial_number
 

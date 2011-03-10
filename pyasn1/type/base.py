@@ -1,12 +1,8 @@
 # Base classes for ASN.1 types
-try:
-    from sys import version_info
-except ImportError:
-    version_info = (0, 0)   # a really early version
 from operator import getslice, setslice, delslice
 from string import join
 from types import SliceType
-from pyasn1.type import constraint
+from pyasn1.type import constraint, tagmap
 from pyasn1 import error
 
 class Asn1Item: pass
@@ -18,6 +14,9 @@ class Asn1ItemBase(Asn1Item):
     # A list of constraint.Constraint instances for checking values
     subtypeSpec = constraint.ConstraintsIntersection()
 
+    # Used for ambiguous ASN.1 types identification
+    typeId = None
+    
     def __init__(self, tagSet=None, subtypeSpec=None):
         if tagSet is None:
             self._tagSet = self.tagSet
@@ -27,14 +26,15 @@ class Asn1ItemBase(Asn1Item):
             self._subtypeSpec = self.subtypeSpec
         else:
             self._subtypeSpec = subtypeSpec
-        
+
     def _verifySubtypeSpec(self, value, idx=None):
         self._subtypeSpec(value, idx)
         
     def getSubtypeSpec(self): return self._subtypeSpec
     
     def getTagSet(self): return self._tagSet
-    def getTypeMap(self): return { self._tagSet: self }
+    def getEffectiveTagSet(self): return self._tagSet  # used by untagged types
+    def getTagMap(self): return tagmap.TagMap({self._tagSet: self})
     
     def isSameTypeWith(self, other):
         return self is other or \
@@ -45,10 +45,9 @@ class Asn1ItemBase(Asn1Item):
         return self._tagSet.isSuperTagSetOf(other.getTagSet()) and \
                self._subtypeSpec.isSuperTypeOf(other.getSubtypeSpec())
 
-class __NoValue(object):
+class __NoValue:
     def __getattr__(self, attr):
-        raise AttributeError('No value for %s()' % attr)
-        #raise error.PyAsn1Error('No value for %s()' % attr)
+        raise error.PyAsn1Error('No value for %s()' % attr)
 noValue = __NoValue()
 
 # Base class for "simple" ASN.1 objects. These are immutable.
@@ -65,7 +64,8 @@ class AbstractSimpleAsn1Item(Asn1ItemBase):
             self._verifySubtypeSpec(value)
             self.__hashedValue = hash(value)
         self._value = value
-
+        self._len = None
+        
     def __repr__(self):
         if self._value is noValue:
             return self.__class__.__name__ + '()'
@@ -149,6 +149,7 @@ class AbstractConstructedAsn1Item(Asn1ItemBase):
         else:
             self._sizeSpec = sizeSpec
         self._componentValues = []
+        self._componentValuesSet = 0
 
     def __repr__(self):
         r = self.__class__.__name__ + '()'
@@ -162,7 +163,7 @@ class AbstractConstructedAsn1Item(Asn1ItemBase):
 
     def __cmp__(self, other): return cmp(self._componentValues, other)
 
-    def getComponentTypeMap(self):
+    def getComponentTagMap(self):
         raise error.PyAsn1Error('Method not implemented')
 
     def _cloneComponentValues(self, myClone, cloneValueFlag): pass
@@ -216,4 +217,8 @@ class AbstractConstructedAsn1Item(Asn1ItemBase):
 
     def __len__(self): return len(self._componentValues)
     
-    def clear(self): self._componentValues = []
+    def clear(self):
+        self._componentValues = []
+        self._componentValuesSet = 0
+
+    def setDefaultComponents(self): pass

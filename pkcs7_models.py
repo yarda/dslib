@@ -340,7 +340,7 @@ class Extension():
             v = decoder.decode(self.value)[0]
             val = KeyUsageExt(v)
             self.value = val
-        elif (self.id == "2.5.29.32"):            
+        elif (self.id == "2.5.29.32"):
             v = decoder.decode(self.value, asn1Spec=CertificatePolicies())[0]           
             val = [CertificatePolicyExt(p) for p in v]
             self.value = val
