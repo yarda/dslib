@@ -70,16 +70,12 @@ class AbstractSimpleAsn1Item(Asn1ItemBase):
         if self._value is noValue:
             return self.__class__.__name__ + '()'
         else:
-            return self.__class__.__name__ + '(' + repr(
-                self.prettyOut(self._value)
-                ) + ')'
+            return self.__class__.__name__ + '(' + self.prettyOut(self._value) + ')'
     def __str__(self): return str(self._value)
     def __cmp__(self, value): return cmp(self._value, value)
     def __hash__(self): return self.__hashedValue
 
-    def __nonzero__(self):
-        if self._value: return 1
-        else: return 0
+    def __nonzero__(self): return self._value and 1 or 0
 
     def clone(self, value=None, tagSet=None, subtypeSpec=None):
         if value is None and tagSet is None and subtypeSpec is None:
@@ -153,7 +149,7 @@ class AbstractConstructedAsn1Item(Asn1ItemBase):
 
     def __repr__(self):
         r = self.__class__.__name__ + '()'
-        for idx in range(len(self)):
+        for idx in range(len(self._componentValues)):
             if self._componentValues[idx] is None:
                 continue
             r = r + '.setComponentByPosition(%s, %s)' % (
@@ -208,12 +204,13 @@ class AbstractConstructedAsn1Item(Asn1ItemBase):
 
     def getComponentByPosition(self, idx):
         raise error.PyAsn1Error('Method not implemented')
-    def setComponentByPosition(self, idx, value):
+    def setComponentByPosition(self, idx, value, verifyConstraints=True):
         raise error.PyAsn1Error('Method not implemented')
 
     def getComponentType(self): return self._componentType
 
-    def __getitem__(self, idx): return self._componentValues[idx]
+    def __getitem__(self, idx): return self.getComponentByPosition(idx)
+    def __setitem__(self, idx, value): self.setComponentByPosition(idx, value)
 
     def __len__(self): return len(self._componentValues)
     

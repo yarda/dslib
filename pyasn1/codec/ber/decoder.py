@@ -41,7 +41,7 @@ class ExplicitTagDecoder(AbstractSimpleDecoder):
         return decodeFun(substrate[:length], asn1Spec, tagSet, length)
 
     def indefLenValueDecoder(self, fullSubstrate, substrate, asn1Spec, tagSet,
-                     length, state, decodeFun):
+                             length, state, decodeFun):
         value, substrate = decodeFun(substrate, asn1Spec, tagSet, length)
         terminator, substrate = decodeFun(substrate)
         if terminator == eoo.endOfOctets:
@@ -230,6 +230,65 @@ class ObjectIdentifierDecoder(AbstractSimpleDecoder):
                 index = index + 1
         return self._createComponent(asn1Spec, tagSet, oid), substrate[index:]
 
+class RealDecoder(AbstractSimpleDecoder):
+    protoComponent = univ.Real()
+    def valueDecoder(self, fullSubstrate, substrate, asn1Spec, tagSet,
+                     length, state, decodeFun):
+        substrate = substrate[:length]
+        if not length:
+            raise error.SubstrateUnderrunError('Short substrate for Real')
+        fo = ord(substrate[0]); substrate = substrate[1:]
+        if fo & 0x40:  # infinite value
+            value = fo & 0x01 and float('-inf') or float('inf')
+        elif fo & 0x80:  # binary enoding
+            if fo & 0x11 == 0:
+                n = 1
+            elif fo & 0x01:
+                n = 2
+            elif fo & 0x02:
+                n = 3
+            else:
+                n = ord(substrate[0])
+            eo, substrate = substrate[:n], substrate[n:]
+            if not eo or not substrate:
+                raise error.PyAsn1Error('Real exponent screwed')
+            e = 0
+            while eo:         # exponent
+                e <<= 8
+                e |= ord(eo[0])
+                eo = eo[1:]
+            p = 0
+            while substrate:  # value
+                p <<= 8
+                p |= ord(substrate[0])
+                substrate = substrate[1:]
+            if fo & 0x40:    # sign bit
+                p = -p
+            value = (p, 2, e)
+        elif fo & 0xc0 == 0:  # character encoding
+            try:
+                if fo & 0x3 == 0x1:  # NR1
+                    value = (long(substrate), 10, 0)
+                elif fo & 0x3 == 0x2:  # NR2
+                    value = float(substrate)
+                elif fo & 0x3 == 0x3:  # NR3
+                    value = float(substrate)
+                else:
+                    raise error.SubstrateUnderrunError(
+                        'Unknown NR (tag %s)' % fo
+                        )
+            except ValueError:
+                raise error.SubstrateUnderrunError(
+                    'Bad character Real syntax'
+                    )
+        elif fo & 0xc0 == 0x40:  # special real value
+            pass
+        else:
+            raise error.SubstrateUnderrunError(
+                'Unknown encoding (tag %s)' % fo
+                )
+        return self._createComponent(asn1Spec, tagSet, value), substrate
+        
 class SequenceDecoder(AbstractConstructedDecoder):
     protoComponent = univ.Sequence()
     def _getComponentTagMap(self, r, idx):
@@ -335,7 +394,7 @@ class SetDecoder(SequenceDecoder):
         if nextIdx is None:
             return idx
         else:
-            nextIdx
+            return nextIdx
     
 class SetOfDecoder(SequenceOfDecoder):
     protoComponent = univ.SetOf()
@@ -443,6 +502,7 @@ tagMap = {
     univ.Null.tagSet: NullDecoder(),
     univ.ObjectIdentifier.tagSet: ObjectIdentifierDecoder(),
     univ.Enumerated.tagSet: IntegerDecoder(),
+    univ.Real.tagSet: RealDecoder(),
     univ.Sequence.tagSet: SequenceDecoder(),  # conflicts with SequenceOf
     univ.Set.tagSet: SetDecoder(),            # conflicts with SetOf
     univ.Choice.tagSet: ChoiceDecoder(),      # conflicts with Any
