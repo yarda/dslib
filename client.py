@@ -433,6 +433,15 @@ class Dispatcher(object):
     else:
       ok = False 
     return Reply(status, ok)
+  
+  def ConfirmDelivery(self, msgid):
+    reply = self.soap_client.service.ConfirmDelivery(msgid)
+    status = models.dmStatus(reply)
+    if status.dmStatusCode == "0000":
+      ok = True
+    else:
+      ok = False 
+    return Reply(status, ok)
 
     
 class Client(object):
@@ -473,6 +482,7 @@ class Client(object):
                           "signature_to_delivery_info": "info",
                           "AuthenticateMessage": "operations",
                           "MarkMessageAsDownloaded": "info",
+                          "ConfirmDelivery": "info",
                           }
 
   dispatcher_name2config = {"info": {"wsdl_name": "dm_info.wsdl",

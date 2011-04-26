@@ -189,7 +189,9 @@ class Message(Model):
                  "dmLegalTitlePar", "dmLegalTitlePoint", "dmPersonalDelivery",\
                  "dmAllowSubstDelivery", "dmFiles",
                  "dmHash", "dmQTimestamp", "dmDeliveryTime", "dmAcceptanceTime",
-                 "dmMessageStatus", "dmAttachmentSize", "dmEvents")
+                 "dmMessageStatus", "dmAttachmentSize", "dmEvents",
+                 "_dmType"
+                 )
 
   ATTR_TO_TYPE = {"dmFiles":list, "dmEvents":list}
 

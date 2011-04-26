@@ -272,7 +272,21 @@ def MarkMessageAsDownloaded():
     i += 1
     if i > 2:
       break
-  
+
+@active
+def ConfirmDelivery():  
+  i = 0
+  for envelope in ds_client.GetListOfReceivedMessages().data:
+    print "*ID:", envelope.dmID, envelope._dmType, envelope.dmMessageStatus
+    #reply = ds_client.MessageEnvelopeDownload(envelope.dmID)    
+    #envelope = reply.data
+    #print " ID:", envelope.dmID, envelope.dmType
+    if envelope._dmType == "K":
+      reply = ds_client.ConfirmDelivery(envelope.dmID)    
+      print reply.status
+      print reply.data
+      break
+
 
 if __name__ == "__main__":
   import logging
