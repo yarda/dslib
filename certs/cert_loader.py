@@ -121,7 +121,4 @@ def load_certificates_from_dir(cert_folder):
             result.append(certificate)
     return result
 
-if __name__ == "__main__":    
-    certs = load_certificates_from_dir("certificates/")
-    print len(certs)
 

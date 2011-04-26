@@ -480,38 +480,3 @@ class DSDatabase(AbstractDSDatabase):
   def get_supplementary_data(self, id):
     return self.session.query(SupplementaryMessageData).get(int(id))
     
-
-
-    
-  # PRIVATE METHODS
-  
-if __name__ == "__main__":
-  d = DSDatabase()
-  d.open_database("pokus.db")
-  CertificateManager.read_trusted_certificates_from_dir("dslib/trusted_certificates")
-
-  ds_client = Client("kvm6ra", "Schr8ne4ka12", test_environment=True,
-                     server_certs="dslib/trusted_certificates/postsignum_qca_root.pem")
-
-  store = False #True
-  load = True
-
-  if store:
-    reply = ds_client.SignedMessageDownload(203657)
-    m = reply.data
-    d.store_message(m, raw_data=reply.additional_data.get('raw_data', None))
-  if load:
-    print d.has_message(203656)
-    import time
-    t = time.time()
-    m = d.get_message_from_raw_data(203657, ds_client)
-    print time.time() - t
-    t = time.time()
-    #import cProfile
-    #x = lambda: d.get_message_from_raw_data(203657, ds_client)
-    #cProfile.run('x()')
-    #m = d.get_message_from_raw_data(203657, ds_client)
-    m = d.get_message(203657)
-    print m.pkcs7_data.certificates
-    print time.time() - t
-  d.close_database()
