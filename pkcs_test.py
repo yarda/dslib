@@ -202,7 +202,7 @@ trusted = load_certificates_from_dir("trusted_certificates")
 
 import pkcs7.tstamp_helper
 
-qts_verified, tstinfo = pkcs7.tstamp_helper.parse_qts(m.dmQTimestamp)
+qts_verified, tstinfo = pkcs7.tstamp_helper.parse_qts(m.dmQTimestamp, verify=True)
 
 if qts_verified:
     imprint = tstinfo.msgImprint.imprint

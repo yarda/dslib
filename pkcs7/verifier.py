@@ -1,3 +1,4 @@
+from certs import cert_finder
 
 #*    dslib - Python library for Datove schranky
 #*    Copyright (C) 2009-2010  CZ.NIC, z.s.p.o. (http://www.nic.cz)
@@ -67,11 +68,11 @@ def _get_key_material(certificate):
     Extracts public key material and alg. name from certificate.
     Certificate is pyasn1 object Certificate
     """
-    pubKey = certificate.getComponentByName("tbsCertificate").\
+    pubKey = cert_finder._get_tbs_certificate(certificate).\
             getComponentByName("subjectPublicKeyInfo").\
                 getComponentByName("subjectPublicKey")
     
-    signing_alg = str(certificate.getComponentByName("tbsCertificate").\
+    signing_alg = str(cert_finder._get_tbs_certificate(certificate).\
             getComponentByName("subjectPublicKeyInfo").\
                 getComponentByName("algorithm"))
     

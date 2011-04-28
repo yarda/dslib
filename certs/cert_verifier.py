@@ -1,3 +1,4 @@
+from certs import cert_finder
 
 #*    dslib - Python library for Datove schranky
 #*    Copyright (C) 2009-2010  CZ.NIC, z.s.p.o. (http://www.nic.cz)
@@ -44,7 +45,7 @@ def _verify_date(certificate):
     '''
     Checks date boundaries in the certificate (actual time must be inside). 
     '''
-    tbs = certificate.getComponentByName("tbsCertificate")
+    tbs = cert_finder._get_tbs_certificate(certificate)
     validity = tbs.getComponentByName("validity")
     start = validity.getComponentByName("notBefore").getComponentByPosition(0)._value
         
@@ -69,14 +70,13 @@ def _check_crl(checked_cert, issuer_cert, force_download=False):
     # check the issuer and sn of checked cert if they are in the cache
     # if yes, return False
     
+    tbs = cert_finder._get_tbs_certificate(checked_cert)
     # serial number of checked certificate
-    cert_sn = checked_cert.getComponentByName("tbsCertificate").\
-                            getComponentByName("serialNumber")._value
+    cert_sn = tbs.getComponentByName("serialNumber")._value
     # get the CRL cache
     crl_cache = crl_store.CRL_cache_manager.get_cache()
     # get the name of issuer of CRL
-    issuer_name = str(checked_cert.getComponentByName("tbsCertificate").\
-                          getComponentByName("issuer"))
+    issuer_name = str(tbs.getComponentByName("issuer"))
     from pkcs7_models import X509Certificate
     # extract CDPs from checked certificate
     c = X509Certificate(checked_cert)
@@ -147,7 +147,7 @@ def verify_certificate(cert, trusted_ca_certs=[],\
     else:
         results["TRUSTED_CERTS_EXIST"] = True
     # extract tbs certificate
-    tbs = cert.getComponentByName("tbsCertificate")
+    tbs = cert_finder._get_tbs_certificate(cert)
     # encode tbs into der
     tbs_encoded = encoder.encode(tbs)
     # hash tbs with used digest algorithm

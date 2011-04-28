@@ -77,10 +77,11 @@ def find_cert_by_iss_sn(certs, issuer, sn):
   not pyAsn components.
   '''
   for cert in certs:
-    logging.debug("Cert issuer/from DER: %s" % str(cert.tbsCertificate.issuer))
+    tbs = _get_tbs_certificate(cert)
+    logging.debug("Cert issuer/from DER: %s" % str(tbs.issuer))
     logging.debug("Cert issuer/from python obj: %s" % issuer)      
-    if str(cert.tbsCertificate.issuer) == issuer:
-      if cert.tbsCertificate.serial_number == sn:
+    if str(tbs.issuer) == issuer:
+      if tbs.serial_number == sn:
         return cert
   return None 
 
