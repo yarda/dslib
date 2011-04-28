@@ -479,4 +479,22 @@ class DSDatabase(AbstractDSDatabase):
   @thread_safe_session
   def get_supplementary_data(self, id):
     return self.session.query(SupplementaryMessageData).get(int(id))
+  
+  @thread_safe_session
+  def get_unique_senders(self):
+    ret = list(self.session.query(Message.dbIDSender, Message.dmSender,
+                                  Message.dmSenderAddress)\
+               .join(SupplementaryMessageData)\
+               .filter_by(message_type=MESSAGE_TYPE_RECEIVED)\
+               .distinct())
+    return ret
+  
+  @thread_safe_session
+  def get_unique_recipients(self):
+    ret = list(self.session.query(Message.dbIDRecipient, Message.dmRecipient,
+                                  Message.dmRecipientAddress)\
+               .join(SupplementaryMessageData)\
+               .filter_by(message_type=MESSAGE_TYPE_SENT)\
+               .distinct())
+    return ret
     
