@@ -24,13 +24,13 @@ Certificate extensions specifications
 import string
 
 # dslib imports
-from dslib.pyasn1.type import tag,namedtype,univ
-from dslib.pyasn1 import error
+from pyasn1.type import tag,namedtype,univ
+from pyasn1 import error
 
 # local imports
 from tools import *
 from oid import oid_map as oid_map
-from general_types import  *
+from dslib.pkcs7.asn1_models.general_types import  *
          
 
 #RDNS sequence otagovana A4 (constructed octet string)
@@ -84,7 +84,7 @@ class DpointName(univ.Choice):
                                          )
 
 
-class ReasonFlags(univ.BitString):
+class ReasonFlags(ConvertibleBitString):
     pass
 
 class DistributionPoint(univ.Sequence):
@@ -116,7 +116,7 @@ class ExtensionValue(univ.Choice):
                             namedtype.NamedType("CRLdistPoints", univ.Sequence()),
                             namedtype.NamedType("certPolicies", univ.Sequence()),
                             namedtype.NamedType("basicConstraints", univ.Sequence()),
-                            namedtype.NamedType("keyUsage", univ.BitString()),
+                            namedtype.NamedType("keyUsage", ConvertibleBitString()),
                             namedtype.NamedType("qcStatements", univ.Sequence()),
                             namedtype.NamedType("subjectKeyId", KeyId()),
                                          )

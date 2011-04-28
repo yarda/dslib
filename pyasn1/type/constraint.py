@@ -29,23 +29,19 @@ class AbstractConstraint:
         try:
             self._testValue(value, idx)
         except error.ValueConstraintError, why:
-            raise error.ValueConstraintError('%s failed at: %s' % (
+            raise error.ValueConstraintError('%s failed at: \"%s\"' % (
                 self, why
                 ))
     def __repr__(self):
         return '%s(%s)' % (
             self.__class__.__name__,
-            string.join(map(lambda x: str(x), self._values), ', ')
+            string.join(map(lambda x: repr(x), self._values), ', ')
         )
     # __cmp__ must accompany __hash__
     def __cmp__(self, other):
-        return self is other and 0 or cmp(
-            (self.__class__, self._values), other
-            )
+        return cmp((self.__class__, self._values), other)
     def __eq__(self, other):
-        return self is other or not cmp(
-            (self.__class__, self._values), other
-            )
+        return  self is other and 1 or (self.__class__, self._values) == other
     def __hash__(self):
         if self.__hashedValues is None:
             self.__hashedValues = hash((self.__class__, self._values))
@@ -57,10 +53,10 @@ class AbstractConstraint:
     # Constraints derivation logic
     def getValueMap(self): return self._valueMap
     def isSuperTypeOf(self, otherConstraint):
-        return otherConstraint.getValueMap().has_key(self) or \
+        return self in otherConstraint.getValueMap() or \
                otherConstraint is self or otherConstraint == self
     def isSubTypeOf(self, otherConstraint):
-        return self._valueMap.has_key(otherConstraint) or \
+        return otherConstraint in self._valueMap or \
                otherConstraint is self or otherConstraint == self
 
 class SingleValueConstraint(AbstractConstraint):
@@ -104,7 +100,16 @@ class ValueSizeConstraint(ValueRangeConstraint):
         if l < self.start or l > self.stop:
             raise error.ValueConstraintError(value)
 
-class PermittedAlphabetConstraint(SingleValueConstraint): pass
+class PermittedAlphabetConstraint(SingleValueConstraint):
+    def _setValues(self, values):
+        self._values = ()
+        for v in values:
+            self._values = self._values + tuple(v)
+
+    def _testValue(self, value, idx):
+        for v in value:
+            if v not in self._values:
+                raise error.ValueConstraintError(value)
 
 # This is a bit kludgy, meaning two op modes within a single constraing
 class InnerTypeConstraint(AbstractConstraint):
@@ -113,7 +118,7 @@ class InnerTypeConstraint(AbstractConstraint):
         if self.__singleTypeConstraint:
             self.__singleTypeConstraint(value)
         elif self.__multipleTypeConstraint:
-            if not self.__multipleTypeConstraint.has_key(idx):
+            if idx not in self.__multipleTypeConstraint:
                 raise error.ValueConstraintError(value)
             constraint, status = self.__multipleTypeConstraint[idx]
             if status == 'ABSENT':   # XXX presense is not checked!
@@ -181,7 +186,7 @@ class ConstraintsUnion(AbstractConstraintSet):
             else:
                 return
         raise error.ValueConstraintError(
-            'all of %s failed for %s' % (self._values, value)
+            'all of %s failed for \"%s\"' % (self._values, value)
             )
 
 # XXX

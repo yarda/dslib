@@ -30,8 +30,8 @@ import types
 import base64
 
 # dslib imports
-from dslib.pyasn1.codec.der import decoder
-from dslib.pyasn1 import error
+from pyasn1.codec.der import decoder
+from pyasn1 import error
 from dslib.converters.bytes_converter import *
 
 # local imports

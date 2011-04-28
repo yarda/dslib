@@ -25,8 +25,8 @@ Created on Dec 3, 2009
 import string
 
 # dslib imports
-from dslib.pyasn1.type import tag,namedtype,univ,useful
-from dslib.pyasn1 import error
+from pyasn1.type import tag,namedtype,univ,useful
+from pyasn1 import error
 
 # local imports
 from tools import *
@@ -49,10 +49,10 @@ class Extensions(univ.SequenceOf):
 class SubjectPublicKeyInfo(univ.Sequence):
      componentType = namedtype.NamedTypes(
          namedtype.NamedType('algorithm', AlgorithmIdentifier()),
-         namedtype.NamedType('subjectPublicKey', univ.BitString())
+         namedtype.NamedType('subjectPublicKey', ConvertibleBitString())
          )
 
-class UniqueIdentifier(univ.BitString): pass
+class UniqueIdentifier(ConvertibleBitString): pass
 
 class Time(univ.Choice):
     componentType = namedtype.NamedTypes(
@@ -95,7 +95,7 @@ class Certificate(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('tbsCertificate', TBSCertificate()),
         namedtype.NamedType('signatureAlgorithm', AlgorithmIdentifier()),
-        namedtype.NamedType('signatureValue', univ.BitString())
+        namedtype.NamedType('signatureValue', ConvertibleBitString())
         )
 
 class Certificates(univ.SetOf):

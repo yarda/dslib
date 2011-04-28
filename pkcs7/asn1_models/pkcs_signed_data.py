@@ -24,8 +24,8 @@ Model for pkcs#7 v1.5 signedData content
 import string
 
 # dslib imports
-from dslib.pyasn1.type import tag,namedtype,univ,useful
-from dslib.pyasn1 import error
+from pyasn1.type import tag,namedtype,univ,useful
+from pyasn1 import error
 
 # local imports
 from X509_certificate import Certificates
@@ -78,7 +78,12 @@ class IssuerAndSerial(univ.Sequence):
                                          namedtype.NamedType("serialNumber", univ.Integer())
                                          )
 
-class AuthAttributeValue(univ.Set): 
+class AuthAttributeValue(univ.SetOf): 
+    #componentType = namedtype.NamedTypes(
+    #    namedtype.NamedType('', univ.Any())
+    #    )
+    #componentType = univ.Any()
+    
     def __str__(self):
         '''
         Return string of first element in this set

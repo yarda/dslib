@@ -23,8 +23,8 @@ Decoding of PKCS7 messages
 from cStringIO import StringIO
 
 # dslib imports
-from dslib.pyasn1.codec.der import decoder
-from dslib.pyasn1 import error
+from pyasn1.codec.der import decoder
+from pyasn1 import error
 
 # local imports
 from asn1_models.pkcs_signed_data import *
@@ -85,16 +85,18 @@ def decode_msg(message):
     # decode pkcs signed message
     mess_obj = StringIO(message)
     mess_view = StringView(mess_obj, 0, len(message))
-    decoded = decoder.decode(mess_view,asn1Spec=msg)
+    decoded = decoder.decode(mess_view, asn1Spec=msg)
     message = decoded[0]
-        
+    print len(decoded[1])
+            
     return message
+
 
 def decode_qts(qts_bytes):
     '''
     Decodes qualified timestamp
     '''
-    qts = Qts()
+    qts = Qts()    
     decoded = decoder.decode(qts_bytes,asn1Spec=qts)
     qts = decoded[0]
     

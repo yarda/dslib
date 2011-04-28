@@ -1,4 +1,5 @@
 # NamedType specification for constructed types
+from pyasn1.type import tagmap
 from pyasn1 import error
 
 class NamedType:
@@ -24,8 +25,10 @@ class DefaultedNamedType(NamedType):
 class NamedTypes:
     def __init__(self, *namedTypes):
         self.__namedTypes = namedTypes
+        self.__namedTypesLen = len(self.__namedTypes)
         self.__minTagSet = None
-        self.__typeMap = {}; self.__tagMap = {}; self.__nameMap = {}
+        self.__tagToPosIdx = {}; self.__nameToPosIdx = {}
+        self.__tagMap = { False: None, True: None }
         self.__ambigiousTypes = {}
 
     def __repr__(self):
@@ -36,27 +39,27 @@ class NamedTypes:
     
     def __getitem__(self, idx): return self.__namedTypes[idx]
 
-    def __nonzero__(self):
-        if self.__namedTypes: return 1
-        else: return 0
-    def __len__(self): return len(self.__namedTypes)
+    def __nonzero__(self): return self.__namedTypesLen and 1 or 0
+    def __len__(self): return self.__namedTypesLen
     
     def getTypeByPosition(self, idx):
-        try:
-            return self.__namedTypes[idx].getType()
-        except IndexError:
+        if idx < 0 or idx >= self.__namedTypesLen:
             raise error.PyAsn1Error('Type position out of range')
+        else:
+            return self.__namedTypes[idx].getType()
+
     def getPositionByType(self, tagSet):
-        if not self.__tagMap:
-            idx = len(self.__namedTypes)
+        if not self.__tagToPosIdx:
+            idx = self.__namedTypesLen
             while idx > 0:
                 idx = idx - 1
-                for t in self.__namedTypes[idx].getType().getTypeMap().keys():
-                    if self.__tagMap.has_key(t):
+                tagMap = self.__namedTypes[idx].getType().getTagMap()
+                for t in tagMap.getPosMap().keys():
+                    if t in self.__tagToPosIdx:
                         raise error.PyAsn1Error('Duplicate type %s' % t)
-                    self.__tagMap[t] = idx
+                    self.__tagToPosIdx[t] = idx
         try:
-            return self.__tagMap[tagSet]
+            return self.__tagToPosIdx[tagSet]
         except KeyError:
             raise error.PyAsn1Error('Type %s not found' % tagSet)
         
@@ -66,22 +69,22 @@ class NamedTypes:
         except IndexError:
             raise error.PyAsn1Error('Type position out of range')
     def getPositionByName(self, name):
-        if not self.__nameMap:
-            idx = len(self.__namedTypes)
+        if not self.__nameToPosIdx:
+            idx = self.__namedTypesLen
             while idx > 0:
                 idx = idx - 1
                 n = self.__namedTypes[idx].getName()
-                if self.__nameMap.has_key(n):
+                if n in self.__nameToPosIdx:
                     raise error.PyAsn1Error('Duplicate name %s' % n)
-                self.__nameMap[n] = idx
+                self.__nameToPosIdx[n] = idx
         try:
-            return self.__nameMap[name]
+            return self.__nameToPosIdx[name]
         except KeyError:
             raise error.PyAsn1Error('Name %s not found' % name)
 
     def __buildAmbigiousTagMap(self):
         ambigiousTypes = ()
-        idx = len(self.__namedTypes)
+        idx = self.__namedTypesLen
         while idx > 0:
             idx = idx - 1
             t = self.__namedTypes[idx]
@@ -91,10 +94,10 @@ class NamedTypes:
                 ambigiousTypes = (t, )
             self.__ambigiousTypes[idx] = apply(NamedTypes, ambigiousTypes)
         
-    def getTypeMapNearPosition(self, idx):
+    def getTagMapNearPosition(self, idx):
         if not self.__ambigiousTypes: self.__buildAmbigiousTagMap()
         try:
-            return self.__ambigiousTypes[idx].getTypeMap()
+            return self.__ambigiousTypes[idx].getTagMap()
         except KeyError:
             raise error.PyAsn1Error('Type position out of range')
 
@@ -114,19 +117,12 @@ class NamedTypes:
                     self.__minTagSet = tagSet
         return self.__minTagSet
     
-    def getTypeMap(self, uniq=None):
-        if not self.__typeMap:
-            for t in self.__namedTypes:
-                __type = t.getType()
-                typeMap = __type.getTypeMap()
-                if uniq:
-                    for k in typeMap.keys():
-                        if self.__typeMap.has_key(k): 
-                            raise error.PyAsn1Error(
-                               'Duplicate type %s in map %s'%(k,self.__typeMap)
-                                )
-                        self.__typeMap[k] = __type
-                else:
-                    for k in typeMap.keys():
-                        self.__typeMap[k] = __type
-        return self.__typeMap
+    def getTagMap(self, uniq=False):
+        if self.__tagMap[uniq] is None:
+            tagMap = tagmap.TagMap()
+            for nt in self.__namedTypes:
+                tagMap = tagMap.clone(
+                    nt.getType(), nt.getType().getTagMap(), uniq
+                    )
+            self.__tagMap[uniq] = tagMap
+        return self.__tagMap[uniq]

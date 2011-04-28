@@ -76,10 +76,10 @@ class CRL_dist_point():
         '''
         added_certs = 0
         for revoked in revoked_sn_list:            
-            sn = revoked[0]
+            sn = int(revoked.getComponentByName("userCertificate"))
             if not self.revoked_certs.has_key(sn): 
                 # write the revocation time of this key (cert serial number) 
-                self.revoked_certs[sn] = revoked[1]
+                self.revoked_certs[sn] = str(revoked.getComponentByName('revocationDate'))
                 self.changed = True
                 added_certs += 1
         return added_certs
@@ -120,10 +120,8 @@ class CRL_dist_point():
         self.nextUpdate = nextUpdate
         revoked = crl.getComponentByName("tbsCertList").\
                         getComponentByName("revokedCertificates")
-        # parse the unparsed content for revokedCerts
-        import fast_rev_cert_parser as fast_parser
-        revoked_sns = fast_parser.parse_all(revoked._value)
-        return self.__fill_revoked(revoked_sns)
+        
+        return self.__fill_revoked(revoked)
     
         
 class CRL_issuer():
@@ -347,7 +345,7 @@ class CRL_cache():
         '''        
         iss = self.get_issuer(issuer_name)
         if iss is None:
-            raise "Issuer %s not found" % issuer_name
+            raise Exception("Issuer %s not found" % issuer_name)
         rev_date = iss.certificate_revoked(cert_sn)
         if rev_date is None:
           return False
