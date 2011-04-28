@@ -186,11 +186,10 @@ class Message(Model):
                  "dmToHands", "dmAnnotation", "dmRecipientRefNumber",
                  "dmSenderRefNumber", "dmRecipientIdent", "dmSenderIdent",
                  "dmLegalTitleLaw", "dmLegalTitleYear", "dmLegalTitleSect",
-                 "dmLegalTitlePar", "dmLegalTitlePoint", "dmPersonalDelivery",\
+                 "dmLegalTitlePar", "dmLegalTitlePoint", "dmPersonalDelivery",
                  "dmAllowSubstDelivery", "dmFiles",
                  "dmHash", "dmQTimestamp", "dmDeliveryTime", "dmAcceptanceTime",
-                 "dmMessageStatus", "dmAttachmentSize", "dmEvents",
-                 "_dmType"
+                 "dmMessageStatus", "dmAttachmentSize", "dmEvents", "_dmType"
                  )
 
   ATTR_TO_TYPE = {"dmFiles":list, "dmEvents":list}
@@ -198,7 +197,7 @@ class Message(Model):
   # attributes of message returned outside in case of MessageEnvelopeDownload,
   # MessageDownload, GetDeliveryInfo
   OUTSIDE_ATTRS = ("dmDeliveryTime","dmAcceptanceTime","dmMessageStatus",
-                   "dmAttachmentSize","dmHash","dmQTimestamp","dmEvents")
+                   "dmAttachmentSize","dmHash","dmQTimestamp","dmEvents", "_dmType")
 
   # origins in which some info (described above in OUTSIDE_ATTRS) is placed outside
   SPLIT_ORIGINS = ("dmReturnedMessageEnvelope","dmReturnedMessage",

@@ -275,13 +275,9 @@ def MarkMessageAsDownloaded():
 
 @active
 def ConfirmDelivery():  
-  i = 0
   for envelope in ds_client.GetListOfReceivedMessages().data:
     print "*ID:", envelope.dmID, envelope._dmType, envelope.dmMessageStatus
-    #reply = ds_client.MessageEnvelopeDownload(envelope.dmID)    
-    #envelope = reply.data
-    #print " ID:", envelope.dmID, envelope.dmType
-    if envelope._dmType == "K":
+    if envelope._dmType == "K" and envelope.dmMessageStatus == 4: 
       reply = ds_client.ConfirmDelivery(envelope.dmID)    
       print reply.status
       print reply.data
