@@ -24,7 +24,7 @@ Cache and management of certificate data
 from hashlib import sha256
 
 # dslib imports
-from dslib.pyasn1.codec.der import encoder
+from pyasn1.codec.der import encoder
 from dslib.properties.properties import Properties as props
 
 # local imports

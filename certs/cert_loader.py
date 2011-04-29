@@ -26,8 +26,8 @@ import string
 import base64
 
 # dslib imports
-from dslib.pyasn1.codec.der import decoder
-from dslib.pyasn1 import error
+from pyasn1.codec.der import decoder
+from pyasn1 import error
 from dslib.pkcs7.asn1_models.X509_certificate import *
 
 PEM_SUFFIX = ".pem"

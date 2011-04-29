@@ -27,8 +27,8 @@ logger = logging.getLogger("certs.cert_verifier")
 import types
 
 # dslib imports
-from dslib.pyasn1.codec.der import encoder
-from dslib.pyasn1 import error
+from pyasn1.codec.der import encoder
+from pyasn1 import error
 from dslib.pkcs7.asn1_models.oid import *
 from dslib.pkcs7.digest import *
 from dslib.pkcs7 import verifier

@@ -42,6 +42,18 @@ v budoucnosti možné použít oficiální verzi "suds", bude naše upravená
 verze z balíčku odstraněna.
 
 
+Knihovna pyasn1
+================
+
+dslib verze 1.4.1 a nižší obsahovaly přibalenou upravenou knihovnu pyasn1
+založenou na upstreamové verzi 0.0.9a. V rámci usnadnění balíčkování byla v
+dslib odstraněna nutnost používat modifikovanou knihovnu pyasn1 a je možné
+využít upstreamovou verzi. Je však nutno použít verzi minimálně 0.0.13b.
+Protože tato verze není ve většině distribucí k disposici, obsahuje knihovna
+dslib stále interní kopii pyasn1, která odpovídá verzi 0.0.13b. V budoucnosti
+bude tato knihovna pravděpodobně odstraněna z balíčku dslib.
+
+
 Autoři
 =======
 
