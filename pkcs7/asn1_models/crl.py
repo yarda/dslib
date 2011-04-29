@@ -57,14 +57,18 @@ from general_types import *
 from X509_certificate import *
 
 class RevokedCertInfo(univ.Sequence):
+    '''
+    univ.Any type is used instead of this type to avoid
+    unnecessary parsing.
+    '''
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('userCertificate', CertificateSerialNumber()),
         namedtype.NamedType('revocationDate', Time()),
-        namedtype.OptionalNamedType('crlEntryExts', univ.Sequence())#Extensions())        
+        namedtype.OptionalNamedType('crlEntryExts', univ.Any())        
         )
 
-class RevokedCertList(univ.SequenceOf):
-    componentType = RevokedCertInfo()
+class RevokedCertList(univ.Any):
+    pass
 
 class TbsCertList(univ.Sequence):
     componentType = namedtype.NamedTypes(
@@ -72,9 +76,8 @@ class TbsCertList(univ.Sequence):
         namedtype.NamedType('signature', AlgorithmIdentifier()),
         namedtype.NamedType('issuer', Name()),        
         namedtype.NamedType('thisUpdate', Time()),
-        namedtype.OptionalNamedType('nextUpdate', Time()),
-        namedtype.OptionalNamedType('revokedCertificates', RevokedCertList()), 
-        #namedtype.OptionalNamedType('revokedCertificates', univ.RevCertsList()),#RevokedCertList()), 
+        namedtype.OptionalNamedType('nextUpdate', Time()),        
+        namedtype.OptionalNamedType('revokedCertificates', RevokedCertList()),
         namedtype.OptionalNamedType('crlExtensions', Extensions().\
                                     subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0x0))),
         )

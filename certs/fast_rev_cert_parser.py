@@ -1,4 +1,3 @@
-
 #*    dslib - Python library for Datove schranky
 #*    Copyright (C) 2009-2010  CZ.NIC, z.s.p.o. (http://www.nic.cz)
 #*
@@ -42,7 +41,7 @@ def _decode_len(substrate):
   if first_byte < 128:
     return first_byte, 1
   else:
-    size = firstOctet & 0x7F    
+    size = first_byte & 0x7F    
     length_str = substrate[1:size+1]
     length = bytes_to_int(length_str)
     return length, size
@@ -102,13 +101,29 @@ def _parse_one_serial(substrate):
     # return empty string to stop the parsing process
     return -1, '', ''
 
+def _unwrap_cert_list(substrate):
+  '''
+  Removes the Set tag left because of Any type.
+  Returns the substrate ready to be parsed in _parse_one_serial.
+  '''
+  if substrate[0] == chr(0x30):
+    object_len, size_of_len_str = _decode_len(substrate[1:])
+    if (object_len == 0):
+      logger.error("Error parsing sequence object length")
+    # 1 for tag, 1 for len specifier + size of length string  
+    content_offset = 2+size_of_len_str
+    return substrate[content_offset:]
+  else:
+    logger.error('Unexpected char at the beginning of revCertList')
+    return ''
+
 def parse_all(rev_cert_list):
   '''
   Returns  list of revoked certificates serial numbers
   '''
   substrate = rev_cert_list 
-  res = []
-  #f = open('parsed_sn', "w")
+  substrate = _unwrap_cert_list(substrate)
+  res = []  
   while len(substrate) != 0:
      sn, rev_date, substrate = _parse_one_serial(substrate)
      #f.write('Parsed serial number: %x\n' % sn)
