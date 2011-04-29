@@ -60,7 +60,7 @@ class RevokedCertInfo(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('userCertificate', CertificateSerialNumber()),
         namedtype.NamedType('revocationDate', Time()),
-        namedtype.OptionalNamedType('crlEntryExts', univ.Sequence())#Extensions())        
+        namedtype.OptionalNamedType('crlEntryExts', univ.Any())        
         )
 
 class RevokedCertList(univ.SequenceOf):
