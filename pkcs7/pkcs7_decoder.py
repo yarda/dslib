@@ -87,8 +87,6 @@ def decode_msg(message):
     mess_view = StringView(mess_obj, 0, len(message))
     decoded = decoder.decode(mess_view, asn1Spec=msg)
     message = decoded[0]
-    print len(decoded[1])
-            
     return message
 
 
