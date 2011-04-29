@@ -195,6 +195,7 @@ def SignedMessageDownload():
     print "ID matches:", reply.data.dmID, reply.data.dmID == envelope.dmID
     print "Verified message: %s" % reply.data.is_message_verified()
     print "Verified certificate: %s" % reply.data.pkcs7_data.certificates[0].is_verified()
+    print reply.data.check_timestamp()
     break
 
 @active
