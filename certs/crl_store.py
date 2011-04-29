@@ -36,6 +36,7 @@ from dslib.pkcs7.asn1_models.crl import *
 # local imports
 import crl_verifier
 import timeutil
+import fast_rev_cert_parser as fast_parser
 
 CRL_DUMP_DIR = ".crl_dumps"
 CRL_DUMP_FILE = ".crl_dump"
@@ -73,13 +74,13 @@ class CRL_dist_point():
         '''
         Fills list of revoked certs with new certificates.
         Returns number of added certificates
-        '''
+        '''       
         added_certs = 0
         for revoked in revoked_sn_list:            
-            sn = int(revoked.getComponentByName("userCertificate"))
+            sn = revoked[0]
             if not self.revoked_certs.has_key(sn): 
                 # write the revocation time of this key (cert serial number) 
-                self.revoked_certs[sn] = str(revoked.getComponentByName('revocationDate'))
+                self.revoked_certs[sn] = revoked[1]
                 self.changed = True
                 added_certs += 1
         return added_certs
@@ -120,8 +121,10 @@ class CRL_dist_point():
         self.nextUpdate = nextUpdate
         revoked = crl.getComponentByName("tbsCertList").\
                         getComponentByName("revokedCertificates")
-        
-        return self.__fill_revoked(revoked)
+        # parse the unparsed content for revokedCerts        
+        revoked_sns = fast_parser.parse_all(revoked._value)
+
+        return self.__fill_revoked(revoked_sns)
     
         
 class CRL_issuer():
