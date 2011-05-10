@@ -21,7 +21,7 @@ Implementing CRL cache
 '''
 
 # standard library imports
-import httplib
+import urllib2
 import logging
 import sys
 logger = logging.getLogger('certs.crl_store')
@@ -138,27 +138,11 @@ class CRL_issuer():
         crl = decoder.decode(der_data, asn1Spec=RevCertificateList())[0]
         return crl
     
-    def __clean_path(self, path):
-        return path.rstrip(" ;,")
-    
-    def __parse_url(self, crl_url):
-        url = crl_url
-        if url.startswith("http://"):
-            url = url[7:]
-        slash = url.find('/')
-        hostname = url[:slash]
-        path = url[slash:]
-        return hostname, path
-    
     def __download_crl(self, url):
         logger.debug("Downloading CRL from %s" % url)
         try:
-          hostname, path = self.__parse_url(url)
-          path = self.__clean_path(path)
-          con = httplib.HTTPConnection(hostname)
-          con.request("GET", path)
-          resp = con.getresponse()
-          c = resp.read()
+          f = urllib2.urlopen(url, timeout=10)
+          c = f.read()
           logger.debug("Downloading finished")
           return c
         except:
