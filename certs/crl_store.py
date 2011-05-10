@@ -251,13 +251,16 @@ class CRL_issuer():
               logger.debug("Force download parameter set, ignoring nextUpdate parameter of CRL")             
             else:
               # if force download was not set, check the nextUpdate parameter
-              next_time = timeutil.to_time(dpoint.nextUpdate)         
-              current_time = timeutil.now()
-              if current_time >= next_time:
-                logger.info("Next update time passed, downloading CRL")
+              if dpoint.nextUpdate:
+                next_time = timeutil.to_time(dpoint.nextUpdate)         
+                current_time = timeutil.now()
+                if current_time >= next_time:
+                  logger.info("Next update time passed, downloading CRL")
+                else:
+                  logger.info("Next update scheduled on %s, not downloading anything" % dpoint.nextUpdate)
+                  return True, 0
               else:
-                logger.info("Next update scheduled on %s, not downloading anything" % dpoint.nextUpdate)
-                return True, 0
+                logger.info("No previous download recorded, downloading CRL")
             # download CRL
             downloaded = self.__download_crl(url)
             if downloaded is None:
