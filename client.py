@@ -60,13 +60,11 @@ class Dispatcher(object):
                                "SignedSentMessageDownload":"MessageDownload",
                                "GetSignedDeliveryInfo":"GetDeliveryInfo",}
 
-  def __init__(self, ds_client, wsdl_url, soap_url=None, proxy=None,
-               server_certs=None):
-    """proxy can be a string 'hostname:port' or None"""
-    self.ds_client = ds_client # this is a Client instance; username, password, etc. will be take from it
+  def __init__(self, ds_client, wsdl_url, soap_url=None, server_certs=None):
+    self.ds_client = ds_client # this is a Client instance;
+                               # username, password, etc. will be take from it
     self.wsdl_url = wsdl_url
     self.soap_url = soap_url # if None, default from WSDL will be used
-    self.proxy = proxy
     transport_args = dict(ca_certs=server_certs,
                           cert_verifier=Client.CERT_VERIFIER,
                           username=self.ds_client.login,
@@ -82,8 +80,6 @@ class Dispatcher(object):
       if self.ds_client.login_method == "certificate":
         transport_class = HttpTransport # we do not need Basic authentication
                                         # - we use only certs
-    if self.proxy:
-      transport_args.update(proxy={'https':self.proxy})
     transport = transport_class(**transport_args)
     if not self.soap_url:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport)
@@ -509,7 +505,7 @@ class Client(object):
                            }
 
   def __init__(self, login=None, password=None, soap_url=None, test_environment=None,
-               login_method="username", proxy=None, server_certs=None,
+               login_method="username", server_certs=None,
                client_certfile=None, client_keyfile=None,
                client_keyobj=None, client_certobj=None):
     """
@@ -518,8 +514,6 @@ class Client(object):
     if neither soap_url not test_environment is provided, it will be empty and
     the dispatcher will use the value from WSDL;
     if soap_url id used, it will be used without regard to test_environment value
-    proxy can be a string 'hostname:port' or None or -1 for automatic
-    detection using the urllib2 library
     server_certs - path to a certificate chain used for verification of server
     certificate, if None, no check on server certificate is performed
     
@@ -563,7 +557,6 @@ class Client(object):
       self.soap_url = None
     self.test_environment = test_environment
     self._dispatchers = {}
-    self.proxy = proxy
     self.server_certs = server_certs
 
 
@@ -601,26 +594,15 @@ class Client(object):
         this_soap_url = self.soap_url
       else:
         this_soap_url = self.soap_url + "/"
-      this_soap_url += Client.login_method2url_part[self.login_method] + "/" + config['soap_url_end']
-    dis = Dispatcher(self, Client.WSDL_URL_BASE+config['wsdl_name'], soap_url=this_soap_url,\
-                      proxy=self.get_real_proxy(), server_certs=self.server_certs)
+      this_soap_url += Client.login_method2url_part[self.login_method] + \
+                       "/" + config['soap_url_end']
+    dis = Dispatcher(self, Client.WSDL_URL_BASE+config['wsdl_name'],
+                     soap_url=this_soap_url,
+                     server_certs=self.server_certs)
     self._dispatchers[name] = dis
     return dis
 
-  def get_real_proxy(self):
-    return self.proxy_to_real_proxy(self.proxy)
-
-  @classmethod
-  def proxy_to_real_proxy(cls, proxy):
-    """interpret the proxy setting to obtain a real name and port or None"""
-    if proxy == None:
-      return None
-    elif proxy == -1:
-      import urllib2
-      return urllib2.getproxies().get('https',None) 
-    else:
-      return proxy
-    
+   
   @classmethod
   def verify_server_certificate(cls, cert):
     """

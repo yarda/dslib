@@ -190,7 +190,9 @@ class HttpTransport(Transport):
         Unskin(self.options).update(kwargs)
         self.cookiejar = CookieJar()
         log.debug("Proxy: %s", self.options.proxy)
-        proxy_handler = u2.ProxyHandler(self.options.proxy)
+        from dslib.network import ProxyManager
+        proxy_handler = ProxyManager.HTTPS_PROXY.create_proxy_handler()
+        proxy_auth_handler = ProxyManager.HTTPS_PROXY.create_proxy_auth_handler()
         if ca_certs or (client_keyfile and client_certfile):
           https_handler = CheckingHTTPSHandler(ca_certs=ca_certs,
                                                cert_verifier=cert_verifier,
@@ -200,10 +202,13 @@ class HttpTransport(Transport):
                                                client_certobj=client_certobj)
         else:
           https_handler = u2.HTTPSHandler()
-        self.urlopener = u2.build_opener(proxy_handler,
-                                         SUDSHTTPRedirectHandler(),
+        self.urlopener = u2.build_opener(SUDSHTTPRedirectHandler(),
                                          u2.HTTPCookieProcessor(self.cookiejar),
                                          https_handler)
+        if proxy_handler:
+          self.urlopener.add_handler(proxy_handler)
+        if proxy_auth_handler:
+          self.urlopener.add_handler(proxy_auth_handler)
                                                               
     def open(self, request):
         try:
@@ -215,7 +220,7 @@ class HttpTransport(Transport):
                 return fp
             log.debug('opening (%s)', url)
             u2request = u2.Request(url)
-            self.__setproxy(url, u2request)
+            #self.__setproxy(url, u2request)
             fp = self.__open(u2request)
             return cache.put(url, fp)
         except u2.HTTPError, e:
@@ -229,7 +234,7 @@ class HttpTransport(Transport):
         try:
             u2request = u2.Request(url, msg, headers)
             self.__addcookies(u2request)
-            self.__setproxy(url, u2request)
+            #self.__setproxy(url, u2request)
             request.headers.update(u2request.headers)
             log.debug('sending:\n%s', request)
             if self.options.proxy:

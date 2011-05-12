@@ -356,6 +356,8 @@ Possible values are 'username', 'certificate' and 'user_certificate'.")
   proxy = options.proxy
   if proxy == "SYSTEM":
     proxy = -1
+  from dslib.network import ProxyManager
+  ProxyManager.HTTPS_PROXY.set_uri(proxy)
   # read the tests
   to_run = []
   if 'ALL' in args:
@@ -381,7 +383,6 @@ Possible values are 'username', 'certificate' and 'user_certificate'.")
     import local
     cert_dir = local.find_data_directory("trusted_certificates")
     args = dict(test_environment=options.test_account,
-                proxy=proxy,
                 server_certs=os.path.join(cert_dir, "all_trusted.pem"),
                 login_method=login_method
                 )

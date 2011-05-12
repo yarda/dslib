@@ -140,8 +140,17 @@ class CRL_issuer():
     
     def __download_crl(self, url):
         logger.debug("Downloading CRL from %s" % url)
+        # we construct an urlopener using proxy settings
+        from dslib.network import ProxyManager
+        prox_hand = ProxyManager.HTTP_PROXY.create_proxy_handler()
+        prox_auth_hand = ProxyManager.HTTP_PROXY.create_proxy_auth_handler()
+        opener = urllib2.build_opener()
+        if prox_hand:
+          opener.add_handler(prox_hand)
+        if prox_auth_hand:
+          opener.add_handler(prox_auth_hand)
         try:
-          f = urllib2.urlopen(url, timeout=10)
+          f = opener.open(url, timeout=10)
           c = f.read()
           logger.debug("Downloading finished")
           return c
