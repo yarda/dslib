@@ -38,9 +38,14 @@ class Proxy(object):
         uri = urllib2.getproxies().get(self.method, None)
       else:
         uri = proxy
-      method, self.username, self.password, self.hostname = self.parse_uri(uri)
-      if method:
-        self.method = method
+      if uri:
+        method, self.username, self.password, self.hostname = self.parse_uri(uri)
+        if method:
+          self.method = method
+      else:
+        self.hostname = None
+        self.username = None
+        self.password = None
     
   @classmethod
   def parse_uri(cls, uri):
