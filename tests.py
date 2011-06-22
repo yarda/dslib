@@ -287,8 +287,8 @@ def ConfirmDelivery():
 
 if __name__ == "__main__":
   import logging
-  logging.basicConfig(level=logging.DEBUG)
-  logging.getLogger('suds').setLevel(logging.DEBUG)
+  #logging.basicConfig(level=logging.DEBUG)
+  #logging.getLogger('suds').setLevel(logging.DEBUG)
   def otp_callback():
     x = raw_input("Generated code: ")
     return x

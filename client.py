@@ -46,6 +46,7 @@ import models
 from properties.properties import Properties as props
 import certs.cert_loader
 import local
+import release
 
 
 class Dispatcher(object):
@@ -70,7 +71,8 @@ class Dispatcher(object):
     transport_args = dict(ca_certs=server_certs,
                           cert_verifier=Client.CERT_VERIFIER,
                           username=self.ds_client.login,
-                          password=self.ds_client.password
+                          password=self.ds_client.password,
+                          user_agent_string=self.ds_client.isds_user_agent_string
                           )
     transport_class = HttpAuthenticated # for Basic HTTP authentication
     if self.ds_client.login_method in ("certificate","user_certificate"):
@@ -518,7 +520,7 @@ class Client(object):
                login_method="username", server_certs=None,
                client_certfile=None, client_keyfile=None,
                client_keyobj=None, client_certobj=None,
-               otp_callback=None):
+               otp_callback=None, isds_user_agent_string=None):
     """
     if soap_url is not given and test_environment is given, soap_url will be
     inferred from the value of test_environment based on what is set in test2soap_url;
@@ -543,6 +545,10 @@ class Client(object):
     self.client_certobj = client_certobj
     self.login_method = login_method 
     self.otp_callback = otp_callback
+    if not isds_user_agent_string:
+      self.isds_user_agent_string = "dslib %s" % release.DSLIB_VERSION
+    else:
+      self.isds_user_agent_string = isds_user_agent_string
     # check authentication data
     if self.login_method in ("certificate","user_certificate"):
       if not self.CERT_LOGIN_AVAILABLE:
@@ -591,6 +597,7 @@ class Client(object):
     from network import ProxyManager
     proxy_handler = ProxyManager.HTTPS_PROXY.create_proxy_handler()
     urlopener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cookie_jar))
+    urlopener.addheaders = [('User-agent', self.isds_user_agent_string)]
     if proxy_handler:
       self.urlopener.add_handler(proxy_handler)
     try:
@@ -603,12 +610,8 @@ class Client(object):
         basic_auth = base64.b64encode(
                              "%s:%s%s" % (self.login, self.password, hotp))
         req.add_header("Authorization", "Basic %s" % basic_auth)
-        try:
-          result = urlopener.open(req)
-        except urllib2.HTTPError as e2:
-          print e2
-        else:
-          print self._cookie_jar
+        result = urlopener.open(req)
+
 
   def get_cookie_jar(self):
     if self.requires_login() and len(self._cookie_jar) == 0:

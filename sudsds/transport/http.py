@@ -71,7 +71,7 @@ class SUDSHTTPRedirectHandler(u2.HTTPRedirectHandler):
 
 class MyHTTPResponse(httplib.HTTPResponse):
   
-  def __init__(self, sock, debuglevel=10, strict=0, method=None):
+  def __init__(self, sock, debuglevel=0, strict=0, method=None):
     
     httplib.HTTPResponse.__init__(self, sock, debuglevel, strict, method)
 
@@ -169,7 +169,7 @@ class HttpTransport(Transport):
     def __init__(self, ca_certs=None, cert_verifier=None,
                  client_keyfile=None, client_certfile=None,
                  client_keyobj=None, client_certobj=None,
-                 cookie_callback=None,
+                 cookie_callback=None, user_agent_string=None,
                  **kwargs):
         """
         @param kwargs: Keyword arguments.
@@ -191,6 +191,7 @@ class HttpTransport(Transport):
         Unskin(self.options).update(kwargs)
         self.cookiejar = CookieJar(DefaultCookiePolicy())
         self.cookie_callback = cookie_callback
+        self.user_agent_string = user_agent_string
         log.debug("Proxy: %s", self.options.proxy)
         from dslib.network import ProxyManager
         proxy_handler = ProxyManager.HTTPS_PROXY.create_proxy_handler()
@@ -211,6 +212,7 @@ class HttpTransport(Transport):
           self.urlopener.add_handler(proxy_handler)
         if proxy_auth_handler:
           self.urlopener.add_handler(proxy_auth_handler)
+        self.urlopener.addheaders = [('User-agent', self.user_agent_string)]
           
     def _fill_in_cookies(self):
         if self.cookie_callback:
