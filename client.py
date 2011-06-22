@@ -31,6 +31,8 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 import base64
 import logging
 import re
+import urllib2
+import cookielib
 
 # local imports
 import pkcs7.pkcs7_decoder
@@ -80,6 +82,9 @@ class Dispatcher(object):
       if self.ds_client.login_method == "certificate":
         transport_class = HttpTransport # we do not need Basic authentication
                                         # - we use only certs
+    if self.ds_client.login_method in ("hotp", "totp"):
+      transport_class = HttpTransport
+      transport_args.update(cookie_callback=self.ds_client.get_cookie_jar)
     transport = transport_class(**transport_args)
     if not self.soap_url:
       self.soap_client = SudsClient(self.wsdl_url, transport=transport)
@@ -492,7 +497,8 @@ class Client(object):
                             }
   test2soap_url = {True: {"username": "https://ws1.czebox.cz/",
                           "certificate": "https://ws1c.czebox.cz/",
-                          "user_certificate": "https://ws1c.czebox.cz/",},
+                          "user_certificate": "https://ws1c.czebox.cz/",
+                          "hotp": "https://www.czebox.cz/"},
                    False: {"username":"https://ws1.mojedatovaschranka.cz/",
                            "certificate": "https://ws1c.mojedatovaschranka.cz/",
                            "user_certificate":
@@ -502,12 +508,17 @@ class Client(object):
   login_method2url_part = {"username": "DS",
                            "certificate": "cert/DS",
                            "user_certificate": "certds/DS",
+                           "hotp": "apps/DS"
                            }
+  
+  otp_method2addr = {"hotp": "as/processLogin?type=hotp" }
+
 
   def __init__(self, login=None, password=None, soap_url=None, test_environment=None,
                login_method="username", server_certs=None,
                client_certfile=None, client_keyfile=None,
-               client_keyobj=None, client_certobj=None):
+               client_keyobj=None, client_certobj=None,
+               otp_callback=None):
     """
     if soap_url is not given and test_environment is given, soap_url will be
     inferred from the value of test_environment based on what is set in test2soap_url;
@@ -523,6 +534,7 @@ class Client(object):
     - an alternative way of providing data for login_methods 'certificate' and
     'user_certificate' 
     """
+    self._cookie_jar = cookielib.CookieJar()
     self.login = login
     self.password = password
     self.client_keyfile = client_keyfile
@@ -530,6 +542,7 @@ class Client(object):
     self.client_keyobj = client_keyobj
     self.client_certobj = client_certobj
     self.login_method = login_method 
+    self.otp_callback = otp_callback
     # check authentication data
     if self.login_method in ("certificate","user_certificate"):
       if not self.CERT_LOGIN_AVAILABLE:
@@ -548,6 +561,10 @@ class Client(object):
       if not self.password:
         raise ValueError("You must supply a password when using\
  '%s' login method" % login_method)
+    if self.login_method in ("hotp","totp"):
+      if not self.otp_callback:
+        raise ValueError("You must supply otp_callback when using\
+ '%s' login method" % login_method)
     # all ok - continue creating the instance attrs
     if soap_url:
       self.soap_url = soap_url
@@ -559,6 +576,49 @@ class Client(object):
     self._dispatchers = {}
     self.server_certs = server_certs
 
+  def login_to_server(self):
+    """Performs all steps necessary for later successful access to the server.
+    It is needed by authentication method that require a cookie to be present
+    when accessing the SOAP interface.
+    'user_callback' is a function that would be called if the login requires some user
+    input."""
+    base_url = self.test2soap_url[self.test_environment][self.login_method]
+    url = base_url + \
+          self.otp_method2addr[self.login_method] + \
+          "&uri=" + base_url + \
+          self.login_method2url_part[self.login_method] + "/" + \
+          self.dispatcher_name2config['operations']['soap_url_end']
+    from network import ProxyManager
+    proxy_handler = ProxyManager.HTTPS_PROXY.create_proxy_handler()
+    urlopener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cookie_jar))
+    if proxy_handler:
+      self.urlopener.add_handler(proxy_handler)
+    try:
+      result = urlopener.open(url, "")
+    except urllib2.HTTPError as e:
+      auth_meth_req = e.headers.get("WWW-Authenticate")
+      if auth_meth_req == "hotp":
+        req = urllib2.Request(url, "")
+        hotp = self.otp_callback()
+        basic_auth = base64.b64encode(
+                             "%s:%s%s" % (self.login, self.password, hotp))
+        req.add_header("Authorization", "Basic %s" % basic_auth)
+        try:
+          result = urlopener.open(req)
+        except urllib2.HTTPError as e2:
+          print e2
+        else:
+          print self._cookie_jar
+
+  def get_cookie_jar(self):
+    if self.requires_login() and len(self._cookie_jar) == 0:
+      self.login_to_server()
+    return self._cookie_jar
+  
+  def requires_login(self):
+    if self.login_method in ("hotp","totp"):
+      return True
+    return False
 
   def __getattr__(self, name):
     """called when the user tries to access attribute or method;

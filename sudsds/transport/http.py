@@ -26,7 +26,7 @@ import socket
 from sudsds.transport import *
 from sudsds.properties import Unskin
 from urlparse import urlparse
-from cookielib import CookieJar
+from cookielib import CookieJar, DefaultCookiePolicy
 from logging import getLogger
 import httplib
 import ssl
@@ -71,7 +71,7 @@ class SUDSHTTPRedirectHandler(u2.HTTPRedirectHandler):
 
 class MyHTTPResponse(httplib.HTTPResponse):
   
-  def __init__(self, sock, debuglevel=0, strict=0, method=None):
+  def __init__(self, sock, debuglevel=10, strict=0, method=None):
     
     httplib.HTTPResponse.__init__(self, sock, debuglevel, strict, method)
 
@@ -169,6 +169,7 @@ class HttpTransport(Transport):
     def __init__(self, ca_certs=None, cert_verifier=None,
                  client_keyfile=None, client_certfile=None,
                  client_keyobj=None, client_certobj=None,
+                 cookie_callback=None,
                  **kwargs):
         """
         @param kwargs: Keyword arguments.
@@ -188,7 +189,8 @@ class HttpTransport(Transport):
         """
         Transport.__init__(self)
         Unskin(self.options).update(kwargs)
-        self.cookiejar = CookieJar()
+        self.cookiejar = CookieJar(DefaultCookiePolicy())
+        self.cookie_callback = cookie_callback
         log.debug("Proxy: %s", self.options.proxy)
         from dslib.network import ProxyManager
         proxy_handler = ProxyManager.HTTPS_PROXY.create_proxy_handler()
@@ -209,8 +211,16 @@ class HttpTransport(Transport):
           self.urlopener.add_handler(proxy_handler)
         if proxy_auth_handler:
           self.urlopener.add_handler(proxy_auth_handler)
+          
+    def _fill_in_cookies(self):
+        if self.cookie_callback:
+            jar = self.cookie_callback()
+            if jar:
+                for cookie in jar:
+                    self.cookiejar.set_cookie(cookie)
                                                               
     def open(self, request):
+        self._fill_in_cookies()
         try:
             url = request.url
             cache = self.options.cache
@@ -227,6 +237,7 @@ class HttpTransport(Transport):
             raise TransportError(str(e), e.code, e.fp)
 
     def send(self, request):
+        self._fill_in_cookies()
         result = None
         url = request.url
         msg = request.message

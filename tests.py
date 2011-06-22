@@ -287,8 +287,11 @@ def ConfirmDelivery():
 
 if __name__ == "__main__":
   import logging
-  #logging.basicConfig(level=logging.DEBUG)
-  #logging.getLogger('suds').setLevel(logging.DEBUG)
+  logging.basicConfig(level=logging.DEBUG)
+  logging.getLogger('suds').setLevel(logging.DEBUG)
+  def otp_callback():
+    x = raw_input("Generated code: ")
+    return x
   
   def list_tests(tests):
     print "Available tests:"
@@ -419,7 +422,7 @@ Possible values are 'username', 'certificate' and 'user_certificate'.")
         sys.stderr.write("For login method '%s' certificate (either -P or -k \
 and -c) is needed!\n" % login_method)
         sys.exit(101)
-    if login_method in ("username", "user_certificate"):
+    if login_method in ("username", "user_certificate", "hotp"):
       # username and password login
       # try to find a stored password
       passfile = "./.isds_password"
@@ -430,6 +433,8 @@ and -c) is needed!\n" % login_method)
         import getpass
         password = getpass.getpass("Enter login password:")
       args.update(login=username, password=password)
+      if login_method in ("hotp", "totp"):
+        args.update(otp_callback=otp_callback)
     CertificateManager.read_trusted_certificates_from_dir("trusted_certificates")
     # create the client      
     ds_client = Client(**args)
