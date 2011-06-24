@@ -78,9 +78,25 @@ class Proxy(object):
     #if pass_man:
     #  return urllib2.ProxyBasicAuthHandler(pass_man)
 
-    
 
 class ProxyManager(object):
   HTTP_PROXY = Proxy(None, method='http')
   HTTPS_PROXY = Proxy(None, method='https')
+  
+
+
+class NoPostRedirectionHTTPRedirectHandler(urllib2.HTTPRedirectHandler):
+  """Handler used for OTP authentication where we do not want redirection
+  of POST requests to occur"""
+  
+  def redirect_request(self, req, fp, code, msg, headers, newurl):
+        """the redirect handler built into python does redirect POST
+        requests even though it is forbidden by the RFC 2616
+        """
+        m = req.get_method()
+        if (code in (301, 302, 303) and m == "POST"):
+            raise urllib2.HTTPError(req.get_full_url(), code, msg, headers, fp)
+        else:
+          urllib2.HTTPRedirectHandler.redirect_request(self, req, fp, code,
+                                                       msg, headers, newurl)
 

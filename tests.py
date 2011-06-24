@@ -422,7 +422,7 @@ Possible values are 'username', 'certificate' and 'user_certificate'.")
         sys.stderr.write("For login method '%s' certificate (either -P or -k \
 and -c) is needed!\n" % login_method)
         sys.exit(101)
-    if login_method in ("username", "user_certificate", "hotp"):
+    if login_method in ("username", "user_certificate", "hotp", "totp"):
       # username and password login
       # try to find a stored password
       passfile = "./.isds_password"

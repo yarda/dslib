@@ -222,7 +222,8 @@ class HttpTransport(Transport):
                     self.cookiejar.set_cookie(cookie)
                                                               
     def open(self, request):
-        self._fill_in_cookies()
+        if not request.url.startswith("file://"):
+            self._fill_in_cookies()
         try:
             url = request.url
             cache = self.options.cache
@@ -239,7 +240,8 @@ class HttpTransport(Transport):
             raise TransportError(str(e), e.code, e.fp)
 
     def send(self, request):
-        self._fill_in_cookies()
+        if not request.url.startswith("file://"):
+            self._fill_in_cookies()
         result = None
         url = request.url
         msg = request.message

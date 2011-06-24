@@ -47,6 +47,7 @@ from properties.properties import Properties as props
 import certs.cert_loader
 import local
 import release
+from network import NoPostRedirectionHTTPRedirectHandler, ProxyManager
 
 
 class Dispatcher(object):
@@ -500,20 +501,25 @@ class Client(object):
   test2soap_url = {True: {"username": "https://ws1.czebox.cz/",
                           "certificate": "https://ws1c.czebox.cz/",
                           "user_certificate": "https://ws1c.czebox.cz/",
-                          "hotp": "https://www.czebox.cz/"},
+                          "hotp": "https://www.czebox.cz/",
+                          "totp": "https://www.czebox.cz/"},
                    False: {"username":"https://ws1.mojedatovaschranka.cz/",
                            "certificate": "https://ws1c.mojedatovaschranka.cz/",
                            "user_certificate":
-                                    "https://ws1c.mojedatovaschranka.cz/",}
+                                    "https://ws1c.mojedatovaschranka.cz/",
+                           "hotp": "https://www.mojedatovaschranka.cz/",
+                           "totp": "https://www.mojedatovaschranka.cz/"}
                    }
 
   login_method2url_part = {"username": "DS",
                            "certificate": "cert/DS",
                            "user_certificate": "certds/DS",
-                           "hotp": "apps/DS"
+                           "hotp": "apps/DS",
+                           "totp": "apps/DS"
                            }
   
-  otp_method2addr = {"hotp": "as/processLogin?type=hotp" }
+  otp_method2addr = {"hotp": "as/processLogin?type=hotp",
+                     "totp": "as/processLogin?type=totp"}
 
 
   def __init__(self, login=None, password=None, soap_url=None, test_environment=None,
@@ -594,23 +600,73 @@ class Client(object):
           "&uri=" + base_url + \
           self.login_method2url_part[self.login_method] + "/" + \
           self.dispatcher_name2config['operations']['soap_url_end']
-    from network import ProxyManager
     proxy_handler = ProxyManager.HTTPS_PROXY.create_proxy_handler()
-    urlopener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cookie_jar))
+    redir_handler = NoPostRedirectionHTTPRedirectHandler()
+    urlopener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cookie_jar),
+                                     redir_handler)
     urlopener.addheaders = [('User-agent', self.isds_user_agent_string)]
     if proxy_handler:
       self.urlopener.add_handler(proxy_handler)
     try:
-      result = urlopener.open(url, "")
+      if self.login_method == "totp":
+        _url = url+"&sendSms=true"
+      else:
+        _url = url
+      result = urlopener.open(_url, "")
     except urllib2.HTTPError as e:
       auth_meth_req = e.headers.get("WWW-Authenticate")
+      # HOTP
       if auth_meth_req == "hotp":
         req = urllib2.Request(url, "")
         hotp = self.otp_callback()
+        if hotp is not None:
+          basic_auth = base64.b64encode(
+                               "%s:%s%s" % (self.login, self.password, hotp))
+          req.add_header("Authorization", "Basic %s" % basic_auth)
+          try:
+            result = urlopener.open(req)
+          except urllib2.HTTPError as e2:
+            if e2.code == 302:
+              # this is ok - we expected it
+              pass
+            else:
+              raise e2
+        else:
+          raise DSException("OTP Error", 1, "User did not supply an OTP")
+      # TOTP
+      if auth_meth_req == "totpsendsms":
+        req = urllib2.Request(_url, "")
+        # request an SMS to be sent using password for authentication
         basic_auth = base64.b64encode(
-                             "%s:%s%s" % (self.login, self.password, hotp))
+                             "%s:%s" % (self.login, self.password))
         req.add_header("Authorization", "Basic %s" % basic_auth)
-        result = urlopener.open(req)
+        try:
+          result = urlopener.open(req)
+        except urllib2.HTTPError as e2:
+            if e2.code == 302:
+              # this is ok - we expected it
+              pass
+            else:
+              raise e2
+        # ask for the code received via SMS
+        totp = self.otp_callback()
+        if totp is not None:
+          req = urllib2.Request(url, "")
+          # make the final request obtaining the cookie
+          basic_auth = base64.b64encode(
+                               "%s:%s%s" % (self.login, self.password, totp))
+          req.add_header("Authorization", "Basic %s" % basic_auth)
+          try:
+            result = urlopener.open(req)
+          except urllib2.HTTPError as e2:
+            if e2.code == 302:
+              # this is ok - we expected it
+              pass
+            else:
+              raise e2
+        else:
+          raise DSException("OTP Error", 1, "User did not supply an OTP")
+
 
 
   def get_cookie_jar(self):
