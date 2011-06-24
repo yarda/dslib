@@ -446,6 +446,7 @@ and -c) is needed!\n" % login_method)
       print "==================== end of %s ====================" % test.__name__  
       print
       print
+    ds_client.logout_from_server()
   else:
     list_tests(tests)
     print op.get_usage()

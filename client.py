@@ -520,6 +520,9 @@ class Client(object):
   
   otp_method2addr = {"hotp": "as/processLogin?type=hotp",
                      "totp": "as/processLogin?type=totp"}
+  
+  logout_url_part = "as/processLogout"
+
 
 
   def __init__(self, login=None, password=None, soap_url=None, test_environment=None,
@@ -668,6 +671,30 @@ class Client(object):
           raise DSException("OTP Error", 1, "User did not supply an OTP")
 
 
+  def logout_from_server(self):
+    """When authentication requiring a cookie is used, we have to log out
+    of the server - on app exit or whatever"""
+    if self.requires_login() and len(self._cookie_jar) != 0:
+      base_url = self.test2soap_url[self.test_environment][self.login_method]
+      url = base_url + \
+            self.logout_url_part + \
+            "?uri=" + base_url + \
+            self.login_method2url_part[self.login_method] + "/" + \
+            self.dispatcher_name2config['operations']['soap_url_end']
+      proxy_handler = ProxyManager.HTTPS_PROXY.create_proxy_handler()
+      urlopener = urllib2.build_opener(
+                              urllib2.HTTPCookieProcessor(self._cookie_jar))
+      urlopener.addheaders = [('User-agent', self.isds_user_agent_string)]
+      if proxy_handler:
+        self.urlopener.add_handler(proxy_handler)
+      try:
+        result = urlopener.open(url)
+      except urllib2.HTTPError as e:
+        raise DSException("OTP Error", 2, "Could not logout: %s" % e)
+      else:
+        result.close()
+      
+    
 
   def get_cookie_jar(self):
     if self.requires_login() and len(self._cookie_jar) == 0:
