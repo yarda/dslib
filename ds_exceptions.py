@@ -22,6 +22,14 @@ Here we define DS related exceptions
 """
 
 class DSException(Exception):
+  
+  def __unicode__(self):
+    return "DSException"
+
+  def __str__(self):
+    return unicode(self).encode("utf-8")
+
+class DSGenericException(DSException):
 
   def __init__(self, message, code, text):
     self.message = message
@@ -30,3 +38,49 @@ class DSException(Exception):
 
   def __unicode__(self):
     return "%s (code: %s, text: %s)" % (self.message, self.code, self.text)
+  
+  def __str__(self):
+    return unicode(self).encode("utf-8")
+  
+
+class DSOTPException(DSException):
+  """fired when something in OTP authorization got out of hand"""
+  
+  OTP_CANCELED_BY_USER = 1
+  LOGOUT_NOT_POSSIBLE = 2
+  
+  def __init__(self, code, text):
+    self.code = code
+    self.text = text
+    
+  def __unicode__(self):
+    return "OTP Error %s: %s" % (self.code, self.text) 
+  
+  
+class DSNotAuthorizedException(DSException):
+  """fired when the client could not be authorized by the server"""
+  
+  def __init__(self, http_exc):
+    self.text = ""
+    self.code = ""
+    self._extract_data_from_http_exc(http_exc)
+    
+    
+  def _extract_data_from_http_exc(self, e):
+    from email.header import decode_header
+    self.code = e.headers.get("x-response-message-code", "")
+    text = e.headers.get("x-response-message-text", "")
+    if text:
+      try:
+        ret = decode_header(text)
+      except:
+        pass
+      else:
+        if ret:
+          text, encoding = ret[0]
+          if encoding:
+            text = text.decode(encoding)
+    self.text = text
+    
+  def __unicode__(self):
+    return "Authorization error %s: %s" % (self.code, self.text) 

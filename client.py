@@ -41,7 +41,7 @@ import pkcs7.tstamp_helper
 from sudsds.client import Client as SudsClient
 from sudsds.transport.http import HttpAuthenticated, HttpTransport
 import exceptions
-from ds_exceptions import DSException
+from ds_exceptions import DSOTPException, DSNotAuthorizedException
 import models
 from properties.properties import Properties as props
 import certs.cert_loader
@@ -632,10 +632,13 @@ class Client(object):
             if e2.code == 302:
               # this is ok - we expected it
               pass
+            elif e2.code == 401:
+              raise DSNotAuthorizedException(e2)
             else:
               raise e2
         else:
-          raise DSException("OTP Error", 1, "User did not supply an OTP")
+          raise DSOTPException(DSOTPException.OTP_CANCELED_BY_USER,
+                               "User did not supply an OTP")
       # TOTP
       if auth_meth_req == "totpsendsms":
         req = urllib2.Request(_url, "")
@@ -649,6 +652,8 @@ class Client(object):
             if e2.code == 302:
               # this is ok - we expected it
               pass
+            elif e2.code == 401:
+              raise DSNotAuthorizedException(e2)
             else:
               raise e2
         # ask for the code received via SMS
@@ -665,10 +670,13 @@ class Client(object):
             if e2.code == 302:
               # this is ok - we expected it
               pass
+            elif e2.code == 401:
+              raise DSNotAuthorizedException(e2)
             else:
               raise e2
         else:
-          raise DSException("OTP Error", 1, "User did not supply an OTP")
+          raise DSOTPException(DSOTPException.OTP_CANCELED_BY_USER,
+                               "User did not supply an OTP")
 
 
   def logout_from_server(self):
@@ -690,16 +698,19 @@ class Client(object):
       try:
         result = urlopener.open(url)
       except urllib2.HTTPError as e:
-        raise DSException("OTP Error", 2, "Could not logout: %s" % e)
+        raise DSOTPException(DSOTPException.LOGOUT_NOT_POSSIBLE,
+                             "Could not logout: %s" % e)
       else:
         result.close()
       
-    
 
-  def get_cookie_jar(self):
-    if self.requires_login() and len(self._cookie_jar) == 0:
+  def get_cookie_jar(self, do_login=True):
+    if do_login and self.requires_login() and len(self._cookie_jar) == 0:
       self.login_to_server()
     return self._cookie_jar
+  
+  def set_auth_cookie(self, cookie):
+    self._cookie_jar.set_cookie(cookie)
   
   def requires_login(self):
     if self.login_method in ("hotp","totp"):
