@@ -591,7 +591,7 @@ class Client(object):
     self._dispatchers = {}
     self.server_certs = server_certs
 
-  def login_to_server(self):
+  def login_to_server(self, repeat_otp=True):
     """Performs all steps necessary for later successful access to the server.
     It is needed by authentication method that require a cookie to be present
     when accessing the SOAP interface.
@@ -617,28 +617,33 @@ class Client(object):
         _url = url
       result = urlopener.open(_url, "")
     except urllib2.HTTPError as e:
+      last_problem = ""
       auth_meth_req = e.headers.get("WWW-Authenticate")
       # HOTP
       if auth_meth_req == "hotp":
         req = urllib2.Request(url, "")
-        hotp = self.otp_callback()
-        if hotp is not None:
-          basic_auth = base64.b64encode(
-                               "%s:%s%s" % (self.login, self.password, hotp))
-          req.add_header("Authorization", "Basic %s" % basic_auth)
-          try:
-            result = urlopener.open(req)
-          except urllib2.HTTPError as e2:
-            if e2.code == 302:
-              # this is ok - we expected it
-              pass
-            elif e2.code == 401:
-              raise DSNotAuthorizedException(e2)
-            else:
-              raise e2
-        else:
-          raise DSOTPException(DSOTPException.OTP_CANCELED_BY_USER,
-                               "User did not supply an OTP")
+        while True:
+          hotp = self.otp_callback(last_problem=last_problem)
+          if hotp is not None:
+            basic_auth = base64.b64encode(
+                                 "%s:%s%s" % (self.login, self.password, hotp))
+            req.add_header("Authorization", "Basic %s" % basic_auth)
+            try:
+              result = urlopener.open(req)
+            except urllib2.HTTPError as e2:
+              if e2.code == 302:
+                # this is ok - we expected it
+                break
+              elif e2.code == 401:
+                if repeat_otp:
+                  last_problem = str(e2)
+                else:
+                  raise DSNotAuthorizedException(e2)
+              else:
+                raise e2
+          else:
+            raise DSOTPException(DSOTPException.OTP_CANCELED_BY_USER,
+                                 "User did not supply an OTP")
       # TOTP
       if auth_meth_req == "totpsendsms":
         req = urllib2.Request(_url, "")
@@ -649,34 +654,38 @@ class Client(object):
         try:
           result = urlopener.open(req)
         except urllib2.HTTPError as e2:
-            if e2.code == 302:
-              # this is ok - we expected it
-              pass
-            elif e2.code == 401:
-              raise DSNotAuthorizedException(e2)
-            else:
-              raise e2
+          if e2.code == 302:
+            # this is ok - we expected it
+            pass
+          elif e2.code == 401:
+            raise DSNotAuthorizedException(e2)
+          else:
+            raise e2
         # ask for the code received via SMS
-        totp = self.otp_callback()
-        if totp is not None:
-          req = urllib2.Request(url, "")
-          # make the final request obtaining the cookie
-          basic_auth = base64.b64encode(
-                               "%s:%s%s" % (self.login, self.password, totp))
-          req.add_header("Authorization", "Basic %s" % basic_auth)
-          try:
-            result = urlopener.open(req)
-          except urllib2.HTTPError as e2:
-            if e2.code == 302:
-              # this is ok - we expected it
-              pass
-            elif e2.code == 401:
-              raise DSNotAuthorizedException(e2)
-            else:
-              raise e2
-        else:
-          raise DSOTPException(DSOTPException.OTP_CANCELED_BY_USER,
-                               "User did not supply an OTP")
+        while True:
+          totp = self.otp_callback()
+          if totp is not None:
+            req = urllib2.Request(url, "")
+            # make the final request obtaining the cookie
+            basic_auth = base64.b64encode(
+                                 "%s:%s%s" % (self.login, self.password, totp))
+            req.add_header("Authorization", "Basic %s" % basic_auth)
+            try:
+              result = urlopener.open(req)
+            except urllib2.HTTPError as e2:
+              if e2.code == 302:
+                # this is ok - we expected it
+                break
+              elif e2.code == 401:
+                if repeat_otp:
+                  last_problem = str(e2)
+                else:
+                  raise DSNotAuthorizedException(e2)
+              else:
+                raise e2
+          else:
+            raise DSOTPException(DSOTPException.OTP_CANCELED_BY_USER,
+                                 "User did not supply an OTP")
 
 
   def logout_from_server(self):
@@ -690,8 +699,11 @@ class Client(object):
             self.login_method2url_part[self.login_method] + "/" + \
             self.dispatcher_name2config['operations']['soap_url_end']
       proxy_handler = ProxyManager.HTTPS_PROXY.create_proxy_handler()
+      jar_copy = cookielib.CookieJar()
+      for cookie in self._cookie_jar:
+        jar_copy.set_cookie(cookie)
       urlopener = urllib2.build_opener(
-                              urllib2.HTTPCookieProcessor(self._cookie_jar))
+                              urllib2.HTTPCookieProcessor(jar_copy))
       urlopener.addheaders = [('User-agent', self.isds_user_agent_string)]
       if proxy_handler:
         self.urlopener.add_handler(proxy_handler)
@@ -704,7 +716,9 @@ class Client(object):
         result.close()
       
 
-  def get_cookie_jar(self, do_login=True):
+  def get_cookie_jar(self, do_login=True, force_refresh=False):
+    if force_refresh:
+      self._cookie_jar.clear_session_cookies()
     if do_login and self.requires_login() and len(self._cookie_jar) == 0:
       self.login_to_server()
     return self._cookie_jar

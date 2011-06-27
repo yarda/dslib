@@ -214,9 +214,9 @@ class HttpTransport(Transport):
           self.urlopener.add_handler(proxy_auth_handler)
         self.urlopener.addheaders = [('User-agent', self.user_agent_string)]
           
-    def _fill_in_cookies(self):
+    def _fill_in_cookies(self, force_refresh=False):
         if self.cookie_callback:
-            jar = self.cookie_callback()
+            jar = self.cookie_callback(force_refresh=force_refresh)
             if jar:
                 for cookie in jar:
                     self.cookiejar.set_cookie(cookie)
@@ -246,25 +246,33 @@ class HttpTransport(Transport):
         url = request.url
         msg = request.message
         headers = request.headers
-        try:
-            u2request = u2.Request(url, msg, headers)
-            self.__addcookies(u2request)
-            #self.__setproxy(url, u2request)
-            request.headers.update(u2request.headers)
-            log.debug('sending:\n%s', request)
-            if self.options.proxy:
-              if not u2request._tunnel_host and u2request.origin_req_host != u2request.host:
-                u2request._tunnel_host = u2request.origin_req_host
-            fp = self.__open(u2request)
-            self.__getcookies(fp, u2request)
-            result = Reply(200, fp.headers.dict, fp.read())
-            log.debug('received:\n%s', result)
-        except u2.HTTPError, e:
-            if e.code in (202,204):
-                result = None
-            else:
-                raise TransportError(e.msg, e.code, e.fp)
-        return result
+        force_cookie_refresh = False
+        while True:
+          if force_cookie_refresh:
+            self._fill_in_cookies(force_refresh=True)
+          try:            
+              u2request = u2.Request(url, msg, headers)
+              self.__addcookies(u2request)
+              #self.__setproxy(url, u2request)
+              request.headers.update(u2request.headers)
+              log.debug('sending:\n%s', request)
+              if self.options.proxy:
+                if not u2request._tunnel_host and u2request.origin_req_host != u2request.host:
+                  u2request._tunnel_host = u2request.origin_req_host
+              fp = self.__open(u2request)
+              self.__getcookies(fp, u2request)
+              result = Reply(200, fp.headers.dict, fp.read())
+              log.debug('received:\n%s', result)
+          except u2.HTTPError, e:
+              if e.code in (202,204):
+                  result = None
+                  return result
+              elif e.code == 400 and self.cookie_callback:
+                  force_cookie_refresh = True
+              else:
+                  raise TransportError(e.msg, e.code, e.fp)
+          else:
+            return result
 
     def __addcookies(self, u2request):
         self.cookiejar.add_cookie_header(u2request)
