@@ -663,7 +663,7 @@ class Client(object):
             raise e2
         # ask for the code received via SMS
         while True:
-          totp = self.otp_callback()
+          totp = self.otp_callback(last_problem=last_problem)
           if totp is not None:
             req = urllib2.Request(url, "")
             # make the final request obtaining the cookie
