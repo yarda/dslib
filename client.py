@@ -696,7 +696,7 @@ class Client(object):
       if proxy_handler:
         self.urlopener.add_handler(proxy_handler)
       try:
-        result = urlopener.open(url)
+        result = urlopener.open(url, timeout=3)
       except urllib2.HTTPError as e:
         raise DSOTPException(DSOTPException.LOGOUT_NOT_POSSIBLE,
                              "Could not logout: %s" % e)
