@@ -289,7 +289,9 @@ if __name__ == "__main__":
   import logging
   #logging.basicConfig(level=logging.DEBUG)
   #logging.getLogger('suds').setLevel(logging.DEBUG)
-  def otp_callback():
+  def otp_callback(last_problem=None):
+    if last_problem:
+      print last_problem
     x = raw_input("Generated code: ")
     return x
   
