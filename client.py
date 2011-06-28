@@ -609,7 +609,7 @@ class Client(object):
                                      redir_handler)
     urlopener.addheaders = [('User-agent', self.isds_user_agent_string)]
     if proxy_handler:
-      self.urlopener.add_handler(proxy_handler)
+      urlopener.add_handler(proxy_handler)
     try:
       if self.login_method == "totp":
         _url = url+"&sendSms=true"
@@ -706,7 +706,7 @@ class Client(object):
                               urllib2.HTTPCookieProcessor(jar_copy))
       urlopener.addheaders = [('User-agent', self.isds_user_agent_string)]
       if proxy_handler:
-        self.urlopener.add_handler(proxy_handler)
+        urlopener.add_handler(proxy_handler)
       try:
         result = urlopener.open(url, timeout=3)
       except urllib2.HTTPError as e:
