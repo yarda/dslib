@@ -41,7 +41,8 @@ import pkcs7.tstamp_helper
 from sudsds.client import Client as SudsClient
 from sudsds.transport.http import HttpAuthenticated, HttpTransport
 import exceptions
-from ds_exceptions import DSOTPException, DSNotAuthorizedException
+from ds_exceptions import \
+  DSOTPException, DSNotAuthorizedException, DSSOAPException
 import models
 from properties.properties import Properties as props
 import certs.cert_loader
@@ -109,11 +110,19 @@ class Dispatcher(object):
   def _extract_status(self, reply):
     if hasattr(reply, "dmStatus"):
       status = models.dmStatus(reply.dmStatus)
+      code_attr = "dmStatusCode"
+      message_attr = "dmStatusMessage"
     elif hasattr(reply, "dbStatus"):
       status = models.dbStatus(reply.dbStatus)
+      code_attr = "dbStatusCode"
+      message_attr = "dbStatusMessage"
     else:
       raise ValueError("Neither dmStatus, nor dbStatus found in reply:\n%s" %
                        reply)
+    status_code = getattr(status, code_attr)
+    if status_code != "0000":
+      status_message = getattr(status, message_attr)
+      raise DSSOAPException(status_code, status_message)
     return status
 
 

@@ -44,6 +44,8 @@ def GetListOfSentMessages():
              
   print (template % heading).encode("utf-8")
   print "------------------------------------------------------------------------------------"
+  reply = ds_client.GetListOfSentMessages()
+  print reply
   for message in ds_client.GetListOfSentMessages().data:
     print (template % (message.__dict__)).encode("utf-8")
 

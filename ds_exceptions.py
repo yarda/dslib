@@ -43,6 +43,18 @@ class DSGenericException(DSException):
     return unicode(self).encode("utf-8")
   
 
+class DSSOAPException(DSException):
+  """fired when something in OTP authorization got out of hand"""
+  
+  def __init__(self, status_code, status_message):
+    self.status_code = status_code
+    self.status_message = status_message
+    
+  def __unicode__(self):
+    return "SOAP Error:\nStatusCode: %s\nStatusMessage: %s" % \
+            (self.status_code, self.status_message) 
+
+
 class DSOTPException(DSException):
   """fired when something in OTP authorization got out of hand"""
   
