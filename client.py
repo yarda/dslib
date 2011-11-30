@@ -151,19 +151,21 @@ class Dispatcher(object):
 
   def MessageEnvelopeDownload(self, msgid):
     reply = self.soap_client.service.MessageEnvelopeDownload(msgid)
+    status = self._extract_status(reply)
     if hasattr(reply, 'dmReturnedMessageEnvelope'):
       message = models.Message(reply.dmReturnedMessageEnvelope)
     else:
       message = None
-    return Reply(self._extract_status(reply), message)
+    return Reply(status, message)
 
   def MessageDownload(self, msgid):
     reply = self.soap_client.service.MessageDownload(msgid)
+    status = self._extract_status(reply)
     if hasattr(reply, 'dmReturnedMessage'):
       message = models.Message(reply.dmReturnedMessage)
     else:
       message = None
-    return Reply(self._extract_status(reply), message)
+    return Reply(status, message)
 
   def DummyOperation(self):
     reply = self.soap_client.service.DummyOperation()
@@ -175,6 +177,7 @@ class Dispatcher(object):
     soap_info = self.soap_client.factory.create("dbOwnerInfo")
     info.copy_to_soap_object(soap_info)
     reply = self.soap_client.service.FindDataBox(soap_info)
+    status = self._extract_status(reply)
     if hasattr(reply, 'dbResults') and reply.dbResults:
       ret_infos = reply.dbResults.dbOwnerInfo
       if type(ret_infos) != list:
@@ -182,7 +185,7 @@ class Dispatcher(object):
       result = [models.dbOwnerInfo(ret_info) for ret_info in ret_infos]
     else:
       result = []
-    return Reply(self._extract_status(reply), result)
+    return Reply(status, result)
 
   def CreateMessage(self, envelope, files):
     """returns message id as reply.data"""
@@ -194,27 +197,30 @@ class Dispatcher(object):
       f.copy_to_soap_object(soap_file)
       soap_files.dmFile.append(soap_file)
     reply = self.soap_client.service.CreateMessage(soap_envelope, soap_files)
+    status = self._extract_status(reply)
     if hasattr(reply,"dmID"):
       dmID = reply.dmID
     else:
       dmID = None
-    return Reply(self._extract_status(reply), dmID)
+    return Reply(status, dmID)
     
   def GetOwnerInfoFromLogin(self):
     reply = self.soap_client.service.GetOwnerInfoFromLogin()
+    status = self._extract_status(reply)
     if hasattr(reply, 'dbOwnerInfo'):
       message = models.dbOwnerInfo(reply.dbOwnerInfo)
     else:
       message = None
-    return Reply(self._extract_status(reply), message)
+    return Reply(status, message)
 
   def GetUserInfoFromLogin(self):
     reply = self.soap_client.service.GetUserInfoFromLogin()
+    status = self._extract_status(reply)
     if hasattr(reply, 'dbUserInfo'):
       message = models.dbUserInfo(reply.dbUserInfo)
     else:
       message = None
-    return Reply(self._extract_status(reply), message)
+    return Reply(status, message)
  
   def _verify_der_msg(self, der_message):
     '''
@@ -382,9 +388,9 @@ class Dispatcher(object):
   def GetSignedDeliveryInfo(self, msgId):
     method = self.soap_client.service.GetSignedDeliveryInfo
     reply = method(msgId)
+    status = self._extract_status(reply)
     message = self.signature_to_delivery_info(reply.dmSignature, method)
-    return Reply(self._extract_status(reply), message,
-                 raw_data=reply.dmSignature)
+    return Reply(status, message, raw_data=reply.dmSignature)
     
   def signature_to_delivery_info(self, signature, method):
     if type(method) in (str, unicode):
@@ -410,19 +416,21 @@ class Dispatcher(object):
 
   def GetDeliveryInfo(self, msgId):
     reply = self.soap_client.service.GetDeliveryInfo(msgId)
+    status = self._extract_status(reply)
     if hasattr(reply, 'dmDelivery'):
       message = models.Message(reply.dmDelivery)
     else:
       message = None
-    return Reply(self._extract_status(reply), message)
+    return Reply(status, message)
   
   def GetPasswordInfo(self):
     reply = self.soap_client.service.GetPasswordInfo()    
+    status = self._extract_status(reply)
     # minOccur = 0, maxOccur = 1
     expiry_date = None
     if hasattr(reply, 'pswExpDate'):
       expiry_date = reply.pswExpDate    
-    return Reply(self._extract_status(reply), expiry_date)
+    return Reply(status, expiry_date)
   
   def ChangeISDSPassword(self, old_pass, new_pass):
     reply = self.soap_client.service.ChangeISDSPassword(old_pass, new_pass) 
