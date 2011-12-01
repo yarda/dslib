@@ -70,6 +70,8 @@ class Dispatcher(object):
                                # username, password, etc. will be take from it
     self.wsdl_url = wsdl_url
     self.soap_url = soap_url # if None, default from WSDL will be used
+    if type(server_certs) == unicode:
+      server_certs = server_certs.encode(sys.getfilesystemencoding())
     transport_args = dict(ca_certs=server_certs,
                           cert_verifier=Client.CERT_VERIFIER,
                           username=self.ds_client.login,

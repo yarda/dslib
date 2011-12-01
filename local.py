@@ -10,6 +10,7 @@ try:
   local_dir = os.path.dirname(__file__)
 except NameError:
   local_dir = os.path.dirname(sys.executable)
+local_dir = local_dir.decode(sys.getfilesystemencoding())
   
 def find_data_directory(name):
   # at first try path set in environment variable
@@ -21,7 +22,7 @@ def find_data_directory(name):
   # then try path relative to this file
   local_path = os.path.join(local_dir, name)
   if os.path.isdir(local_path):
-    return local_path.decode(sys.getfilesystemencoding())
+    return local_path
   # try relative path inside an egg
   if os.path.dirname(local_dir).endswith(".egg"):
     local_path = os.path.join(os.path.dirname(local_dir),'share','dslib',name)
