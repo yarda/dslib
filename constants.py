@@ -18,17 +18,23 @@
 #*    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #*
 
-
-MESSAGE_STATUS = dict( [(1, u"zpráva byla podána"),
-			(2, u"hash datové zprávy včetně písemností označen časovým razítkem"),
-			(3, u"zpráva NEprošla AV kontrolou; nakažená písemnost je smazána; konečný stav zprávy"),
-			(4, u"zpráva dodána do ISDS (zapsán čas dodání)"),
-			(5, u"zpráva byla doručena fikcí (vypršením 10 dnů od dodání) - (zapsán čas doručení)"),
-			(6, u"zpráva byla doručena přihlášením (zapsán čas doručení)"),
-			(7, u"zpráva byla přečtena (na portále nebo akcí ESS)"),
-			(8, u"zpráva byla označena jako nedoručitelná (DS byla zpětně znepřístupněna)"),
-			(9, u"obsah zprávy byl smazán (v současné verzi takovouto DZ nelze získat pomocí jakékoliv WS)")
-			]
-		       )
+MESSAGE_STATUS = {
+	1: u"zpráva byla podána (vznikla v ISDS)",
+	2: u"datová zpráva včetně písemností podepsána časovým razítkem",
+	3: u"zpráva neprošla AV kontrolou; nakažená písemnost je smazána; konečný \
+stav zprávy před smazáním",
+	4: u"zpráva dodána do ISDS (zapsán čas dodání)",
+	5: u"uplynulo 10 dní od dodání veřejné zprávy, která dosud nebyla doručena \
+přihlášením (předpoklad doručení fikcí u neOVM DS); u komerční zprávy nemůže\
+tento stav nastat",
+	6: u"osoba oprávněná číst tuto zprávu se přihlásila - dodaná zpráva byla \
+doručena;",
+	7: u"zpráva byla přečtena (na portále nebo akcí ESS)",
+	8: u"zpráva byla označena jako nedoručitelná, protože DS adresáta byla \
+zpětně znepřístupněna",
+	9: u"obsah zprávy byl smazán, obálka zprávy včetně hashů přesunuta do \
+archivu",
+	10: u"zpráva je v Datovém trezoru",
+}
 
 ORG_TYPE_NUM_TO_TEXT = {10:"OVM",20:"PO",30:"PFO",40:"FO"}
