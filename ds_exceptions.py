@@ -31,13 +31,15 @@ class DSException(Exception):
 
 class DSGenericException(DSException):
 
-  def __init__(self, message, code, text):
+  CODE_SERVER_CERT_FILE_MISSING = 1
+  CODE_SERVER_CERT_FILE_INVALID = 2
+
+  def __init__(self, message, code):
     self.message = message
     self.code = code
-    self.text = text
 
   def __unicode__(self):
-    return "%s (code: %s, text: %s)" % (self.message, self.code, self.text)
+    return "%s (code: %s)" % (self.message, self.code)
   
   def __str__(self):
     return unicode(self).encode("utf-8")

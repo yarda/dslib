@@ -34,6 +34,9 @@ import re
 import urllib2
 import cookielib
 
+# third party imports
+import OpenSSL
+
 # local imports
 import pkcs7.pkcs7_decoder
 import pkcs7.verifier
@@ -42,7 +45,7 @@ from sudsds.client import Client as SudsClient
 from sudsds.transport.http import HttpAuthenticated, HttpTransport
 import exceptions
 from ds_exceptions import \
-  DSOTPException, DSNotAuthorizedException, DSSOAPException
+  DSOTPException, DSNotAuthorizedException, DSSOAPException, DSGenericException
 import models
 from properties.properties import Properties as props
 import certs.cert_loader
@@ -72,6 +75,21 @@ class Dispatcher(object):
     self.soap_url = soap_url # if None, default from WSDL will be used
     if type(server_certs) == unicode:
       server_certs = server_certs.encode(sys.getfilesystemencoding())
+    # test server_certs availability
+    if server_certs:
+      if not os.path.isfile(server_certs):
+        raise DSGenericException("No server certificate file found - %s" % \
+                                 server_certs,
+                                 DSGenericException.CODE_SERVER_CERT_FILE_MISSING)
+      else:
+        try:
+          cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
+                                                 server_certs)
+        except Exception as e:
+          raise DSGenericException("Server certificate file not valid - %s" % \
+                                   server_certs,
+                                   DSGenericException.CODE_SERVER_CERT_FILE_INVALID)
+    # go on with creating the connection parameters
     transport_args = dict(ca_certs=server_certs,
                           cert_verifier=Client.CERT_VERIFIER,
                           username=self.ds_client.login,

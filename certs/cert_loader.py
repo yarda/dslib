@@ -40,6 +40,7 @@ def _get_substrate(lines):
     begin_cert, content, end_cert = 0, 1, 2
     state = begin_cert
     certCnt = 0
+    substrate = None
     
     for certLine in lines:
         certLine = string.strip(certLine)
