@@ -45,7 +45,8 @@ from sudsds.client import Client as SudsClient
 from sudsds.transport.http import HttpAuthenticated, HttpTransport
 import exceptions
 from ds_exceptions import \
-  DSOTPException, DSNotAuthorizedException, DSSOAPException, DSGenericException
+  DSOTPException, DSNotAuthorizedException, DSSOAPException,\
+  DSServerCertificateException
 import models
 from properties.properties import Properties as props
 import certs.cert_loader
@@ -78,17 +79,31 @@ class Dispatcher(object):
     # test server_certs availability
     if server_certs:
       if not os.path.isfile(server_certs):
-        raise DSGenericException("No server certificate file found - %s" % \
-                                 server_certs,
-                                 DSGenericException.CODE_SERVER_CERT_FILE_MISSING)
+        raise DSServerCertificateException(
+                    "No server certificate file found - %s" % server_certs,
+                    DSServerCertificateException.SERVER_CERT_FILE_MISSING)
       else:
+        if os.path.getsize(server_certs) > 100000:
+          raise DSServerCertificateException(
+                  "Server certificate file not valid (too big) - %s (%d KB)" %\
+                  (server_certs, os.path.getsize(server_certs)//1000),
+                  DSServerCertificateException.SERVER_CERT_FILE_INVALID)
+        try:
+          cert_f = open(server_certs, 'r')
+          cert_content = cert_f.read()
+          cert_f.close()
+        except Exception as e:
+          raise DSServerCertificateException(
+                    "Server certificate is not readable - %s (%s)" % \
+                    (server_certs, e),
+                    DSServerCertificateException.SERVER_CERT_FILE_INACCESSIBLE)
         try:
           cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
-                                                 server_certs)
+                                                 cert_content)
         except Exception as e:
-          raise DSGenericException("Server certificate file not valid - %s" % \
-                                   server_certs,
-                                   DSGenericException.CODE_SERVER_CERT_FILE_INVALID)
+          raise DSServerCertificateException(
+                    "Server certificate file not valid - %s" % server_certs,
+                    DSServerCertificateException.SERVER_CERT_FILE_INVALID)
     # go on with creating the connection parameters
     transport_args = dict(ca_certs=server_certs,
                           cert_verifier=Client.CERT_VERIFIER,

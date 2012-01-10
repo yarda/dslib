@@ -31,8 +31,6 @@ class DSException(Exception):
 
 class DSGenericException(DSException):
 
-  CODE_SERVER_CERT_FILE_MISSING = 1
-  CODE_SERVER_CERT_FILE_INVALID = 2
 
   def __init__(self, message, code):
     self.message = message
@@ -55,6 +53,24 @@ class DSSOAPException(DSException):
   def __unicode__(self):
     return "SOAP Error:\nStatusCode: %s\nStatusMessage: %s" % \
             (self.status_code, self.status_message) 
+
+
+class DSServerCertificateException(DSException):
+  """fired when something is wrong with the server certificate file"""
+  
+  SERVER_CERT_FILE_MISSING = 1
+  SERVER_CERT_FILE_INVALID = 2
+  SERVER_CERT_FILE_INACCESSIBLE = 3
+
+  def __init__(self, message, code):
+    self.message = message
+    self.code = code
+
+  def __unicode__(self):
+    return "%s (code: %s)" % (self.message, self.code)
+  
+  def __str__(self):
+    return unicode(self).encode("utf-8")
 
 
 class DSOTPException(DSException):

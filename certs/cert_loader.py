@@ -67,14 +67,16 @@ def parse_pem(pem_file):
     Parses PEM certificate.
     Returns pyasn Certificate object or None, if parsing failed.
     '''
-    f = open(pem_file, "r")
-    lines = f.readlines()
+    try:
+        f = open(pem_file, "r")
+        lines = f.readlines()
+    except IOError:
+        return None
     substrate = _get_substrate(lines)
     pattern = Certificate()
     try:
         certificate = decoder.decode(substrate, asn1Spec=pattern)[0]
     except Exception, e:
-        print e.message
         return None
     
     return certificate
