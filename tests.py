@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 #*    dslib - Python library for Datove schranky
-#*    Copyright (C) 2009-2010  CZ.NIC, z.s.p.o. (http://www.nic.cz)
+#*    Copyright (C) 2009-2012  CZ.NIC, z.s.p.o. (http://www.nic.cz)
 #*
 #*    This library is free software; you can redistribute it and/or
 #*    modify it under the terms of the GNU Library General Public
