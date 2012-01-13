@@ -433,11 +433,14 @@ class dmHash(Model):
 
 class dmEnvelope(Model):
 
-  KNOWN_ATTRS = ("dmSenderOrgUnit", "dmSenderOrgUnitNum", "dbIDRecipient", "dmRecipientOrgUnit",
-                 "dmRecipientOrgUnitNum", "dmToHands", "dmAnnotation", "dmRecipientRefNumber",
-                 "dmSenderRefNumber", "dmRecipientIdent", "dmSenderIdent", "dmLegalTitleLaw",
-                 "dmLegalTitleYear", "dmLegalTitleSect", "dmLegalTitlePar", "dmLegalTitlePoint",
-                 "dmPersonalDelivery", "dmAllowSubstDelivery", "dmOVM")
+  KNOWN_ATTRS = ("dmSenderOrgUnit", "dmSenderOrgUnitNum", "dbIDRecipient",
+                 "dmRecipientOrgUnit", "dmRecipientOrgUnitNum", "dmToHands",
+                 "dmAnnotation", "dmRecipientRefNumber",
+                 "dmSenderRefNumber", "dmRecipientIdent", "dmSenderIdent",
+                 "dmLegalTitleLaw", "dmLegalTitleYear", "dmLegalTitleSect",
+                 "dmLegalTitlePar", "dmLegalTitlePoint",
+                 "dmPersonalDelivery", "dmAllowSubstDelivery", "dmOVM",
+                 "_dmType")
   
   
 class dbOwnerInfo(Model):
