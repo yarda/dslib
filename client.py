@@ -212,7 +212,11 @@ class Dispatcher(object):
     soap_info = self.soap_client.factory.create("dbOwnerInfo")
     info.copy_to_soap_object(soap_info)
     reply = self.soap_client.service.FindDataBox(soap_info)
-    status = self._extract_status(reply)
+    if reply.dbStatus and reply.dbStatus.dbStatusCode == "0003":
+      # this is a special case where non-zero status code is not an error
+      status = reply.dbStatus
+    else:
+      status = self._extract_status(reply)
     if hasattr(reply, 'dbResults') and reply.dbResults:
       ret_infos = reply.dbResults.dbOwnerInfo
       if type(ret_infos) != list:
