@@ -27,13 +27,12 @@ import release
 
 # dslib subpackages
 dslib_dir = "./"
-pkgdirs = ["dsdb","converters","sudsds","pkcs7","pyasn1","properties","certs"]
+pkgdirs = ["dsdb","converters","pkcs7","pyasn1","properties","certs"]
 dslib_subpackages = []
 for pkgdir in pkgdirs:
   for name,dirs,files in os.walk(pkgdir): #, followlinks=True):
     if os.path.exists(os.path.join(name,"__init__.py")):
-      if not "suds-svn-work" in name:
-        dslib_subpackages.append("dslib."+name.replace("/","."))
+      dslib_subpackages.append("dslib."+name.replace("/","."))
 #print >> sys.stderr, dslib_subpackages
 
 data = dict(
@@ -53,10 +52,11 @@ an electronic communication interface endorsed by the Czech government.",
   data_files = [('share/dslib', ['README.txt', 'LICENSE.txt']),
                 ('share/dslib/pyasn1', ['pyasn1/LICENSE']),
                 ('share/dslib/wsdl', glob.glob('wsdl/*')),
-                ('share/dslib/trusted_certificates', glob.glob('trusted_certificates/*.pem')),
+                ('share/dslib/trusted_certificates',
+                 glob.glob('trusted_certificates/*.pem')),
                 ],
-  requires = ['pyOpenSSL (>=0.9)'],
-  install_requires = ['pyOpenSSL>=0.9'],
+  requires = ['pyOpenSSL (>=0.9)', 'sudsds>=1.0'],
+  install_requires = ['pyOpenSSL>=0.9', 'sudsds>=1.0'],
   provides=["dslib"],
   )
 
