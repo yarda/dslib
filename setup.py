@@ -27,7 +27,7 @@ import release
 
 # dslib subpackages
 dslib_dir = "./"
-pkgdirs = ["dsdb","converters","pkcs7","pyasn1","properties","certs"]
+pkgdirs = ["dsdb","converters","pkcs7","properties","certs"]
 dslib_subpackages = []
 for pkgdir in pkgdirs:
   for name,dirs,files in os.walk(pkgdir): #, followlinks=True):
@@ -55,7 +55,7 @@ an electronic communication interface endorsed by the Czech government.",
                 ('share/dslib/trusted_certificates',
                  glob.glob('trusted_certificates/*.pem')),
                 ],
-  requires = ['pyOpenSSL (>=0.9)', 'sudsds>=1.0'],
+  requires = ['pyOpenSSL (>=0.9)', 'sudsds (>=1.0)'],
   install_requires = ['pyOpenSSL>=0.9', 'sudsds>=1.0'],
   provides=["dslib"],
   )
