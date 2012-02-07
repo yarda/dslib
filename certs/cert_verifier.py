@@ -23,7 +23,6 @@ Module for certificate verification.
 
 # standard library imports
 import logging
-logger = logging.getLogger("certs.cert_verifier")
 import types
 
 # dslib imports
@@ -40,6 +39,7 @@ from cert_finder import *
 import timeutil
 from constants import *
 
+logger = logging.getLogger("certs.cert_verifier")
 
 def _verify_date(certificate): 
     '''
