@@ -55,8 +55,8 @@ an electronic communication interface endorsed by the Czech government.",
                 ('share/dslib/trusted_certificates',
                  glob.glob('trusted_certificates/*.pem')),
                 ],
-  requires = ['pyOpenSSL (>=0.9)', 'sudsds (>=1.0)'],
-  install_requires = ['pyOpenSSL>=0.9', 'sudsds>=1.0'],
+  requires = ['pyOpenSSL (>=0.9)', 'sudsds (>=1.0)', 'pyasn1 (>=0.0.13)'],
+  install_requires = ['pyOpenSSL>=0.9', 'sudsds>=1.0', 'pyasn1>=0.0.13'],
   provides=["dslib"],
   )
 
