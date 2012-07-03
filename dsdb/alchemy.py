@@ -506,3 +506,14 @@ class DSDatabase(AbstractDSDatabase):
                .distinct())
     return ret
     
+  @thread_safe_session
+  def mark_messages_as_read_locally(self, mids):
+    """mids is a list of message ids that should be marked as read_locally"""
+    #ex = sal.update(SupplementaryMessageData)\
+    #        .where(SupplementaryMessageData.message_id.in_(mids))\
+    #        .values(read_locally=True)
+    self.session.query(SupplementaryMessageData)\
+      .filter(SupplementaryMessageData.message_id.in_(mids))\
+      .update({"read_locally": True}, synchronize_session=False)
+    self.session.commit()
+  
