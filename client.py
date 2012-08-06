@@ -89,9 +89,12 @@ class Dispatcher(object):
                   (server_certs, os.path.getsize(server_certs)//1000),
                   DSServerCertificateException.SERVER_CERT_FILE_INVALID)
         try:
+          logging.debug("Loading trusted server certificates from %s",
+                        server_certs)
           cert_f = open(server_certs, 'r')
           cert_content = cert_f.read()
           cert_f.close()
+          logging.debug("Read %d bytes of certificate data", len(cert_content))
         except Exception as e:
           raise DSServerCertificateException(
                     "Server certificate is not readable - %s (%s)" % \
