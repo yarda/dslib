@@ -287,19 +287,6 @@ class DSDatabase(AbstractDSDatabase):
       self.add_pkcs7_data(m)
       yield m
       
-  @thread_safe_session
-  def messages_between_dates(self, from_date, to_date):
-    """return messages with dmDeliveryTime between certain dates"""
-    if not from_date:
-      ms = self.session.query(Message).filter(Message.dmDeliveryTime < to_date)
-    elif not to_date:
-      ms = self.session.query(Message).filter(Message.dmDeliveryTime > from_date)
-    else:
-      ms = self.session.query(Message).filter(
-                  between(Message.dmDeliveryTime, from_date, to_date))
-    for m in ms:
-      self.add_pkcs7_data(m)
-      yield m
 
   @thread_safe_session
   def store_message(self, message, raw_data=None,
@@ -364,29 +351,44 @@ class DSDatabase(AbstractDSDatabase):
     return m
   
   @thread_safe_session
+  def messages_between_dates(self, from_date, to_date,
+                             message_type=None, add_pkcs7_data=False):
+    """generator yielding messages with dmDeliveryTime between certain dates"""
+    query = self.session.query(Message, SupplementaryMessageData).\
+                filter(Message.dmID==SupplementaryMessageData.message_id)
+    if message_type:
+        query = query.filter(SupplementaryMessageData.message_type==message_type)
+    if not from_date:
+      ms = query.filter(Message.dmDeliveryTime < to_date)
+    elif not to_date:
+      ms = query.filter(Message.dmDeliveryTime > from_date)
+    else:
+      ms = query.filter(between(Message.dmDeliveryTime, from_date, to_date))
+    for m, supp in ms:
+      m.read_locally = supp.read_locally
+      m.message_type = supp.message_type
+      if add_pkcs7_data:
+        self.add_pkcs7_data(m)
+      yield m
+  
+  @thread_safe_session
   def get_messages_between_dates(self, from_date, to_date,
                                  message_type=None, add_pkcs7_data=False):
     """return messages with dmDeliveryTime between certain dates"""
-    if not from_date:
-      ms = self.session.query(Message).filter(Message.dmDeliveryTime < to_date)
-    elif not to_date:
-      ms = self.session.query(Message).filter(Message.dmDeliveryTime > from_date)
-    else:
-      ms = self.session.query(Message).filter(
-                  between(Message.dmDeliveryTime, from_date, to_date))
-    ret = []
-    for m in ms:
-      if add_pkcs7_data:
-        self.add_pkcs7_data(m)
-      ret.append(m)
+    ret = list(self.messages_between_dates(from_date, to_date, message_type,
+                                           add_pkcs7_data))
     return ret
 
   @thread_safe_session
   def get_messages_without_date(self, message_type=None, add_pkcs7_data=False):
     """return messages with empty dmDeliveryTime"""
-    ms = self.session.query(Message).filter(Message.dmDeliveryTime == None)
+    ms = self.session.query(Message, SupplementaryMessageData).\
+        filter(Message.dmID==SupplementaryMessageData.message_id).\
+        filter(Message.dmDeliveryTime == None)
     ret = []
-    for m in ms:
+    for m, supp in ms:
+      m.read_locally = supp.read_locally
+      m.message_type = supp.message_type
       if add_pkcs7_data:
         self.add_pkcs7_data(m)
       ret.append(m)
