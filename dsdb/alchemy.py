@@ -388,11 +388,13 @@ class DSDatabase(AbstractDSDatabase):
   @thread_safe_session
   def get_messages_without_date(self, message_type=None, add_pkcs7_data=False):
     """return messages with empty dmDeliveryTime"""
-    ms = self.session.query(Message, SupplementaryMessageData).\
-        filter(Message.dmID==SupplementaryMessageData.message_id).\
-        filter(Message.dmDeliveryTime == None)
+    query = self.session.query(Message, SupplementaryMessageData).\
+              filter(Message.dmID==SupplementaryMessageData.message_id).\
+              filter(Message.dmDeliveryTime == None)
+    if message_type:
+      query = query.filter(SupplementaryMessageData.message_type==message_type)
     ret = []
-    for m, supp in ms:
+    for m, supp in query:
       m.read_locally = supp.read_locally
       m.message_type = supp.message_type
       if add_pkcs7_data:
