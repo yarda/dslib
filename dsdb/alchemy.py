@@ -283,8 +283,7 @@ class DSDatabase(AbstractDSDatabase):
 
   @thread_safe_session
   def all_messages(self):
-    for m in self.session.query(Message).all():
-      self.add_pkcs7_data(m)
+    for m in self.messages_between_dates(None, None):
       yield m
       
 
@@ -341,7 +340,12 @@ class DSDatabase(AbstractDSDatabase):
   @thread_safe_session
   def get_message(self, id, omit_relations=False):
     """return message by its id"""
-    m = self.session.query(Message).get(int(id))
+    m, sup = self.session.query(Message, SupplementaryMessageData).\
+                filter(Message.dmID==SupplementaryMessageData.message_id).\
+                filter(Message.dmID==int(id)).first()
+    if sup:
+      m.message_type = sup.message_type
+      m.read_locally = sup.read_locally
     if m and not omit_relations:
       m.dmFiles = [f for f in self.session.query(dmFile).filter_by(message_id=id)]
       m.dmHash = self.session.query(dmHash).filter_by(message_id=id).first()
