@@ -358,12 +358,14 @@ class DSDatabase(AbstractDSDatabase):
                 filter(Message.dmID==SupplementaryMessageData.message_id)
     if message_type:
         query = query.filter(SupplementaryMessageData.message_type==message_type)
-    if not from_date:
+    if to_date and not from_date:
       ms = query.filter(Message.dmDeliveryTime < to_date)
-    elif not to_date:
+    elif from_date and not to_date:
       ms = query.filter(Message.dmDeliveryTime > from_date)
-    else:
+    elif from_date and to_date:
       ms = query.filter(between(Message.dmDeliveryTime, from_date, to_date))
+    else:
+      ms = query
     for m, supp in ms:
       m.read_locally = supp.read_locally
       m.message_type = supp.message_type
