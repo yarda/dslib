@@ -1,3 +1,7 @@
+This is UNOFFICIAL fork of dslib.
+The dslib upstream is: https://git.nic.cz/redmine/projects/dslib
+The purpose of this fork is to help dslib upstream to switch to upstream version of suds (http://fedorahosted.org/suds/).
+
 =====
 dslib
 =====
