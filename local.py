@@ -32,4 +32,10 @@ def find_data_directory(name):
   system_path = os.path.join(sys.prefix, "share", "dslib", name)
   if os.path.isdir(system_path):
     return system_path
+
+  # then the system path local (ubuntu dists)
+  system_path = os.path.join(sys.prefix, "local", "share", "dslib", name)
+  if os.path.isdir(system_path):
+    return system_path
+
   raise ValueError("Could not find data dir '%s'" % name)
